@@ -42,6 +42,15 @@ std::vector<StateInterface> FrankaHardwareInterface::export_state_interfaces() {
     state_interfaces.emplace_back(
         StateInterface(info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_efforts_.at(i)));
   }
+
+  state_interfaces.emplace_back(StateInterface(
+      k_robot_name, k_robot_state_interface_name,
+      reinterpret_cast<double*>(  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+          &hw_franka_robot_state_addr_)));
+  state_interfaces.emplace_back(StateInterface(
+      k_robot_name, k_robot_model_interface_name,
+      reinterpret_cast<double*>(  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+          &hw_franka_model_ptr_)));
   return state_interfaces;
 }
 
@@ -75,10 +84,18 @@ CallbackReturn FrankaHardwareInterface::on_deactivate(
 
 hardware_interface::return_type FrankaHardwareInterface::read(const rclcpp::Time& /*time*/,
                                                               const rclcpp::Duration& /*period*/) {
-  const auto kState = robot_->read();
-  hw_positions_ = kState.q;
-  hw_velocities_ = kState.dq;
-  hw_efforts_ = kState.tau_J;
+  
+  if (hw_franka_model_ptr_ == nullptr) {
+    hw_franka_model_ptr_ = robot_->getModel();
+  }
+  hw_franka_robot_state_ = robot_->read(); // readOnce franka_ros2 uses active control, which isn't available for Panda
+  hw_positions_ = hw_franka_robot_state_.q;
+  hw_velocities_ = hw_franka_robot_state_.dq;
+  hw_efforts_ = hw_franka_robot_state_.tau_J;
+  // const auto kState = robot_->read(); // kState is basically franka state, so why wasn't frankastate just implemented?
+  // hw_positions_ = kState.q;
+  // hw_velocities_ = kState.dq;
+  // hw_efforts_ = kState.tau_J;
   return hardware_interface::return_type::OK;
 }
 
@@ -152,6 +169,8 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
     return CallbackReturn::ERROR;
   }
   RCLCPP_INFO(getLogger(), "Successfully connected to robot");
+
+  // executor is tied to the param_service_server, for setting stiffness and stuff. So that will be added later on.
   return CallbackReturn::SUCCESS;
 }
 
