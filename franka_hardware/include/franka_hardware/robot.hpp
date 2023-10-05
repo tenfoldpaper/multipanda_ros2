@@ -22,7 +22,9 @@
 #include <string>
 #include <thread>
 
+#include <franka/model.h>
 #include <franka/robot.h>
+#include <franka_hardware/model.hpp>
 #include <rclcpp/logger.hpp>
 
 namespace franka_hardware {
@@ -59,7 +61,11 @@ class Robot {
 
   /// stops the control or reading loop of the robot.
   void stopRobot();
-
+  /**
+   * Return pointer to the franka robot model object .
+   * @return pointer to the current robot model.
+   */
+  virtual franka_hardware::Model* getModel();
   /**
    * Get the current robot state in a thread-safe way.
    * @return current robot state.
@@ -79,11 +85,13 @@ class Robot {
  private:
   std::unique_ptr<std::thread> control_thread_;
   std::unique_ptr<franka::Robot> robot_;
+  std::unique_ptr<franka::Model> model_;
+  std::unique_ptr<Model> franka_hardware_model_;
   std::mutex read_mutex_;
   std::mutex write_mutex_;
   std::atomic_bool finish_{false};
   bool stopped_ = true;
   franka::RobotState current_state_;
-  std::array<double, 7> tau_command_{};
+  std::array<double, 7> tau_command_ = {0, 0, 0, 0, 0, 0, 0};
 };
 }  // namespace franka_hardware
