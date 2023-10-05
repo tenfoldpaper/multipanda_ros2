@@ -9,6 +9,13 @@ Still work in progress, but changelogs will be updated to indicate the current s
 
 The current version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble], which has a much smaller feature set than franka_ros.
 
+## Priority list
+* Publishing FrankaState
+* Adding error recovery services
+* Adding different joint interfaces (joint {velocity, position} and cartesian {velocity, pose})
+* Adding logic for switching to different joint interfaces
+* Adding additional example controllers (Cartesian, joint velocity/position, etc. )
+* Investigating multiple arm control
 
 ## Installation Guide
 
