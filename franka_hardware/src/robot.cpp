@@ -23,7 +23,6 @@
 namespace franka_hardware {
 
 Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
-  tau_command_.fill(0.);
   franka::RealtimeConfig rt_config = franka::RealtimeConfig::kEnforce;
   if (!franka::hasRealtimeKernel()) {
     rt_config = franka::RealtimeConfig::kIgnore;
@@ -32,6 +31,12 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
         "You are not using a real-time kernel. Using a real-time kernel is strongly recommended!");
   }
   robot_ = std::make_unique<franka::Robot>(robot_ip, rt_config);
+  model_ = std::make_unique<franka::Model>(robot_->loadModel());
+  franka_hardware_model_ = std::make_unique<Model>(model_.get());
+}
+
+Robot::~Robot() {
+  stopRobot();
 }
 
 void Robot::write(const std::array<double, 7>& efforts) {
@@ -43,7 +48,9 @@ franka::RobotState Robot::read() {
   std::lock_guard<std::mutex> lock(read_mutex_);
   return {current_state_};
 }
-
+franka_hardware::Model* Robot::getModel() {
+  return franka_hardware_model_.get();
+}
 void Robot::stopRobot() {
   if (!stopped_) {
     finish_ = true;
@@ -88,9 +95,6 @@ void Robot::initializeContinuousReading() {
   control_thread_ = std::make_unique<std::thread>(kReading);
 }
 
-Robot::~Robot() {
-  stopRobot();
-}
 
 bool Robot::isStopped() const {
   return stopped_;
