@@ -1,6 +1,11 @@
 # Changelog
 
-## [Unreleased]
+## Added 05.10.23
+* Added `model_base.hpp` and `model.hpp`; copy-pasted mostly from `franka_ros`
+* Extended `robot.xpp` to have a pointer to the robot's model
+* Added `FrankaState` to `franka_hardware_interface`; not yet exposed as a published topic.
+
+## [Old from Franka]
 ### Added
 * CI tests in Jenkins
 * joint\_effort\_trajectory\_controller package that contains a version of the
