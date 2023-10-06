@@ -1,5 +1,11 @@
 # Changelog
 
+## Added 06.10.23
+* Added `franka_semantic_components` adapted for panda
+* Updated `FrankaState.msg` to fit the ROS2 requirements
+* Added `Errors.msg`
+* Added working FrankaState broadcaster, which is included in `franka.launch.py`
+
 ## Added 05.10.23
 * Added `model_base.hpp` and `model.hpp`; copy-pasted mostly from `franka_ros`
 * Extended `robot.xpp` to have a pointer to the robot's model
