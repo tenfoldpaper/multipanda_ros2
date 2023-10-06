@@ -13,7 +13,7 @@ The current version is forked from mcbed's port of franka_ros2 for [humble][mcbe
 * FrankaState broadcaster
 
 ## Priority list
-* Publishing FrankaState
+* <s>Publishing FrankaState</s>
 * Adding error recovery services
 * Adding different joint interfaces (joint {velocity, position} and cartesian {velocity, pose})
 * Adding logic for switching to different joint interfaces
