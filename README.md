@@ -9,6 +9,9 @@ Still work in progress, but changelogs will be updated to indicate the current s
 
 The current version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble], which has a much smaller feature set than franka_ros.
 
+## Working (not thoroughly tested) features
+* FrankaState broadcaster
+
 ## Priority list
 * Publishing FrankaState
 * Adding error recovery services
