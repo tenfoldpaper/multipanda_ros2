@@ -39,9 +39,10 @@ Robot::~Robot() {
   stopRobot();
 }
 
-void Robot::write(const std::array<double, 7>& efforts) {
+void Robot::write(const std::array<double, 7>& efforts, const std::array<double, 7>& joint_positions) {
   std::lock_guard<std::mutex> lock(write_mutex_);
   tau_command_ = efforts;
+  joint_position_command_ = joint_positions;
 }
 
 franka::RobotState Robot::read() {
@@ -79,6 +80,29 @@ void Robot::initializeTorqueControl() {
   };
   control_thread_ = std::make_unique<std::thread>(kTorqueControl);
 }
+
+void Robot::initializeJointPositionControl() {
+  assert(isStopped());
+  stopped_ = false;
+  const auto kJointPositionControl = [this]() {
+    robot_->control(
+        [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
+          {
+            std::lock_guard<std::mutex> lock(read_mutex_);
+            current_state_ = state;
+          }
+          std::lock_guard<std::mutex> lock(write_mutex_);
+          franka::JointPositions out(joint_position_command_);
+          out.motion_finished = finish_;
+          return out;
+        }, 
+        franka::ControllerMode::kJointImpedance,
+        true, franka::kMaxCutoffFrequency);
+  };
+  control_thread_ = std::make_unique<std::thread>(kJointPositionControl);
+}
+
+
 
 void Robot::initializeContinuousReading() {
   assert(isStopped());
