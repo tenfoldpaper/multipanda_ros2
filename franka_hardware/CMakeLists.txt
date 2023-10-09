@@ -26,6 +26,7 @@ add_library(franka_hardware
         src/franka_hardware_interface.cpp
         src/robot.cpp
         src/franka_executor.cpp
+        src/control_mode.cpp
 )
 
 target_include_directories(
