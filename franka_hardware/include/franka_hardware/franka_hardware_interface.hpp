@@ -56,7 +56,12 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
  private:
   std::shared_ptr<Robot> robot_;
   std::shared_ptr<FrankaExecutor> executor_;
-  std::array<double, kNumberOfJoints> hw_commands_{0, 0, 0, 0, 0, 0, 0};
+
+  // Commands
+  std::array<double, kNumberOfJoints> hw_commands_joint_effort{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, kNumberOfJoints> hw_commands_joint_position{0, 0, 0, 0, 0, 0, 0};
+
+  // States
   std::array<double, kNumberOfJoints> hw_positions_{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_velocities_{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_efforts_{0, 0, 0, 0, 0, 0, 0};
