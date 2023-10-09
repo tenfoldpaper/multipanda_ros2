@@ -11,12 +11,17 @@ The current version is forked from mcbed's port of franka_ros2 for [humble][mcbe
 
 ## Working (not thoroughly tested) features
 * FrankaState broadcaster
+* Basic joint position interface with `panda_joint{n}/position`; see Joint Position Example Controller
 
 ## Priority list
 * <s>Publishing FrankaState</s>
+* Completely replicate the functionalities of `franka_hw`
+    * <s>Implement joint limits interface (position, velocity, effort)</s> Joint limits are not really working in ros2_control; they need to be implemented at controller level.
+    * Adding different joint interfaces (joint {velocity, position} and cartesian {velocity, pose})
+        * Implemented basic torque <--> joint position logic. Needs further testing.
+    * Adding logic for switching to different joint interfaces
 * Adding error recovery services
-* Adding different joint interfaces (joint {velocity, position} and cartesian {velocity, pose})
-* Adding logic for switching to different joint interfaces
+    * franka_ros2 crashes right away if the E-stop is pressed or a controller exception occurs.
 * Adding additional example controllers (Cartesian, joint velocity/position, etc. )
 * Investigating multiple arm control
 
