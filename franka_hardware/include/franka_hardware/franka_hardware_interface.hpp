@@ -28,6 +28,7 @@
 #include <rclcpp_lifecycle/state.hpp>
 
 #include "franka_hardware/franka_executor.hpp"
+#include "franka_hardware/control_mode.h"
 #include "franka_hardware/robot.hpp"
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -60,7 +61,13 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
   // Commands
   std::array<double, kNumberOfJoints> hw_commands_joint_effort{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_commands_joint_position{0, 0, 0, 0, 0, 0, 0};
-
+  std::array<ControlMode, kNumberOfJoints> control_mode_{ControlMode::None, 
+                                                         ControlMode::None,
+                                                         ControlMode::None,
+                                                         ControlMode::None, 
+                                                         ControlMode::None, 
+                                                         ControlMode::None, 
+                                                         ControlMode::None};
   // States
   std::array<double, kNumberOfJoints> hw_positions_{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_velocities_{0, 0, 0, 0, 0, 0, 0};
