@@ -61,6 +61,7 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
   // Commands
   std::array<double, kNumberOfJoints> hw_commands_joint_effort{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_commands_joint_position{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, kNumberOfJoints> hw_commands_joint_velocity{0, 0, 0, 0, 0, 0, 0};
   std::array<ControlMode, kNumberOfJoints> control_mode_{ControlMode::None, 
                                                          ControlMode::None,
                                                          ControlMode::None,

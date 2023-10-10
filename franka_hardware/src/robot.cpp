@@ -17,6 +17,7 @@
 #include <cassert>
 #include <mutex>
 
+#include <stdio.h>
 #include <franka/control_tools.h>
 #include <rclcpp/logging.hpp>
 
@@ -33,16 +34,24 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
   robot_ = std::make_unique<franka::Robot>(robot_ip, rt_config);
   model_ = std::make_unique<franka::Model>(robot_->loadModel());
   franka_hardware_model_ = std::make_unique<Model>(model_.get());
+  robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
+  robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
+  robot_->setCollisionBehavior(
+        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
+        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
 }
 
 Robot::~Robot() {
   stopRobot();
 }
 
-void Robot::write(const std::array<double, 7>& efforts, const std::array<double, 7>& joint_positions) {
+void Robot::write(const std::array<double, 7>& efforts, const std::array<double, 7>& joint_positions, const std::array<double, 7>& joint_velocities) {
   std::lock_guard<std::mutex> lock(write_mutex_);
   tau_command_ = efforts;
   joint_position_command_ = joint_positions;
+  joint_velocity_command_ = joint_velocities;
 }
 
 franka::RobotState Robot::read() {
@@ -93,13 +102,32 @@ void Robot::initializeJointPositionControl() {
           }
           std::lock_guard<std::mutex> lock(write_mutex_);
           franka::JointPositions out(joint_position_command_);
+          // franka::JointPositions out({0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4});
+          //printf("controller: %f %f\n", out.q[6], joint_position_command_[6]);
           out.motion_finished = finish_;
           return out;
-        }, 
-        franka::ControllerMode::kJointImpedance,
-        true, franka::kMaxCutoffFrequency);
+        });
   };
   control_thread_ = std::make_unique<std::thread>(kJointPositionControl);
+}
+
+void Robot::initializeJointVelocityControl() {
+  assert(isStopped());
+  stopped_ = false;
+  const auto kJointVelocityControl = [this]() {
+    robot_->control(
+        [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
+          {
+            std::lock_guard<std::mutex> lock(read_mutex_);
+            current_state_ = state;
+          }
+          std::lock_guard<std::mutex> lock(write_mutex_);
+          franka::JointVelocities out(joint_velocity_command_);
+          out.motion_finished = finish_;
+          return out;
+        });
+  };
+  control_thread_ = std::make_unique<std::thread>(kJointVelocityControl);
 }
 
 

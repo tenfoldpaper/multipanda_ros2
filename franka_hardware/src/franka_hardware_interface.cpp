@@ -66,6 +66,8 @@ std::vector<CommandInterface> FrankaHardwareInterface::export_command_interfaces
         info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_joint_effort.at(i)));
     command_interfaces.emplace_back(CommandInterface( // JOINT POSITION
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_joint_position.at(i)));
+    command_interfaces.emplace_back(CommandInterface( // JOINT VELOCITY
+        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_commands_joint_velocity.at(i)));
   }
 
   // Franka ros provides:
@@ -121,8 +123,12 @@ hardware_interface::return_type FrankaHardwareInterface::write(const rclcpp::Tim
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
-
-  robot_->write(hw_commands_joint_effort, hw_commands_joint_position);
+  if (std::any_of(hw_commands_joint_velocity.begin(), hw_commands_joint_velocity.end(),
+                  [](double c) { return !std::isfinite(c); })) {
+    return hardware_interface::return_type::ERROR;
+  }
+  // RCLCPP_INFO(getLogger(), "HWI write: %f %f ", hw_commands_joint_effort[6], hw_commands_joint_position[6]);
+  robot_->write(hw_commands_joint_effort, hw_commands_joint_position, hw_commands_joint_velocity);
   return hardware_interface::return_type::OK;
 }
 
@@ -139,8 +145,8 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
   for (const auto& joint : info_.joints) {
 
     // Check number of command interfaces
-    if (joint.command_interfaces.size() != 2) {
-      RCLCPP_FATAL(getLogger(), "Joint '%s' has %zu command interfaces found. 2 expected.",
+    if (joint.command_interfaces.size() != 3) {
+      RCLCPP_FATAL(getLogger(), "Joint '%s' has %zu command interfaces found. 3 expected.",
                    joint.name.c_str(), joint.command_interfaces.size());
       return CallbackReturn::ERROR;
     }
@@ -148,7 +154,8 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
     // Check that the interfaces are named correctly
     for (const auto & cmd_interface : joint.command_interfaces){
       if (cmd_interface.name != hardware_interface::HW_IF_EFFORT &&   // Effort "effort"
-          cmd_interface.name != hardware_interface::HW_IF_POSITION) { // Joint position "position"
+          cmd_interface.name != hardware_interface::HW_IF_POSITION && // Joint position "position"
+          cmd_interface.name != hardware_interface::HW_IF_VELOCITY){  // Joint velocity "velocity"
         RCLCPP_FATAL(getLogger(), "Joint '%s' has unexpected command interface '%s'",
                     joint.name.c_str(), cmd_interface.name.c_str());
         return CallbackReturn::ERROR;
@@ -207,6 +214,7 @@ hardware_interface::return_type FrankaHardwareInterface::perform_command_mode_sw
     const std::vector<std::string>& /*stop_interfaces*/) {
 
   RCLCPP_INFO(this->getLogger(),"Performing command mode switch");
+  RCLCPP_INFO(this->getLogger(),"%f", hw_commands_joint_effort[3]);
   if(control_mode_[0] == ControlMode::None){
     robot_->stopRobot();
     robot_->initializeContinuousReading();
@@ -218,6 +226,10 @@ hardware_interface::return_type FrankaHardwareInterface::perform_command_mode_sw
   else if(control_mode_[0] == ControlMode::JointPosition){
     robot_->stopRobot();
     robot_->initializeJointPositionControl();
+  }
+  else if(control_mode_[0] == ControlMode::JointVelocity){
+    robot_->stopRobot();
+    robot_->initializeJointVelocityControl();
   }
 //  if (!effort_interface_running_ && effort_interface_claimed_) {
 //     robot_->stopRobot();
@@ -255,6 +267,10 @@ hardware_interface::return_type FrankaHardwareInterface::prepare_command_mode_sw
       {
         new_modes.push_back(ControlMode::JointPosition);
       }
+      if (key == info_.joints[i].name + "/" + hardware_interface::HW_IF_VELOCITY)
+      {
+        new_modes.push_back(ControlMode::JointVelocity);
+      }
 
     }
   }
@@ -267,6 +283,10 @@ hardware_interface::return_type FrankaHardwareInterface::prepare_command_mode_sw
           new_modes.push_back(ControlMode::None); 
         }
         if (key == info_.joints[i].name + "/" + hardware_interface::HW_IF_POSITION)
+        {
+          new_modes.push_back(ControlMode::None);
+        }
+        if (key == info_.joints[i].name + "/" + hardware_interface::HW_IF_VELOCITY)
         {
           new_modes.push_back(ControlMode::None);
         }
@@ -301,7 +321,7 @@ hardware_interface::return_type FrankaHardwareInterface::prepare_command_mode_sw
       if (key.find(info_.joints[i].name) != std::string::npos)
       {
         hw_commands_joint_effort[i] = 0;
-        hw_commands_joint_position[i] = 0;
+        // hw_commands_joint_position[i] = 0; // setting this to 0 is actually rather dangerous
         control_mode_[i] = ControlMode::None;  // Revert to undefined
       }
     }
@@ -349,7 +369,7 @@ hardware_interface::return_type FrankaHardwareInterface::prepare_command_mode_sw
   //   error_string += std::to_string(kNumberOfJoints);
   //   throw std::invalid_argument(error_string);
   // }
-  return hardware_interface::return_type::OK;
+  // return hardware_interface::return_type::OK;
 }
 }  // namespace franka_hardware
 

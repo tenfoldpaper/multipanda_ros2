@@ -54,6 +54,7 @@ class Robot {
   void initializeTorqueControl();
 
   void initializeJointPositionControl();
+  void initializeJointVelocityControl();
 
   /**
    * Starts a reading loop of the robot state. Before using this method make sure that no other
@@ -79,7 +80,7 @@ class Robot {
    * The robot will use these torques until a different set of torques are commanded.
    * @param[in] efforts torque command for each joint.
    */
-  void write(const std::array<double, 7>& efforts, const std::array<double, 7>& joint_positions);
+  void write(const std::array<double, 7>& efforts, const std::array<double, 7>& joint_positions, const std::array<double, 7>& joint_velocities);
 
   /// @return true if there is no control or reading loop running.
   bool isStopped() const;
@@ -96,5 +97,6 @@ class Robot {
   franka::RobotState current_state_;
   std::array<double, 7> tau_command_ = {0, 0, 0, 0, 0, 0, 0};
   std::array<double, 7> joint_position_command_ = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};
+  std::array<double, 7> joint_velocity_command_;
 };
 }  // namespace franka_hardware

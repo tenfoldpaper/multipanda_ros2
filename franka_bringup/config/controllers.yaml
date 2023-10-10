@@ -7,9 +7,12 @@ controller_manager:
 
     joint_impedance_example_controller:
       type: franka_example_controllers/JointImpedanceExampleController
-      
+
     joint_position_example_controller:
       type: franka_example_controllers/JointPositionExampleController
+
+    joint_velocity_example_controller:
+      type: franka_example_controllers/JointVelocityExampleController
 
     move_to_start_example_controller:
       type: franka_example_controllers/MoveToStartExampleController
@@ -90,6 +93,26 @@ move_to_start_example_controller:
       - 10.0
       - 5.
 joint_position_example_controller:
+  ros__parameters:
+    arm_id: panda
+    k_gains:
+      - 24.0
+      - 24.0
+      - 24.0
+      - 24.0
+      - 10.0
+      - 6.0
+      - 2.0
+    d_gains:
+      - 2.0
+      - 2.0
+      - 2.0
+      - 1.0
+      - 1.0
+      - 1.0
+      - 0.5
+
+joint_velocity_example_controller:
   ros__parameters:
     arm_id: panda
     k_gains:

@@ -20,7 +20,13 @@
     <class name="franka_example_controllers/JointPositionExampleController"
            type="franka_example_controllers::JointPositionExampleController" base_class_type="controller_interface::ControllerInterface">
         <description>
-            Dummy position control controller to starting pose.
+            Dummy position controller to starting pose.
+        </description>
+    </class>
+    <class name="franka_example_controllers/JointVelocityExampleController"
+           type="franka_example_controllers::JointVelocityExampleController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            Dummy velocity controller.
         </description>
     </class>
 </library>
