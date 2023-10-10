@@ -46,14 +46,14 @@ JointPositionExampleController::state_interface_configuration() const {
 }
 
 controller_interface::return_type JointPositionExampleController::update(
-    const rclcpp::Time& /*time*/,
-    const rclcpp::Duration& /*period*/) {
-  updateJointStates();
-  Vector7d q_goal = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};
+    const rclcpp::Time& time,
+    const rclcpp::Duration& period) {
+  init_time_ = init_time_ + period;
+
+  double delta_angle = M_PI / 16 * (1 - std::cos(M_PI / 5.0 * init_time_.seconds())) * 0.5;
   for (int i = 0; i < num_joints; ++i) {
-    command_interfaces_[i].set_value(initial_q_(i));
+        command_interfaces_[i].set_value(initial_q_(i) + delta_angle);
   }
-  RCLCPP_INFO(get_node()->get_logger(), "%f %f %f %f %f %f %f", initial_q_(0), initial_q_(1), initial_q_(2), initial_q_(3), initial_q_(4), initial_q_(5), initial_q_(6));
   return controller_interface::return_type::OK;
 }
 
@@ -105,6 +105,7 @@ CallbackReturn JointPositionExampleController::on_activate(
   updateJointStates();
   initial_q_ = q_;
   start_time_ = this->get_node()->now();
+  init_time_ = rclcpp::Duration(0, 0);
   return CallbackReturn::SUCCESS;
 }
 
