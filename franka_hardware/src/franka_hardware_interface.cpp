@@ -34,8 +34,7 @@ using CommandInterface = hardware_interface::CommandInterface;
 
 std::vector<StateInterface> FrankaHardwareInterface::export_state_interfaces() {
   std::vector<StateInterface> state_interfaces;
-  // seems like, there is no way to properly format the topic... But is this interface even a topic? 
-  // We do see it in the topic list, but it must be handled rather differently.
+
   for (auto i = 0U; i < info_.joints.size(); i++) {
     state_interfaces.emplace_back(StateInterface(
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_.at(i)));
@@ -102,14 +101,10 @@ hardware_interface::return_type FrankaHardwareInterface::read(const rclcpp::Time
   if (hw_franka_model_ptr_ == nullptr) {
     hw_franka_model_ptr_ = robot_->getModel();
   }
-  hw_franka_robot_state_ = robot_->read(); // readOnce franka_ros2 uses active control, which isn't available for Panda
+  hw_franka_robot_state_ = robot_->read();
   hw_positions_ = hw_franka_robot_state_.q;
   hw_velocities_ = hw_franka_robot_state_.dq;
   hw_efforts_ = hw_franka_robot_state_.tau_J;
-  // const auto kState = robot_->read(); // kState is basically franka state, so why wasn't frankastate just implemented?
-  // hw_positions_ = kState.q;
-  // hw_velocities_ = kState.dq;
-  // hw_efforts_ = kState.tau_J;
   return hardware_interface::return_type::OK;
 }
 
@@ -127,16 +122,13 @@ hardware_interface::return_type FrankaHardwareInterface::write(const rclcpp::Tim
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
-  // RCLCPP_INFO(getLogger(), "HWI write: %f %f ", hw_commands_joint_effort[6], hw_commands_joint_position[6]);
+
   robot_->write(hw_commands_joint_effort, hw_commands_joint_position, hw_commands_joint_velocity);
   if(robot_->hasError()){
     return hardware_interface::return_type::ERROR;
   }
   return hardware_interface::return_type::OK;
 }
-
-// implement on_error
-// and then need to cascade that shit upstream, somehow
 
 CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::HardwareInfo& info) {
   if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
@@ -211,8 +203,6 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
   executor_ = std::make_shared<FrankaExecutor>();
   executor_->add_node(service_node_);
 
-  // executor is tied to the param_service_server, for setting stiffness and stuff. So that will be added later on.
-  // Additionally, could use a service server for triggering automaticRecovery. See franka_ros2 for how they do this.
   return CallbackReturn::SUCCESS;
 }
 
@@ -242,15 +232,6 @@ hardware_interface::return_type FrankaHardwareInterface::perform_command_mode_sw
     robot_->stopRobot();
     robot_->initializeJointVelocityControl();
   }
-//  if (!effort_interface_running_ && effort_interface_claimed_) {
-//     robot_->stopRobot();
-//     robot_->initializeTorqueControl();
-//     effort_interface_running_ = true;
-//   } else if (effort_interface_running_ && !effort_interface_claimed_) {
-//     robot_->stopRobot();
-//     robot_->initializeContinuousReading();
-//     effort_interface_running_ = false;
-//   }
   return hardware_interface::return_type::OK;
 }
 
@@ -353,34 +334,6 @@ hardware_interface::return_type FrankaHardwareInterface::prepare_command_mode_sw
   RCLCPP_INFO(this->getLogger(), "Joints mode: %d %d %d %d %d %d %d ", int(control_mode_[0]),int(control_mode_[1]),int(control_mode_[2]),int(control_mode_[3]),int(control_mode_[4]),int(control_mode_[5]),int(control_mode_[6]));
   return hardware_interface::return_type::OK;
 
-  // auto is_effort_interface = [](const std::string& interface) {
-  //   return interface.find(hardware_interface::HW_IF_EFFORT) != std::string::npos;
-  // };
-
-  // int64_t num_stop_effort_interfaces =
-  //     std::count_if(stop_interfaces.begin(), stop_interfaces.end(), is_effort_interface);
-  // if (num_stop_effort_interfaces == kNumberOfJoints) {
-  //   effort_interface_claimed_ = false;
-  // } else if (num_stop_effort_interfaces != 0) {
-  //   RCLCPP_FATAL(this->getLogger(), "Expected %ld effort interfaces to stop, but got %ld instead.",
-  //                kNumberOfJoints, num_stop_effort_interfaces);
-  //   std::string error_string = "Invalid number of effort interfaces to stop. Expected ";
-  //   error_string += std::to_string(kNumberOfJoints);
-  //   throw std::invalid_argument(error_string);
-  // }
-
-  // int64_t num_start_effort_interfaces =
-  //     std::count_if(start_interfaces.begin(), start_interfaces.end(), is_effort_interface);
-  // if (num_start_effort_interfaces == kNumberOfJoints) {
-  //   effort_interface_claimed_ = true;
-  // } else if (num_start_effort_interfaces != 0) {
-  //   RCLCPP_FATAL(this->getLogger(), "Expected %ld effort interfaces to start, but got %ld instead.",
-  //                kNumberOfJoints, num_start_effort_interfaces);
-  //   std::string error_string = "Invalid number of effort interfaces to start. Expected ";
-  //   error_string += std::to_string(kNumberOfJoints);
-  //   throw std::invalid_argument(error_string);
-  // }
-  // return hardware_interface::return_type::OK;
 }
 }  // namespace franka_hardware
 

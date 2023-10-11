@@ -38,6 +38,8 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
   catch(franka::ControlException& e){
     RCLCPP_INFO(logger, "Robot is in error state! Please trigger automatic recovery first.");
     setError(true);
+    // will need a boolean to set this for the first time;
+    // after the necessary runtime services, this part can be removed.
     robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
     robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
     robot_->setCollisionBehavior(
@@ -118,8 +120,6 @@ void Robot::initializeJointPositionControl() {
         }
         std::lock_guard<std::mutex> lock(write_mutex_);
         franka::JointPositions out(joint_position_command_);
-        // franka::JointPositions out({0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4});
-        //printf("controller: %f %f\n", out.q[6], joint_position_command_[6]);
         out.motion_finished = finish_;
         return out;
       });
@@ -151,7 +151,6 @@ void Robot::initializeJointVelocityControl() {
           });
       }
     catch(franka::ControlException& e){
-      // This pattern works! Not as clean as franka_ros, but still!
       std::cout <<  e.what() << std::endl;
       setError(true);
     }
