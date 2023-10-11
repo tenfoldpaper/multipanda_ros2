@@ -18,6 +18,7 @@
 #include <mutex>
 
 #include <stdio.h>
+#include <iostream>
 #include <franka/control_tools.h>
 #include <rclcpp/logging.hpp>
 
@@ -61,6 +62,7 @@ franka::RobotState Robot::read() {
 franka_hardware::Model* Robot::getModel() {
   return franka_hardware_model_.get();
 }
+
 void Robot::stopRobot() {
   if (!stopped_) {
     finish_ = true;
@@ -74,7 +76,8 @@ void Robot::initializeTorqueControl() {
   assert(isStopped());
   stopped_ = false;
   const auto kTorqueControl = [this]() {
-    robot_->control(
+    try{
+      robot_->control(
         [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
           {
             std::lock_guard<std::mutex> lock(read_mutex_);
@@ -86,6 +89,12 @@ void Robot::initializeTorqueControl() {
           return out;
         },
         true, franka::kMaxCutoffFrequency);
+    }
+    catch(franka::ControlException& e){
+      std::cout <<  e.what() << std::endl;
+      std::lock_guard<std::mutex> lock(error_mutex_);
+      has_error_ = true;
+    }
   };
   control_thread_ = std::make_unique<std::thread>(kTorqueControl);
 }
@@ -94,19 +103,28 @@ void Robot::initializeJointPositionControl() {
   assert(isStopped());
   stopped_ = false;
   const auto kJointPositionControl = [this]() {
+    try{
+
     robot_->control(
-        [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
-          {
-            std::lock_guard<std::mutex> lock(read_mutex_);
-            current_state_ = state;
-          }
-          std::lock_guard<std::mutex> lock(write_mutex_);
-          franka::JointPositions out(joint_position_command_);
-          // franka::JointPositions out({0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4});
-          //printf("controller: %f %f\n", out.q[6], joint_position_command_[6]);
-          out.motion_finished = finish_;
-          return out;
-        });
+      [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
+        {
+          std::lock_guard<std::mutex> lock(read_mutex_);
+          current_state_ = state;
+        }
+        std::lock_guard<std::mutex> lock(write_mutex_);
+        franka::JointPositions out(joint_position_command_);
+        // franka::JointPositions out({0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4});
+        //printf("controller: %f %f\n", out.q[6], joint_position_command_[6]);
+        out.motion_finished = finish_;
+        return out;
+      });
+    }
+    catch(franka::ControlException& e){
+      std::cout <<  e.what() << std::endl;
+      std::lock_guard<std::mutex> lock(error_mutex_);
+      has_error_ = true;
+    }
+      
   };
   control_thread_ = std::make_unique<std::thread>(kJointPositionControl);
 }
@@ -115,22 +133,28 @@ void Robot::initializeJointVelocityControl() {
   assert(isStopped());
   stopped_ = false;
   const auto kJointVelocityControl = [this]() {
-    robot_->control(
-        [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
-          {
-            std::lock_guard<std::mutex> lock(read_mutex_);
-            current_state_ = state;
-          }
-          std::lock_guard<std::mutex> lock(write_mutex_);
-          franka::JointVelocities out(joint_velocity_command_);
-          out.motion_finished = finish_;
-          return out;
-        });
+    try{
+      robot_->control(
+          [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
+            {
+              std::lock_guard<std::mutex> lock(read_mutex_);
+              current_state_ = state;
+            }
+            std::lock_guard<std::mutex> lock(write_mutex_);
+            franka::JointVelocities out(joint_velocity_command_);
+            out.motion_finished = finish_;
+            return out;
+          });
+      }
+    catch(franka::ControlException& e){
+      // This pattern works! Not as clean as franka_ros, but still!
+      std::cout <<  e.what() << std::endl;
+      std::lock_guard<std::mutex> lock(error_mutex_);
+      has_error_ = true;
+    }
   };
   control_thread_ = std::make_unique<std::thread>(kJointVelocityControl);
 }
-
-
 
 void Robot::initializeContinuousReading() {
   assert(isStopped());
