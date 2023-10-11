@@ -60,25 +60,24 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
   std::shared_ptr<FrankaErrorRecoveryServiceServer> service_node_;
   std::shared_ptr<FrankaExecutor> executor_;
 
+
   // Commands
+
+  std::array<std::string, 16> cartesian_matrix_names{"00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15"};
+  std::array<std::string, 6> cartesian_velocity_command_names{"tx","ty","tz","omega_x","omega_y","omega_z"};
   std::array<double, kNumberOfJoints> hw_commands_joint_effort{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_commands_joint_position{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_commands_joint_velocity{0, 0, 0, 0, 0, 0, 0};
   std::array<double, 16> hw_commands_cartesian_position;
   std::array<double, 6> hw_commands_cartesian_velocity;
-  std::array<ControlMode, kNumberOfJoints> control_mode_{ControlMode::None, 
-                                                         ControlMode::None,
-                                                         ControlMode::None,
-                                                         ControlMode::None, 
-                                                         ControlMode::None, 
-                                                         ControlMode::None, 
-                                                         ControlMode::None};
+ 
+  ControlMode control_mode_ = ControlMode::None;
   // States
   std::array<double, kNumberOfJoints> hw_positions_{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_velocities_{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_efforts_{0, 0, 0, 0, 0, 0, 0};
   std::array<double, 16> hw_cartesian_positions_;
-  std::array<double, 6> hw_cartesian_velocities_;
+  std::array<double, 16> hw_cartesian_velocities_;
 
   franka::RobotState hw_franka_robot_state_;
   franka::RobotState* hw_franka_robot_state_addr_ = &hw_franka_robot_state_;
