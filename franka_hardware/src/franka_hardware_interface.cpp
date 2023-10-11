@@ -135,8 +135,21 @@ hardware_interface::return_type FrankaHardwareInterface::write(const rclcpp::Tim
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
+  if (std::any_of(hw_commands_cartesian_position.begin(), hw_commands_cartesian_position.end(),
+                  [](double c) { return !std::isfinite(c); })) {
+    return hardware_interface::return_type::ERROR;
+  }
+  if (std::any_of(hw_commands_cartesian_velocity.begin(), hw_commands_cartesian_velocity.end(),
+                  [](double c) { return !std::isfinite(c); })) {
+    return hardware_interface::return_type::ERROR;
+  }
 
-  robot_->write(hw_commands_joint_effort, hw_commands_joint_position, hw_commands_joint_velocity);
+  robot_->write(hw_commands_joint_effort, 
+                hw_commands_joint_position, 
+                hw_commands_joint_velocity, 
+                hw_commands_cartesian_position, 
+                hw_commands_cartesian_velocity);
+                
   if(robot_->hasError()){
     return hardware_interface::return_type::ERROR;
   }

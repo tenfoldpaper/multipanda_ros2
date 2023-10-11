@@ -48,6 +48,10 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
           {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
           {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
   }
+  tau_command_.fill({});
+  joint_velocity_command_.fill({});
+  cartesian_position_command_.fill({});
+  cartesian_velocity_command_.fill({});
   model_ = std::make_unique<franka::Model>(robot_->loadModel());
   franka_hardware_model_ = std::make_unique<Model>(model_.get());
 }
@@ -56,11 +60,17 @@ Robot::~Robot() {
   stopRobot();
 }
 
-void Robot::write(const std::array<double, 7>& efforts, const std::array<double, 7>& joint_positions, const std::array<double, 7>& joint_velocities) {
+void Robot::write(const std::array<double, 7>& efforts, 
+                  const std::array<double, 7>& joint_positions, 
+                  const std::array<double, 7>& joint_velocities,
+                  const std::array<double, 16>& cartesian_positions,
+                  const std::array<double, 16>& cartesian_velocities) {
   std::lock_guard<std::mutex> lock(write_mutex_);
   tau_command_ = efforts;
   joint_position_command_ = joint_positions;
   joint_velocity_command_ = joint_velocities;
+  cartesian_position_command_ = cartesian_positions;
+  cartesian_velocity_command_ = cartesian_velocities;
 }
 
 franka::RobotState Robot::read() {

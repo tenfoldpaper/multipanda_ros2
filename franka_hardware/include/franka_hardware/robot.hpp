@@ -96,7 +96,11 @@ class Robot {
    * The robot will use these torques until a different set of torques are commanded.
    * @param[in] efforts torque command for each joint.
    */
-  void write(const std::array<double, 7>& efforts, const std::array<double, 7>& joint_positions, const std::array<double, 7>& joint_velocities);
+  void write( const std::array<double, 7>& efforts, 
+              const std::array<double, 7>& joint_positions, 
+              const std::array<double, 7>& joint_velocities,
+              const std::array<double, 16>& cartesian_positions,
+              const std::array<double, 16>& cartesian_velocities);
 
   /// @return true if there is no control or reading loop running.
   bool isStopped() const;
@@ -113,8 +117,11 @@ class Robot {
   std::mutex error_mutex_;
   bool has_error_ = false;
   franka::RobotState current_state_;
-  std::array<double, 7> tau_command_ = {0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 7> tau_command_;
   std::array<double, 7> joint_position_command_ = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};
   std::array<double, 7> joint_velocity_command_;
+  std::array<double, 16> cartesian_position_command_;
+  std::array<double, 16> cartesian_velocity_command_;
+  
 };
 }  // namespace franka_hardware
