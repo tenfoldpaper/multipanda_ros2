@@ -41,7 +41,7 @@ std::vector<StateInterface> FrankaHardwareInterface::export_state_interfaces() {
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_.at(i)));
     state_interfaces.emplace_back(StateInterface(
         info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_.at(i)));
-        
+    
     state_interfaces.emplace_back(
         StateInterface(info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_efforts_.at(i)));
   }
@@ -129,8 +129,14 @@ hardware_interface::return_type FrankaHardwareInterface::write(const rclcpp::Tim
   }
   // RCLCPP_INFO(getLogger(), "HWI write: %f %f ", hw_commands_joint_effort[6], hw_commands_joint_position[6]);
   robot_->write(hw_commands_joint_effort, hw_commands_joint_position, hw_commands_joint_velocity);
+  if(robot_->hasError()){
+    return hardware_interface::return_type::ERROR;
+  }
   return hardware_interface::return_type::OK;
 }
+
+// implement on_error
+// and then need to cascade that shit upstream, somehow
 
 CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::HardwareInfo& info) {
   if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
@@ -201,7 +207,12 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
   }
   RCLCPP_INFO(getLogger(), "Successfully connected to robot");
 
+  service_node_ = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), robot_);
+  executor_ = std::make_shared<FrankaExecutor>();
+  executor_->add_node(service_node_);
+
   // executor is tied to the param_service_server, for setting stiffness and stuff. So that will be added later on.
+  // Additionally, could use a service server for triggering automaticRecovery. See franka_ros2 for how they do this.
   return CallbackReturn::SUCCESS;
 }
 
