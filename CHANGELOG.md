@@ -5,6 +5,8 @@
 * Added error recovery server for triggering automatic recovery, under `franka_error_recovery_service_server`.
 * Made corresponding changes to `franka_hardware_interface` and `robot`
 * Added `ErrorRecovery.srv`
+* Overhauled `prepare_command_mode_switch` to accommodate Cartesian interfaces with error checks
+* Added Cartesian velocity interface and a corresponding example controller
 
 ## Added 10.10.23
 * Added additional controller interfaces: joint position, joint velocity
