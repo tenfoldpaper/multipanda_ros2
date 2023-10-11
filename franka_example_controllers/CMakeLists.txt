@@ -30,6 +30,7 @@ add_library(
         src/move_to_start_example_controller.cpp
         src/joint_position_example_controller.cpp
         src/joint_velocity_example_controller.cpp
+        src/cartesian_velocity_example_controller.cpp
         src/motion_generator.cpp)
 target_include_directories(
         ${PROJECT_NAME}
