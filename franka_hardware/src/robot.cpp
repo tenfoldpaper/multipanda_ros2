@@ -64,7 +64,7 @@ void Robot::write(const std::array<double, 7>& efforts,
                   const std::array<double, 7>& joint_positions, 
                   const std::array<double, 7>& joint_velocities,
                   const std::array<double, 16>& cartesian_positions,
-                  const std::array<double, 16>& cartesian_velocities) {
+                  const std::array<double, 6>& cartesian_velocities) {
   std::lock_guard<std::mutex> lock(write_mutex_);
   tau_command_ = efforts;
   joint_position_command_ = joint_positions;
@@ -90,6 +90,7 @@ void Robot::stopRobot() {
   }
 }
 
+// Joint-level controls
 void Robot::initializeTorqueControl() {
   assert(isStopped());
   stopped_ = false;
@@ -166,6 +167,57 @@ void Robot::initializeJointVelocityControl() {
     }
   };
   control_thread_ = std::make_unique<std::thread>(kJointVelocityControl);
+}
+
+// Cartesian controls
+void Robot::initializeCartesianVelocityControl() {
+  assert(isStopped());
+  stopped_ = false;
+  const auto kCartesianVelocityControl = [this]() {
+    try{
+      robot_->control(
+          [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
+            {
+              std::lock_guard<std::mutex> lock(read_mutex_);
+              current_state_ = state;
+            }
+            std::lock_guard<std::mutex> lock(write_mutex_);
+            franka::CartesianVelocities out(cartesian_velocity_command_);
+            out.motion_finished = finish_;
+            return out;
+          });
+      }
+    catch(franka::ControlException& e){
+      std::cout <<  e.what() << std::endl;
+      setError(true);
+    }
+  };
+  control_thread_ = std::make_unique<std::thread>(kCartesianVelocityControl);
+}
+
+void Robot::initializeCartesianPositionControl() {
+  assert(isStopped());
+  stopped_ = false;
+  const auto kCartesianPositionControl = [this]() {
+    try{
+      robot_->control(
+          [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
+            {
+              std::lock_guard<std::mutex> lock(read_mutex_);
+              current_state_ = state;
+            }
+            std::lock_guard<std::mutex> lock(write_mutex_);
+            franka::CartesianPose out(cartesian_position_command_);
+            out.motion_finished = finish_;
+            return out;
+          });
+      }
+    catch(franka::ControlException& e){
+      std::cout <<  e.what() << std::endl;
+      setError(true);
+    }
+  };
+  control_thread_ = std::make_unique<std::thread>(kCartesianPositionControl);
 }
 
 void Robot::initializeContinuousReading() {

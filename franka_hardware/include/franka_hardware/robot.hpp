@@ -57,6 +57,10 @@ class Robot {
   void initializeJointPositionControl();
   void initializeJointVelocityControl();
 
+  void initializeCartesianPositionControl();
+  void initializeCartesianVelocityControl();
+  
+
   /**
    * Starts a reading loop of the robot state. Before using this method make sure that no other
    * control or reading loop is currently active.
@@ -100,7 +104,7 @@ class Robot {
               const std::array<double, 7>& joint_positions, 
               const std::array<double, 7>& joint_velocities,
               const std::array<double, 16>& cartesian_positions,
-              const std::array<double, 16>& cartesian_velocities);
+              const std::array<double, 6>& cartesian_velocities);
 
   /// @return true if there is no control or reading loop running.
   bool isStopped() const;
@@ -121,7 +125,7 @@ class Robot {
   std::array<double, 7> joint_position_command_ = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};
   std::array<double, 7> joint_velocity_command_;
   std::array<double, 16> cartesian_position_command_;
-  std::array<double, 16> cartesian_velocity_command_;
+  std::array<double, 6> cartesian_velocity_command_;
   
 };
 }  // namespace franka_hardware
