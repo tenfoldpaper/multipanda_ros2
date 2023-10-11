@@ -20,8 +20,9 @@ The current version is forked from mcbed's port of franka_ros2 for [humble][mcbe
     * <s>Adding different joint interfaces (joint {velocity, position}</s> and cartesian {velocity, pose})
         * Added all joint-level control interfaces. Switching between them leads to crash, since there is no exception handling yet.
     * <s>Adding logic for switching to different joint interfaces</s>
-* Adding error recovery services
-    * franka_ros2 crashes right away if the E-stop is pressed or a controller exception occurs.
+* <s>Adding error recovery services</s>
+    * <s>franka_ros2 crashes right away if the E-stop is pressed or a controller exception occurs.</s>
+    * franka_ros2 does not start if the robot is already in error mode before the node is started.
 * <s>Adding additional example controllers (Cartesian, joint velocity/position, etc. )</s>
 * Investigating multiple arm control
 
