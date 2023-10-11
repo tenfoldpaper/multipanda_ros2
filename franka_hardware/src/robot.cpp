@@ -32,16 +32,22 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
         logger,
         "You are not using a real-time kernel. Using a real-time kernel is strongly recommended!");
   }
-  robot_ = std::make_unique<franka::Robot>(robot_ip, rt_config);
+  try{
+    robot_ = std::make_unique<franka::Robot>(robot_ip, rt_config);
+  }
+  catch(franka::ControlException& e){
+    RCLCPP_INFO(logger, "Robot is in error state! Please trigger automatic recovery first.");
+    setError(true);
+    robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
+    robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
+    robot_->setCollisionBehavior(
+          {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+          {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+          {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
+          {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
+  }
   model_ = std::make_unique<franka::Model>(robot_->loadModel());
   franka_hardware_model_ = std::make_unique<Model>(model_.get());
-  robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
-  robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
-  robot_->setCollisionBehavior(
-        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
-        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
-        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
-        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
 }
 
 Robot::~Robot() {
@@ -92,8 +98,7 @@ void Robot::initializeTorqueControl() {
     }
     catch(franka::ControlException& e){
       std::cout <<  e.what() << std::endl;
-      std::lock_guard<std::mutex> lock(error_mutex_);
-      has_error_ = true;
+      setError(true);
     }
   };
   control_thread_ = std::make_unique<std::thread>(kTorqueControl);
@@ -121,8 +126,7 @@ void Robot::initializeJointPositionControl() {
     }
     catch(franka::ControlException& e){
       std::cout <<  e.what() << std::endl;
-      std::lock_guard<std::mutex> lock(error_mutex_);
-      has_error_ = true;
+      setError(true);
     }
       
   };
@@ -149,8 +153,7 @@ void Robot::initializeJointVelocityControl() {
     catch(franka::ControlException& e){
       // This pattern works! Not as clean as franka_ros, but still!
       std::cout <<  e.what() << std::endl;
-      std::lock_guard<std::mutex> lock(error_mutex_);
-      has_error_ = true;
+      setError(true);
     }
   };
   control_thread_ = std::make_unique<std::thread>(kJointVelocityControl);
