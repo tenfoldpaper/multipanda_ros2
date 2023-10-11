@@ -9,6 +9,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/Grasp.action"
   "action/Homing.action"
   "action/Move.action"
+  "srv/ErrorRecovery.srv"
   "msg/GraspEpsilon.msg"
   "msg/FrankaState.msg"
   "msg/Errors.msg"
