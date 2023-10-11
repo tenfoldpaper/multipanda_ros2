@@ -64,6 +64,8 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
   std::array<double, kNumberOfJoints> hw_commands_joint_effort{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_commands_joint_position{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_commands_joint_velocity{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 16> hw_commands_cartesian_position;
+  std::array<double, 16> hw_commands_cartesian_velocity;
   std::array<ControlMode, kNumberOfJoints> control_mode_{ControlMode::None, 
                                                          ControlMode::None,
                                                          ControlMode::None,
@@ -75,6 +77,9 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
   std::array<double, kNumberOfJoints> hw_positions_{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_velocities_{0, 0, 0, 0, 0, 0, 0};
   std::array<double, kNumberOfJoints> hw_efforts_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 16> hw_cartesian_positions_;
+  std::array<double, 16> hw_cartesian_velocities_;
+
   franka::RobotState hw_franka_robot_state_;
   franka::RobotState* hw_franka_robot_state_addr_ = &hw_franka_robot_state_;
   Model* hw_franka_model_ptr_ = nullptr;

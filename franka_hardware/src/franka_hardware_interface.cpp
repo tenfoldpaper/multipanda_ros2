@@ -40,10 +40,13 @@ std::vector<StateInterface> FrankaHardwareInterface::export_state_interfaces() {
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_.at(i)));
     state_interfaces.emplace_back(StateInterface(
         info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_.at(i)));
-    
-    state_interfaces.emplace_back(
-        StateInterface(info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_efforts_.at(i)));
+    state_interfaces.emplace_back(StateInterface(
+      info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_efforts_.at(i)));
   }
+  state_interfaces.emplace_back(StateInterface(
+      "ee_cartesian", hardware_interface::HW_IF_POSITION, reinterpret_cast<double*>(&hw_cartesian_positions_)));
+  state_interfaces.emplace_back(StateInterface(
+      "ee_cartesian", hardware_interface::HW_IF_VELOCITY, reinterpret_cast<double*>(&hw_cartesian_velocities_)));
 
   state_interfaces.emplace_back(StateInterface(
       k_robot_name, k_robot_state_interface_name,
@@ -60,7 +63,10 @@ std::vector<StateInterface> FrankaHardwareInterface::export_state_interfaces() {
 std::vector<CommandInterface> FrankaHardwareInterface::export_command_interfaces() {
   std::vector<CommandInterface> command_interfaces;
   command_interfaces.reserve(info_.joints.size());
+  RCLCPP_INFO(getLogger(), "%ld", info_.joints.size());
+
   for (auto i = 0U; i < info_.joints.size(); i++) {
+    RCLCPP_INFO(getLogger(), "%s", info_.joints[i].name.c_str());
     command_interfaces.emplace_back(CommandInterface( // JOINT EFFORT
         info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_joint_effort.at(i)));
     command_interfaces.emplace_back(CommandInterface( // JOINT POSITION
@@ -68,6 +74,10 @@ std::vector<CommandInterface> FrankaHardwareInterface::export_command_interfaces
     command_interfaces.emplace_back(CommandInterface( // JOINT VELOCITY
         info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_commands_joint_velocity.at(i)));
   }
+  command_interfaces.emplace_back(CommandInterface( // CARTESIAN POSITION
+      "ee_cartesian", hardware_interface::HW_IF_POSITION, reinterpret_cast<double*>(&hw_commands_cartesian_position)));
+  command_interfaces.emplace_back(CommandInterface( // CARTESIAN VELOCITY
+      "ee_cartesian", hardware_interface::HW_IF_VELOCITY, reinterpret_cast<double*>(&hw_commands_cartesian_velocity)));
 
   // Franka ros provides:
   // joint torque, position, velocity
@@ -105,6 +115,9 @@ hardware_interface::return_type FrankaHardwareInterface::read(const rclcpp::Time
   hw_positions_ = hw_franka_robot_state_.q;
   hw_velocities_ = hw_franka_robot_state_.dq;
   hw_efforts_ = hw_franka_robot_state_.tau_J;
+  hw_cartesian_positions_ = hw_franka_robot_state_.O_T_EE;
+  hw_cartesian_velocities_ = hw_franka_robot_state_.O_T_EE_d;
+  
   return hardware_interface::return_type::OK;
 }
 
@@ -144,7 +157,7 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
 
     // Check number of command interfaces
     if (joint.command_interfaces.size() != 3) {
-      RCLCPP_FATAL(getLogger(), "Joint '%s' has %zu command interfaces found. 3 expected.",
+      RCLCPP_FATAL(getLogger(), "Joint '%s' has %ld command interfaces found. 3 expected.",
                    joint.name.c_str(), joint.command_interfaces.size());
       return CallbackReturn::ERROR;
     }
@@ -153,7 +166,9 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
     for (const auto & cmd_interface : joint.command_interfaces){
       if (cmd_interface.name != hardware_interface::HW_IF_EFFORT &&   // Effort "effort"
           cmd_interface.name != hardware_interface::HW_IF_POSITION && // Joint position "position"
-          cmd_interface.name != hardware_interface::HW_IF_VELOCITY){  // Joint velocity "velocity"
+          cmd_interface.name != hardware_interface::HW_IF_VELOCITY && // Joint velocity "velocity"
+          cmd_interface.name != "cartesian_position" &&               // Cartesian position
+          cmd_interface.name != "cartesian_velocity"){                // Cartesian velocity
         RCLCPP_FATAL(getLogger(), "Joint '%s' has unexpected command interface '%s'",
                     joint.name.c_str(), cmd_interface.name.c_str());
         return CallbackReturn::ERROR;
@@ -203,6 +218,11 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
   executor_ = std::make_shared<FrankaExecutor>();
   executor_->add_node(service_node_);
 
+  // Init the cartesian values to 0
+  hw_cartesian_positions_.fill({});
+  hw_cartesian_velocities_.fill({});
+  hw_commands_cartesian_position.fill({});
+  hw_commands_cartesian_velocity.fill({});
   return CallbackReturn::SUCCESS;
 }
 
