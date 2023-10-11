@@ -12,17 +12,24 @@ The current version is forked from mcbed's port of franka_ros2 for [humble][mcbe
 ## Working (not thoroughly tested) features
 * FrankaState broadcaster
 * All joint-level control interfaces (torque, position, velocity); see their respective example controllers.
-* Controllers are swappable using rqt_controller_manager, although it crashes at the moment due to not having exception handling for libfranka.
+* Controllers are swappable using rqt_controller_manager
+* Runtime error recovery via `~/service_server/error_recovery`
+ 
+## Known issues
+* When panda_ros2 is started with the robot in error state, whatever command controller that is started in the launch file will not work even when the error recovery is triggered, before a different type of command controller (i.e. different interface, like position/velocity) is loaded first.
+* After error recovery, the command controller will not continue to publish the data. Reloading the controller is necessary.
+* Joint position controller might cause some bad motor behaviors. Suggest using torque or velocity for now.
+
 ## Priority list
 * <s>Publishing FrankaState</s>
 * Completely replicate the functionalities of `franka_hw`
     * <s>Implement joint limits interface (position, velocity, effort)</s> Joint limits are not really working in ros2_control; they need to be implemented at controller level.
     * <s>Adding different joint interfaces (joint {velocity, position}</s> and cartesian {velocity, pose})
-        * Added all joint-level control interfaces. Switching between them leads to crash, since there is no exception handling yet.
+        * Added all joint-level control interfaces. <s>Switching between them leads to crash, since there is no exception handling yet.</s>
     * <s>Adding logic for switching to different joint interfaces</s>
 * <s>Adding error recovery services</s>
     * <s>franka_ros2 crashes right away if the E-stop is pressed or a controller exception occurs.</s>
-    * franka_ros2 does not start if the robot is already in error mode before the node is started.
+    * <s>franka_ros2 does not start if the robot is already in error mode before the node is started.</s>
 * <s>Adding additional example controllers (Cartesian, joint velocity/position, etc. )</s>
 * Investigating multiple arm control
 
