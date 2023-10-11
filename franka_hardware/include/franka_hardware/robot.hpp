@@ -24,6 +24,7 @@
 
 #include <franka/model.h>
 #include <franka/robot.h>
+#include <franka/exception.h>
 #include <franka_hardware/model.hpp>
 #include <rclcpp/logger.hpp>
 
@@ -75,6 +76,21 @@ class Robot {
    */
   franka::RobotState read();
 
+  bool hasError(){
+    std::lock_guard<std::mutex> lock(error_mutex_);
+    return has_error_;
+  };
+
+  void setError(bool new_state){
+    std::lock_guard<std::mutex> lock(error_mutex_);
+    has_error_ = new_state;
+  }
+  
+  void doAutomaticErrorRecovery(){
+    robot_->automaticErrorRecovery();
+  }
+
+
   /**
    * Sends new desired torque commands to the control loop in a thread-safe way.
    * The robot will use these torques until a different set of torques are commanded.
@@ -94,6 +110,8 @@ class Robot {
   std::mutex write_mutex_;
   std::atomic_bool finish_{false};
   bool stopped_ = true;
+  std::mutex error_mutex_;
+  bool has_error_ = false;
   franka::RobotState current_state_;
   std::array<double, 7> tau_command_ = {0, 0, 0, 0, 0, 0, 0};
   std::array<double, 7> joint_position_command_ = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};
