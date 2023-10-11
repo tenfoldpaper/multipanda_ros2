@@ -1,5 +1,15 @@
 # Changelog
 
+## Added 11.10.23
+* Added franka::ControlException handling in the control loop under `robot.cpp`
+* Added error recovery server for triggering automatic recovery, under `franka_error_recovery_service_server`.
+* Made corresponding changes to `franka_hardware_interface` and `robot`
+* Added `ErrorRecovery.srv`
+
+## Added 10.10.23
+* Added additional controller interfaces: joint position, joint velocity
+* Added example controllers for the new interfaces
+* Confirmed that switching between controllers at runtime with rqt_controller_manager woks.
 ## Added 06.10.23
 * Added `franka_semantic_components` adapted for panda
 * Updated `FrankaState.msg` to fit the ROS2 requirements
