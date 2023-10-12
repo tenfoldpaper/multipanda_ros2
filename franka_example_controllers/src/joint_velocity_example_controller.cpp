@@ -112,7 +112,7 @@ CallbackReturn JointVelocityExampleController::on_activate(
 CallbackReturn JointVelocityExampleController::on_error(
   const rclcpp_lifecycle::State& /*previous_state*/){
     RCLCPP_ERROR(this->get_node()->get_logger(), "error encountered!");
-    CallbackReturn::ERROR;
+    return CallbackReturn::ERROR;
   }
 
 void JointVelocityExampleController::updateJointStates() {
