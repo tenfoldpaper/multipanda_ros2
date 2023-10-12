@@ -5,9 +5,10 @@ Franka Emika has dropped software support for robots older than FR3, which leave
 
 This repository attempts to remedy that somewhat, by bringing existing features from franka_ros over to ROS2 specifically for the Panda robots.
 
-Still work in progress, but changelogs will be updated to indicate the current status.
+As of 12.10.23, almost all single-robot `franka_ros` features have been migrated, including different controller interfaces, error recovery, and runtime parameter setters.
 
-The current version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble], which has a much smaller feature set than franka_ros.
+## Credits
+The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].
 
 ## Working (not thoroughly tested) features
 * FrankaState broadcaster
@@ -33,12 +34,13 @@ The current version is forked from mcbed's port of franka_ros2 for [humble][mcbe
     * <s>franka_ros2 crashes right away if the E-stop is pressed or a controller exception occurs.</s>
     * <s>franka_ros2 does not start if the robot is already in error mode before the node is started.</s>
 * <s>Adding additional example controllers (Cartesian, joint velocity/position, etc. )</s>
-* Clean up base acceleration-dependent values in Franka State
 * <s>Add reconfiguration service for:</s>
     * <s>Cartesian, Joint impedance</s>
     * <s>Force torque, full collision behaviors</s>
     * <s>EE, K frames</s>
     * <s>Load settings</s>
+* Clean up base acceleration-dependent values in Franka State
+* Clean up dependency tree for packages
 * Investigating multiple arm control
 * Make reusable impedance controllers with proper subscribers for general use
 
