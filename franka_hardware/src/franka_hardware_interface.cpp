@@ -233,9 +233,13 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
   }
   RCLCPP_INFO(getLogger(), "Successfully connected to robot");
 
-  service_node_ = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), robot_);
+  // Start the service nodes
+  error_recovery_service_node_ = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), robot_);
+  param_service_node_ = std::make_shared<FrankaParamServiceServer>(rclcpp::NodeOptions(), robot_);
   executor_ = std::make_shared<FrankaExecutor>();
-  executor_->add_node(service_node_);
+  executor_->add_node(error_recovery_service_node_);
+  executor_->add_node(param_service_node_);
+  
 
   // Init the cartesian values to 0
   hw_cartesian_positions_.fill({});

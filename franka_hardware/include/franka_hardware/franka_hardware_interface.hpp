@@ -31,6 +31,7 @@
 #include "franka_hardware/control_mode.h"
 #include "franka_hardware/robot.hpp"
 #include "franka_hardware/franka_error_recovery_service_server.hpp"
+#include "franka_hardware/franka_param_service_server.hpp"
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -57,7 +58,8 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
 
  private:
   std::shared_ptr<Robot> robot_;
-  std::shared_ptr<FrankaErrorRecoveryServiceServer> service_node_;
+  std::shared_ptr<FrankaErrorRecoveryServiceServer> error_recovery_service_node_;
+  std::shared_ptr<FrankaParamServiceServer> param_service_node_;
   std::shared_ptr<FrankaExecutor> executor_;
 
 
