@@ -40,7 +40,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * <s>EE, K frames</s>
     * <s>Load settings</s>
 * Clean up base acceleration-dependent values in Franka State
-* Clean up dependency tree for packages
+* <s>Clean up dependency tree for packages</s>
 * Investigating multiple arm control
 * Make reusable impedance controllers with proper subscribers for general use
 
