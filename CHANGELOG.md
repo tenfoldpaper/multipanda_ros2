@@ -1,5 +1,8 @@
 # Changelog
 
+## Added 12.10.23
+* Added param setter services to allow run-time changing of stiffness, collision behavior, load, frames, etc.
+
 ## Added 11.10.23
 * Added franka::ControlException handling in the control loop under `robot.cpp`
 * Added error recovery server for triggering automatic recovery, under `franka_error_recovery_service_server`.
