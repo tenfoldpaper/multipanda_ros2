@@ -7,6 +7,8 @@ This repository attempts to remedy that somewhat, by bringing existing features 
 
 As of 12.10.23, almost all single-robot `franka_ros` features have been migrated, including different controller interfaces, error recovery, and runtime parameter setters.
 
+The repo is still in active development, and I will try to address any missing features or bugs as soon as possible.
+
 ## Credits
 The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].
 
@@ -28,7 +30,6 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 * Completely replicate the functionalities of `franka_hw`
     * <s>Implement joint limits interface (position, velocity, effort)</s> Joint limits are not really working in ros2_control; they need to be implemented at controller level.
     * <s>Adding different joint interfaces (joint {velocity, position}</s> and cartesian {<s>velocity</s>, pose})
-        * Added all joint-level control interfaces. <s>Switching between them leads to crash, since there is no exception handling yet.</s>
     * <s>Adding logic for switching to different joint interfaces</s>
 * <s>Adding error recovery services</s>
     * <s>franka_ros2 crashes right away if the E-stop is pressed or a controller exception occurs.</s>
@@ -41,6 +42,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * <s>Load settings</s>
 * Clean up base acceleration-dependent values in Franka State
 * <s>Clean up dependency tree for packages</s>
+* Test it out with moveit! 2
 * Investigating multiple arm control
 * Make reusable impedance controllers with proper subscribers for general use
 
@@ -52,7 +54,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 2. Clone this repository into your workspace's `src` folder.
 3. Source the workspace, then in your workspace root, call: `colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release -DFranka_DIR:PATH=/path/to/libfranka/build`
 4. Add the build path to your `LD_LIBRARY_PATH`: `LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/path/to/libfranka/build"`
-5. To test, source the workspace, and run `ros2 launch franka_moveit_config moveit.launch.py robot_ip:=<fci-ip>`.
+5. To test, source the workspace, and run `ros2 launch franka_bringup franka.launch.py robot_ip:=<fci-ip>`.
 
 ## License
 
