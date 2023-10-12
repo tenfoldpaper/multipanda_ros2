@@ -25,8 +25,9 @@ add_library(franka_hardware
         SHARED
         src/franka_hardware_interface.cpp
         src/robot.cpp
-        src/franka_executor.cpp
+        src/franka_param_service_server.cpp
         src/franka_error_recovery_service_server.cpp
+        src/franka_executor.cpp
         src/control_mode.cpp
 )
 
