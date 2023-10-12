@@ -50,15 +50,11 @@ controller_interface::return_type JointVelocityExampleController::update(
     const rclcpp::Duration& period) {
 //   updateJointStates();
   init_time_ = init_time_ + period;
-
-  RCLCPP_INFO(this->get_node()->get_logger(),"loop");
   Vector7d q_goal_ = {0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4};
   double omega = 0.1 * std::sin(init_time_.seconds());
   for(int i = 3; i < 7; i++){
     command_interfaces_[i].set_value(omega);
   }
-
-
   return controller_interface::return_type::OK;
 }
 
@@ -113,6 +109,11 @@ CallbackReturn JointVelocityExampleController::on_activate(
   init_time_ = rclcpp::Duration(0, 0);
   return CallbackReturn::SUCCESS;
 }
+
+CallbackReturn JointVelocityExampleController::on_error(
+  const rclcpp_lifecycle::State& previous_state){
+    RCLCPP_ERROR(this->get_node()->get_logger(), "error encountered!");
+  }
 
 void JointVelocityExampleController::updateJointStates() {
   for (auto i = 0; i < num_joints; ++i) {
