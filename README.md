@@ -15,6 +15,7 @@ The current version is forked from mcbed's port of franka_ros2 for [humble][mcbe
 * Cartesian velocity control interface and an example controller
 * Controllers are swappable using rqt_controller_manager
 * Runtime franka::ControlException error recovery via `~/service_server/error_recovery`
+* Runtime internal parameter setter services much like what is offered in the updated `franka_ros2`
  
 ## Known issues
 * When panda_ros2 is started with the robot in error state, whatever command controller that is started in the launch file will not work even when the error recovery is triggered, before a different type of command controller (i.e. different interface, like position/velocity) is loaded first.
@@ -33,12 +34,13 @@ The current version is forked from mcbed's port of franka_ros2 for [humble][mcbe
     * <s>franka_ros2 does not start if the robot is already in error mode before the node is started.</s>
 * <s>Adding additional example controllers (Cartesian, joint velocity/position, etc. )</s>
 * Clean up base acceleration-dependent values in Franka State
-* Add reconfiguration service for:
-    * Cartesian, Joint impedance
-    * Force torque, full collision behaviors
-    * EE, K frames
-    * Load settings
+* <s>Add reconfiguration service for:</s>
+    * <s>Cartesian, Joint impedance</s>
+    * <s>Force torque, full collision behaviors</s>
+    * <s>EE, K frames</s>
+    * <s>Load settings</s>
 * Investigating multiple arm control
+* Make reusable impedance controllers with proper subscribers for general use
 
 ## Installation Guide
 
