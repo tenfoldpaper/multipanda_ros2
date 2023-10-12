@@ -38,16 +38,16 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
   catch(franka::ControlException& e){
     RCLCPP_INFO(logger, "Robot is in error state! Please trigger automatic recovery first.");
     setError(true);
-    // will need a boolean to set this for the first time;
-    // after the necessary runtime services, this part can be removed.
-    robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
-    robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
-    robot_->setCollisionBehavior(
-          {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
-          {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
-          {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
-          {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
   }
+  // will need a boolean to set this for the first time;
+  // after the necessary runtime services, this part can be removed.
+  robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
+  robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
+  robot_->setCollisionBehavior(
+        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
+        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
   tau_command_.fill({});
   joint_velocity_command_.fill({});
   cartesian_position_command_.fill({});
@@ -239,4 +239,116 @@ void Robot::initializeContinuousReading() {
 bool Robot::isStopped() const {
   return stopped_;
 }
+
+//##############################//
+// Internal param setters       //
+//##############################//
+
+void Robot::setJointStiffness(const franka_msgs::srv::SetJointStiffness::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  std::array<double, 7> joint_stiffness{};
+  std::copy(req->joint_stiffness.cbegin(), req->joint_stiffness.cend(), joint_stiffness.begin());
+  robot_->setJointImpedance(joint_stiffness);
+}
+
+void Robot::setCartesianStiffness(
+    const franka_msgs::srv::SetCartesianStiffness::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  std::array<double, 6> cartesian_stiffness{};
+  std::copy(req->cartesian_stiffness.cbegin(), req->cartesian_stiffness.cend(),
+            cartesian_stiffness.begin());
+  robot_->setCartesianImpedance(cartesian_stiffness);
+}
+
+void Robot::setLoad(const franka_msgs::srv::SetLoad::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  double mass(req->mass);
+  std::array<double, 3> center_of_mass{};  // NOLINT [readability-identifier-naming]
+  std::copy(req->center_of_mass.cbegin(), req->center_of_mass.cend(), center_of_mass.begin());
+  std::array<double, 9> load_inertia{};
+  std::copy(req->load_inertia.cbegin(), req->load_inertia.cend(), load_inertia.begin());
+
+  robot_->setLoad(mass, center_of_mass, load_inertia);
+}
+
+void Robot::setTCPFrame(const franka_msgs::srv::SetTCPFrame::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+
+  std::array<double, 16> transformation{};  // NOLINT [readability-identifier-naming]
+  std::copy(req->transformation.cbegin(), req->transformation.cend(), transformation.begin());
+  robot_->setEE(transformation);
+}
+
+void Robot::setStiffnessFrame(const franka_msgs::srv::SetStiffnessFrame::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+
+  std::array<double, 16> transformation{};
+  std::copy(req->transformation.cbegin(), req->transformation.cend(), transformation.begin());
+  robot_->setK(transformation);
+}
+
+void Robot::setForceTorqueCollisionBehavior(
+    const franka_msgs::srv::SetForceTorqueCollisionBehavior::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+
+  std::array<double, 7> lower_torque_thresholds_nominal{};
+  std::copy(req->lower_torque_thresholds_nominal.cbegin(),
+            req->lower_torque_thresholds_nominal.cend(), lower_torque_thresholds_nominal.begin());
+  std::array<double, 7> upper_torque_thresholds_nominal{};
+  std::copy(req->upper_torque_thresholds_nominal.cbegin(),
+            req->upper_torque_thresholds_nominal.cend(), upper_torque_thresholds_nominal.begin());
+  std::array<double, 6> lower_force_thresholds_nominal{};
+  std::copy(req->lower_force_thresholds_nominal.cbegin(),
+            req->lower_force_thresholds_nominal.cend(), lower_force_thresholds_nominal.begin());
+  std::array<double, 6> upper_force_thresholds_nominal{};
+  std::copy(req->upper_force_thresholds_nominal.cbegin(),
+            req->upper_force_thresholds_nominal.cend(), upper_force_thresholds_nominal.begin());
+
+  robot_->setCollisionBehavior(lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
+                               lower_force_thresholds_nominal, upper_force_thresholds_nominal);
+}
+
+void Robot::setFullCollisionBehavior(
+    const franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr& req) {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+
+  std::array<double, 7> lower_torque_thresholds_acceleration{};
+  std::copy(req->lower_torque_thresholds_acceleration.cbegin(),
+            req->lower_torque_thresholds_acceleration.cend(),
+            lower_torque_thresholds_acceleration.begin());
+  std::array<double, 7> upper_torque_thresholds_acceleration{};
+  std::copy(req->upper_torque_thresholds_acceleration.cbegin(),
+            req->upper_torque_thresholds_acceleration.cend(),
+            upper_torque_thresholds_acceleration.begin());
+  std::array<double, 7> lower_torque_thresholds_nominal{};
+  std::copy(req->lower_torque_thresholds_nominal.cbegin(),
+            req->lower_torque_thresholds_nominal.cend(), lower_torque_thresholds_nominal.begin());
+  std::array<double, 7> upper_torque_thresholds_nominal{};
+  std::copy(req->upper_torque_thresholds_nominal.cbegin(),
+            req->upper_torque_thresholds_nominal.cend(), upper_torque_thresholds_nominal.begin());
+  std::array<double, 6> lower_force_thresholds_acceleration{};
+  std::copy(req->lower_force_thresholds_acceleration.cbegin(),
+            req->lower_force_thresholds_acceleration.cend(),
+            lower_force_thresholds_acceleration.begin());
+  std::array<double, 6> upper_force_thresholds_acceleration{};
+  std::copy(req->upper_force_thresholds_acceleration.cbegin(),
+            req->upper_force_thresholds_acceleration.cend(),
+            upper_force_thresholds_acceleration.begin());
+  std::array<double, 6> lower_force_thresholds_nominal{};
+  std::copy(req->lower_force_thresholds_nominal.cbegin(),
+            req->lower_force_thresholds_nominal.cend(), lower_force_thresholds_nominal.begin());
+  std::array<double, 6> upper_force_thresholds_nominal{};
+  std::copy(req->upper_force_thresholds_nominal.cbegin(),
+            req->upper_force_thresholds_nominal.cend(), upper_force_thresholds_nominal.begin());
+  robot_->setCollisionBehavior(
+      lower_torque_thresholds_acceleration, upper_torque_thresholds_acceleration,
+      lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
+      lower_force_thresholds_acceleration, upper_force_thresholds_acceleration,
+      lower_force_thresholds_nominal, upper_force_thresholds_nominal);
+}
+
+//##############################//
+// Internal param setters       //
+//##############################//
+
 }  // namespace franka_hardware
