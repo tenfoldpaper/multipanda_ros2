@@ -18,7 +18,7 @@ FrankaErrorRecoveryServiceServer::FrankaErrorRecoveryServiceServer(const rclcpp:
     RCLCPP_INFO(get_logger(), "Error recovery service started");
 }
 
-void FrankaErrorRecoveryServiceServer::triggerAutomaticRecovery(const franka_msgs::srv::ErrorRecovery::Request::SharedPtr& request,
+void FrankaErrorRecoveryServiceServer::triggerAutomaticRecovery(const franka_msgs::srv::ErrorRecovery::Request::SharedPtr& /*request*/,
                                                                 const franka_msgs::srv::ErrorRecovery::Response::SharedPtr& response)
 {
     if(!this->robot_->hasError()){

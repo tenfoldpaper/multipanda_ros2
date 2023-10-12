@@ -46,7 +46,7 @@ JointPositionExampleController::state_interface_configuration() const {
 }
 
 controller_interface::return_type JointPositionExampleController::update(
-    const rclcpp::Time& time,
+    const rclcpp::Time& /*time*/,
     const rclcpp::Duration& period) {
   init_time_ = init_time_ + period;
 

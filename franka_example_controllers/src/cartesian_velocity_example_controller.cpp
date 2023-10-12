@@ -52,7 +52,7 @@ CartesianVelocityExampleController::state_interface_configuration() const {
 }
 
 controller_interface::return_type CartesianVelocityExampleController::update(
-    const rclcpp::Time& time,
+    const rclcpp::Time& /*time*/,
     const rclcpp::Duration& period) {
   // updateJointStates();
   init_time_ = init_time_ + period;
@@ -124,22 +124,10 @@ CallbackReturn CartesianVelocityExampleController::on_activate(
 }
 
 CallbackReturn CartesianVelocityExampleController::on_error(
-  const rclcpp_lifecycle::State& previous_state){
+  const rclcpp_lifecycle::State& /*previous_state*/){
     RCLCPP_ERROR(this->get_node()->get_logger(), "error encountered!");
+    return CallbackReturn::ERROR;
   }
-
-void CartesianVelocityExampleController::updateJointStates() {
-  // for (auto i = 0; i < num_joints; ++i) {
-  //   const auto& position_interface = state_interfaces_.at(2 * i);
-  //   const auto& velocity_interface = state_interfaces_.at(2 * i + 1);
-
-  //   assert(position_interface.get_interface_name() == "position");
-  //   assert(velocity_interface.get_interface_name() == "velocity");
-
-  //   q_(i) = position_interface.get_value();
-  //   dq_(i) = velocity_interface.get_value();
-  // }
-}
 
 }  // namespace franka_example_controllers
 #include "pluginlib/class_list_macros.hpp"

@@ -46,11 +46,10 @@ JointVelocityExampleController::state_interface_configuration() const {
 }
 
 controller_interface::return_type JointVelocityExampleController::update(
-    const rclcpp::Time& time,
+    const rclcpp::Time& /*time*/,
     const rclcpp::Duration& period) {
 //   updateJointStates();
   init_time_ = init_time_ + period;
-  Vector7d q_goal_ = {0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4};
   double omega = 0.1 * std::sin(init_time_.seconds());
   for(int i = 3; i < 7; i++){
     command_interfaces_[i].set_value(omega);
@@ -111,8 +110,9 @@ CallbackReturn JointVelocityExampleController::on_activate(
 }
 
 CallbackReturn JointVelocityExampleController::on_error(
-  const rclcpp_lifecycle::State& previous_state){
+  const rclcpp_lifecycle::State& /*previous_state*/){
     RCLCPP_ERROR(this->get_node()->get_logger(), "error encountered!");
+    CallbackReturn::ERROR;
   }
 
 void JointVelocityExampleController::updateJointStates() {
