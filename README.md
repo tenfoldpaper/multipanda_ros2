@@ -19,7 +19,8 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 * Controllers are swappable using rqt_controller_manager
 * Runtime franka::ControlException error recovery via `~/service_server/error_recovery`
 * Runtime internal parameter setter services much like what is offered in the updated `franka_ros2`
- 
+* Multi-arm initialization and joint state broadcaster
+
 ## Known issues
 * When panda_ros2 is started with the robot in error state, whatever command controller that is started in the launch file will not work even when the error recovery is triggered, before a different type of command controller (i.e. different interface, like position/velocity) is loaded first.
 * After error recovery, the command controller will not continue to publish the data. Reloading the controller is necessary.
@@ -44,6 +45,14 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 * <s>Clean up dependency tree for packages</s>
 * Test it out with moveit! 2
 * Investigating multiple arm control
+    * <s>Initialization</s>
+    * <s>Reading joint states</s>
+    * Broadcasting franka states
+    * Controllers for:
+        * Joint-level stuff
+        * Cartesian-level stuff
+    * Splitting all broadcasters into its own nodes
+    * Cleaning up parametrization
 * Make reusable impedance controllers with proper subscribers for general use
 
 ## Installation Guide

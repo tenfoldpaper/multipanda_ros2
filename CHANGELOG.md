@@ -1,5 +1,8 @@
 # Changelog
 
+## Added 16.10.23
+* Added basic multi-arm hardware interface. Currently, initialization and `read()` function work. 
+
 ## Added 12.10.23
 * Added param setter services to allow run-time changing of stiffness, collision behavior, load, frames, etc.
 
