@@ -93,45 +93,45 @@ CallbackReturn FrankaMultiHardwareInterface::on_init(const hardware_interface::H
       RCLCPP_FATAL(getLogger(), "Parameber 'ns%s' ! set\nMake sure all multi-robot parameters follow the format {ns/robot_ip/etc.}_n", suffix.c_str());
       return CallbackReturn::ERROR;
     }
-    if(!arm_container_.insert(std::make_pair(robot_name, ArmContainer())).second){
+    if(!arms_.insert(std::make_pair(robot_name, ArmContainer())).second){
       RCLCPP_FATAL(getLogger(),"The provided robot namespace %s already exists! Make sure they are unique.", robot_name.c_str());
       return CallbackReturn::ERROR;
     }
-    arm_container_[robot_name].robot_name = robot_name;
+    arms_[robot_name].robot_name_ = robot_name;
   
     try {
-      arm_container_[robot_name].robot_ip = info_.hardware_parameters.at("robot_ip"+suffix);
+      arms_[robot_name].robot_ip_ = info_.hardware_parameters.at("robot_ip"+suffix);
     } catch (const std::out_of_range& ex) {
       RCLCPP_FATAL(getLogger(), "Parameter 'robot_ip%s' ! set", suffix.c_str());
       return CallbackReturn::ERROR;
     }
     try {
-      RCLCPP_INFO(getLogger(), "Connecting to robot at \"%s\" ...", arm_container_[robot_name].robot_ip.c_str());
-      arm_container_[robot_name].robot = std::make_unique<Robot>(arm_container_[robot_name].robot_ip, getLogger());
+      RCLCPP_INFO(getLogger(), "Connecting to robot at \"%s\" ...", arms_[robot_name].robot_ip_.c_str());
+      arms_[robot_name].robot_ = std::make_unique<Robot>(arms_[robot_name].robot_ip_, getLogger());
     } catch (const franka::Exception& e) {
       RCLCPP_FATAL(getLogger(), "Could ! connect to robot");
       RCLCPP_FATAL(getLogger(), "%s", e.what());
       return CallbackReturn::ERROR;
     }
-    RCLCPP_INFO(getLogger(), "Successfully connected to robot %s at %s", robot_name.c_str(), arm_container_[robot_name].robot_ip.c_str());
+    RCLCPP_INFO(getLogger(), "Successfully connected to robot %s at %s", robot_name.c_str(), arms_[robot_name].robot_ip_.c_str());
 
     // Start the service nodes
-    arm_container_[robot_name].error_recovery_service_node = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), arm_container_[robot_name].robot, robot_name);
-    arm_container_[robot_name].param_service_node = std::make_shared<FrankaParamServiceServer>(rclcpp::NodeOptions(), arm_container_[robot_name].robot, robot_name);
+    arms_[robot_name].error_recovery_service_node_ = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), arms_[robot_name].robot_, robot_name + "_");
+    arms_[robot_name].param_service_node_ = std::make_shared<FrankaParamServiceServer>(rclcpp::NodeOptions(), arms_[robot_name].robot_, robot_name + "_");
     executor_ = std::make_shared<FrankaExecutor>();
-    executor_->add_node(arm_container_[robot_name].error_recovery_service_node);
-    executor_->add_node(arm_container_[robot_name].param_service_node);
+    executor_->add_node(arms_[robot_name].error_recovery_service_node_);
+    executor_->add_node(arms_[robot_name].param_service_node_);
     
 
     // Init the cartesian values to 0
-    arm_container_[robot_name].hw_cartesian_positions_.fill({});
-    arm_container_[robot_name].hw_cartesian_velocities_.fill({});
-    arm_container_[robot_name].hw_commands_cartesian_position.fill({});
-    arm_container_[robot_name].hw_commands_cartesian_velocity.fill({});
+    arms_[robot_name].hw_cartesian_positions_.fill({});
+    arms_[robot_name].hw_cartesian_velocities_.fill({});
+    arms_[robot_name].hw_commands_cartesian_position_.fill({});
+    arms_[robot_name].hw_commands_cartesian_velocity_.fill({});
   }
-  RCLCPP_INFO(getLogger(), "All %d robots have been intiialized (%ld)", robot_count, arm_container_.size() );
-  if(arm_container_.size() != robot_count){
-    RCLCPP_FATAL(getLogger(), "initialized arm container size %ld is not the same as robot_count %d", arm_container_.size(), robot_count);
+  RCLCPP_INFO(getLogger(), "All %d robots have been intiialized (%ld)", robot_count, arms_.size() );
+  if(arms_.size() != robot_count){
+    RCLCPP_FATAL(getLogger(), "initialized arm container size %ld is not the same as robot_count %d", arms_.size(), robot_count);
     return CallbackReturn::ERROR;
   }
   return CallbackReturn::SUCCESS;
@@ -163,32 +163,34 @@ std::vector<StateInterface> FrankaMultiHardwareInterface::export_state_interface
     
     std::cout << get_ns(info_.joints[i].name) << std::endl;
     state_interfaces.emplace_back(StateInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &arm_container_[get_ns(info_.joints[i].name)].hw_positions_.at(get_joint_no(info_.joints[i].name))));
+        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &arms_[get_ns(info_.joints[i].name)].hw_positions_.at(get_joint_no(info_.joints[i].name))));
     state_interfaces.emplace_back(StateInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &arm_container_[get_ns(info_.joints[i].name)].hw_velocities_.at(get_joint_no(info_.joints[i].name))));
+        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &arms_[get_ns(info_.joints[i].name)].hw_velocities_.at(get_joint_no(info_.joints[i].name))));
     state_interfaces.emplace_back(StateInterface(
-      info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &arm_container_[get_ns(info_.joints[i].name)].hw_efforts_.at(get_joint_no(info_.joints[i].name))));
+      info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &arms_[get_ns(info_.joints[i].name)].hw_efforts_.at(get_joint_no(info_.joints[i].name))));
   }
 
-  for(auto arm_container_pair : arm_container_){
-    std::string cartesian_position_prefix = arm_container_pair.second.robot_name + "_ee_cartesian_position";
-    std::string cartesian_velocity_prefix = arm_container_pair.second.robot_name + "_ee_cartesian_velocity";
+  for(auto arm_container_pair : arms_){
+    auto &arm = arms_.at(arm_container_pair.first);
+
+    std::string cartesian_position_prefix = arm.robot_name_ + "_ee_cartesian_position";
+    std::string cartesian_velocity_prefix = arm.robot_name_ + "_ee_cartesian_velocity";
 
     for (auto i = 0; i < 16; i++){
       state_interfaces.emplace_back(StateInterface(
-          cartesian_position_prefix, cartesian_matrix_names[i], &arm_container_pair.second.hw_cartesian_positions_[i]));
+          cartesian_position_prefix, cartesian_matrix_names[i], &arm.hw_cartesian_positions_[i]));
       state_interfaces.emplace_back(StateInterface(
-          cartesian_velocity_prefix, cartesian_matrix_names[i], &arm_container_pair.second.hw_cartesian_velocities_[i]));
+          cartesian_velocity_prefix, cartesian_matrix_names[i], &arm.hw_cartesian_velocities_[i]));
     }
 
     state_interfaces.emplace_back(StateInterface(
-        arm_container_pair.second.robot_name, k_robot_state_interface_name,
+        arm.robot_name_, k_robot_state_interface_name,
         reinterpret_cast<double*>(  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            &arm_container_pair.second.hw_franka_robot_state_addr_)));
+            &arm.hw_franka_robot_state_addr_)));
     state_interfaces.emplace_back(StateInterface(
-        arm_container_pair.second.robot_name, k_robot_model_interface_name,
+        arm.robot_name_, k_robot_model_interface_name,
         reinterpret_cast<double*>(  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            &arm_container_pair.second.hw_franka_model_ptr_)));
+            &arm.hw_franka_model_ptr_)));
   }
   
   return state_interfaces;
@@ -203,24 +205,25 @@ std::vector<CommandInterface> FrankaMultiHardwareInterface::export_command_inter
     RCLCPP_INFO(getLogger(), "%s", info_.joints[i].name.c_str());
 
     command_interfaces.emplace_back(CommandInterface( // JOINT EFFORT
-        info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &arm_container_[get_ns(info_.joints[i].name)].hw_commands_joint_effort.at(get_joint_no(info_.joints[i].name))));
+        info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &arms_[get_ns(info_.joints[i].name)].hw_commands_joint_effort_.at(get_joint_no(info_.joints[i].name))));
     command_interfaces.emplace_back(CommandInterface( // JOINT POSITION
-        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &arm_container_[get_ns(info_.joints[i].name)].hw_commands_joint_position.at(get_joint_no(info_.joints[i].name))));
+        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &arms_[get_ns(info_.joints[i].name)].hw_commands_joint_position_.at(get_joint_no(info_.joints[i].name))));
     command_interfaces.emplace_back(CommandInterface( // JOINT VELOCITY
-        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &arm_container_[get_ns(info_.joints[i].name)].hw_commands_joint_velocity.at(get_joint_no(info_.joints[i].name))));
+        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &arms_[get_ns(info_.joints[i].name)].hw_commands_joint_velocity_.at(get_joint_no(info_.joints[i].name))));
   }
 
-  for(auto arm_container_pair : arm_container_){
-    std::string cartesian_position_prefix = arm_container_pair.second.robot_name + "_ee_cartesian_position";
-    std::string cartesian_velocity_prefix = arm_container_pair.second.robot_name + "_ee_cartesian_velocity";
+  for(auto arm_container_pair : arms_){
+    auto &arm = arms_.at(arm_container_pair.first);
+    std::string cartesian_position_prefix = arm.robot_name_ + "_ee_cartesian_position";
+    std::string cartesian_velocity_prefix = arm.robot_name_ + "_ee_cartesian_velocity";
 
     for (auto i = 0; i < 16; i++){
       command_interfaces.emplace_back(CommandInterface(
-          cartesian_position_prefix, cartesian_matrix_names[i], &arm_container_pair.second.hw_commands_cartesian_position[i]));
+          cartesian_position_prefix, cartesian_matrix_names[i], &arm.hw_commands_cartesian_position_[i]));
     }
     for (auto i = 0; i < 6; i++){
       command_interfaces.emplace_back(CommandInterface(
-          cartesian_velocity_prefix, cartesian_velocity_command_names[i], &arm_container_pair.second.hw_commands_cartesian_velocity[i]));
+          cartesian_velocity_prefix, cartesian_velocity_command_names[i], &arm.hw_commands_cartesian_velocity_[i]));
     }
   }
 
@@ -229,11 +232,12 @@ std::vector<CommandInterface> FrankaMultiHardwareInterface::export_command_inter
 
 CallbackReturn FrankaMultiHardwareInterface::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
-  for(auto& arm_container_pair : arm_container_){
+  for(auto& arm_container_pair : arms_){
+    auto &arm = arms_.at(arm_container_pair.first);
     RCLCPP_INFO(getLogger(), "key: %s", arm_container_pair.first.c_str());
 
-    arm_container_pair.second.robot->initializeContinuousReading();
-    arm_container_pair.second.hw_commands_joint_effort.fill(0);
+    arm.robot_->initializeContinuousReading();
+    arm.hw_commands_joint_effort_.fill(0);
   }
   read(rclcpp::Time(0),
        rclcpp::Duration(0, 0));  // makes sure that the robot state is properly initialized.
@@ -244,9 +248,9 @@ CallbackReturn FrankaMultiHardwareInterface::on_activate(
 CallbackReturn FrankaMultiHardwareInterface::on_deactivate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   RCLCPP_INFO(getLogger(), "trying to Stop...");
-  for(auto arm_container_pair : arm_container_){
-
-    arm_container_pair.second.robot->stopRobot();
+  for(auto arm_container_pair : arms_){
+    auto &arm = arms_.at(arm_container_pair.first);
+    arm.robot_->stopRobot();
   }
   RCLCPP_INFO(getLogger(), "Stopped");
   return CallbackReturn::SUCCESS;
@@ -256,12 +260,12 @@ CallbackReturn FrankaMultiHardwareInterface::on_deactivate(
 hardware_interface::return_type FrankaMultiHardwareInterface::read(const rclcpp::Time& /*time*/,
                                                               const rclcpp::Duration& /*period*/) {
   
-  for(auto& arm_container_pair: arm_container_){
-    auto &arm = arm_container_.at(arm_container_pair.first);
+  for(auto& arm_container_pair: arms_){
+    auto &arm = arms_.at(arm_container_pair.first);
     if (arm.hw_franka_model_ptr_ == nullptr) {
-      arm.hw_franka_model_ptr_ = arm.robot->getModel();
+      arm.hw_franka_model_ptr_ = arm.robot_->getModel();
     }
-    arm.hw_franka_robot_state_ = arm.robot->read();
+    arm.hw_franka_robot_state_ = arm.robot_->read();
     arm.hw_positions_ = arm.hw_franka_robot_state_.q;
     arm.hw_velocities_ = arm.hw_franka_robot_state_.dq;
     arm.hw_efforts_ = arm.hw_franka_robot_state_.tau_J;

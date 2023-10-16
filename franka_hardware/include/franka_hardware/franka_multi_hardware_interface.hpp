@@ -38,17 +38,17 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 namespace franka_hardware {
 
 struct ArmContainer {
-  std::string robot_ip;
-  std::string robot_name;
-  std::shared_ptr<Robot> robot;
-  std::shared_ptr<FrankaErrorRecoveryServiceServer> error_recovery_service_node;
-  std::shared_ptr<FrankaParamServiceServer> param_service_node;
+  std::string robot_ip_;
+  std::string robot_name_;
+  std::shared_ptr<Robot> robot_;
+  std::shared_ptr<FrankaErrorRecoveryServiceServer> error_recovery_service_node_;
+  std::shared_ptr<FrankaParamServiceServer> param_service_node_;
 
-  std::array<double, 7> hw_commands_joint_effort{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, 7> hw_commands_joint_position{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, 7> hw_commands_joint_velocity{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, 16> hw_commands_cartesian_position;
-  std::array<double, 6> hw_commands_cartesian_velocity;
+  std::array<double, 7> hw_commands_joint_effort_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 7> hw_commands_joint_position_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 7> hw_commands_joint_velocity_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 16> hw_commands_cartesian_position_;
+  std::array<double, 6> hw_commands_cartesian_velocity_;
 
   // States
   ControlMode control_mode_ = ControlMode::None;
@@ -88,7 +88,7 @@ class FrankaMultiHardwareInterface : public hardware_interface::SystemInterface 
   std::array<std::string, 16> cartesian_matrix_names{"00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15"};
   std::array<std::string, 6> cartesian_velocity_command_names{"tx","ty","tz","omega_x","omega_y","omega_z"};
 
-  std::map<std::string, ArmContainer> arm_container_;
+  std::map<std::string, ArmContainer> arms_;
 
   // Commands
 
