@@ -9,7 +9,7 @@
 namespace franka_hardware{
 class FrankaErrorRecoveryServiceServer : public rclcpp::Node {
 public:
-  FrankaErrorRecoveryServiceServer(const rclcpp::NodeOptions& options, std::shared_ptr<Robot> robot);
+  FrankaErrorRecoveryServiceServer(const rclcpp::NodeOptions& options, std::shared_ptr<Robot> robot, std::string prefix="");
 
 private:
   
