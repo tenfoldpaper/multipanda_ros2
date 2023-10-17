@@ -97,37 +97,37 @@ CallbackReturn FrankaMultiHardwareInterface::on_init(const hardware_interface::H
       RCLCPP_FATAL(getLogger(),"The provided robot namespace %s already exists! Make sure they are unique.", robot_name.c_str());
       return CallbackReturn::ERROR;
     }
-    arms_[robot_name].robot_name_ = robot_name;
+    auto &arm = arms_[robot_name];
+    arm.robot_name_ = robot_name;
   
     try {
-      arms_[robot_name].robot_ip_ = info_.hardware_parameters.at("robot_ip"+suffix);
+      arm.robot_ip_ = info_.hardware_parameters.at("robot_ip"+suffix);
     } catch (const std::out_of_range& ex) {
       RCLCPP_FATAL(getLogger(), "Parameter 'robot_ip%s' ! set", suffix.c_str());
       return CallbackReturn::ERROR;
     }
     try {
-      RCLCPP_INFO(getLogger(), "Connecting to robot at \"%s\" ...", arms_[robot_name].robot_ip_.c_str());
-      arms_[robot_name].robot_ = std::make_unique<Robot>(arms_[robot_name].robot_ip_, getLogger());
+      RCLCPP_INFO(getLogger(), "Connecting to robot at \"%s\" ...", arm.robot_ip_.c_str());
+      arm.robot_ = std::make_unique<Robot>(arm.robot_ip_, getLogger());
     } catch (const franka::Exception& e) {
       RCLCPP_FATAL(getLogger(), "Could ! connect to robot");
       RCLCPP_FATAL(getLogger(), "%s", e.what());
       return CallbackReturn::ERROR;
     }
-    RCLCPP_INFO(getLogger(), "Successfully connected to robot %s at %s", robot_name.c_str(), arms_[robot_name].robot_ip_.c_str());
-
+    RCLCPP_INFO(getLogger(), "Successfully connected to robot %s at %s", robot_name.c_str(), arm.robot_ip_.c_str());
+    arm.hw_franka_robot_state_ = arm.robot_->read();
     // Start the service nodes
-    arms_[robot_name].error_recovery_service_node_ = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), arms_[robot_name].robot_, robot_name + "_");
-    arms_[robot_name].param_service_node_ = std::make_shared<FrankaParamServiceServer>(rclcpp::NodeOptions(), arms_[robot_name].robot_, robot_name + "_");
+    arm.error_recovery_service_node_ = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), arm.robot_, robot_name + "_");
+    arm.param_service_node_ = std::make_shared<FrankaParamServiceServer>(rclcpp::NodeOptions(), arm.robot_, robot_name + "_");
     executor_ = std::make_shared<FrankaExecutor>();
-    executor_->add_node(arms_[robot_name].error_recovery_service_node_);
-    executor_->add_node(arms_[robot_name].param_service_node_);
+    executor_->add_node(arm.error_recovery_service_node_);
+    executor_->add_node(arm.param_service_node_);
     
-
     // Init the cartesian values to 0
-    arms_[robot_name].hw_cartesian_positions_.fill({});
-    arms_[robot_name].hw_cartesian_velocities_.fill({});
-    arms_[robot_name].hw_commands_cartesian_position_.fill({});
-    arms_[robot_name].hw_commands_cartesian_velocity_.fill({});
+    arm.hw_cartesian_positions_.fill({});
+    arm.hw_cartesian_velocities_.fill({});
+    arm.hw_commands_cartesian_position_.fill({});
+    arm.hw_commands_cartesian_velocity_.fill({});
   }
   RCLCPP_INFO(getLogger(), "All %ld robots have been intiialized (%ld)", robot_count_, arms_.size() );
   if(arms_.size() != robot_count_){
@@ -171,7 +171,7 @@ std::vector<StateInterface> FrankaMultiHardwareInterface::export_state_interface
   }
 
   for(auto arm_container_pair : arms_){
-    auto &arm = arms_.at(arm_container_pair.first);
+    auto &arm = arm_container_pair.second;
 
     std::string cartesian_position_prefix = arm.robot_name_ + "_ee_cartesian_position";
     std::string cartesian_velocity_prefix = arm.robot_name_ + "_ee_cartesian_velocity";
@@ -213,7 +213,7 @@ std::vector<CommandInterface> FrankaMultiHardwareInterface::export_command_inter
   }
 
   for(auto arm_container_pair : arms_){
-    auto &arm = arms_.at(arm_container_pair.first);
+    auto &arm = arm_container_pair.second;
     std::string cartesian_position_prefix = arm.robot_name_ + "_ee_cartesian_position";
     std::string cartesian_velocity_prefix = arm.robot_name_ + "_ee_cartesian_velocity";
 
@@ -233,7 +233,7 @@ std::vector<CommandInterface> FrankaMultiHardwareInterface::export_command_inter
 CallbackReturn FrankaMultiHardwareInterface::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   for(auto& arm_container_pair : arms_){
-    auto &arm = arms_.at(arm_container_pair.first);
+    auto &arm = arm_container_pair.second;
     RCLCPP_INFO(getLogger(), "key: %s", arm_container_pair.first.c_str());
 
     arm.robot_->initializeContinuousReading();
@@ -249,7 +249,7 @@ CallbackReturn FrankaMultiHardwareInterface::on_deactivate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   RCLCPP_INFO(getLogger(), "trying to Stop...");
   for(auto arm_container_pair : arms_){
-    auto &arm = arms_.at(arm_container_pair.first);
+    auto &arm = arm_container_pair.second;
     arm.robot_->stopRobot();
   }
   RCLCPP_INFO(getLogger(), "Stopped");
@@ -261,7 +261,7 @@ hardware_interface::return_type FrankaMultiHardwareInterface::read(const rclcpp:
                                                               const rclcpp::Duration& /*period*/) {
   
   for(auto& arm_container_pair: arms_){
-    auto &arm = arms_.at(arm_container_pair.first);
+    auto &arm = arm_container_pair.second;
     if (arm.hw_franka_model_ptr_ == nullptr) {
       arm.hw_franka_model_ptr_ = arm.robot_->getModel();
     }
@@ -279,7 +279,7 @@ hardware_interface::return_type FrankaMultiHardwareInterface::read(const rclcpp:
 hardware_interface::return_type FrankaMultiHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
   for(auto& arm_container_pair: arms_){
-    auto &arm = arms_.at(arm_container_pair.first);
+    auto &arm = arm_container_pair.second;
     if (std::any_of(arm.hw_commands_joint_effort_.begin(), arm.hw_commands_joint_effort_.end(),
                     [](double c) { return !std::isfinite(c); })) {
       return hardware_interface::return_type::ERROR;
