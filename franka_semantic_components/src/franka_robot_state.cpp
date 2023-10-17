@@ -15,7 +15,6 @@
 #include "franka_semantic_components/franka_robot_state.hpp"
 
 #include <cstring>
-
 #include "rclcpp/logging.hpp"
 namespace {
 
@@ -148,8 +147,9 @@ franka_msgs::msg::Errors errorsToMessage(const franka::Errors& error) {
 
 namespace franka_semantic_components {
 
-FrankaRobotState::FrankaRobotState(const std::string& name) : SemanticComponentInterface(name, 1) {
+FrankaRobotState::FrankaRobotState(const std::string& name, const std::string& robot_name) : SemanticComponentInterface(name, 1) {
   interface_names_.emplace_back(name_);
+  robot_name_ = robot_name;
   // TODO: Set default values to NaN
 }
 
