@@ -22,8 +22,9 @@ namespace franka_robot_state_broadcaster {
 
 controller_interface::CallbackReturn FrankaRobotStateBroadcaster::on_init() {
   try {
-    param_listener = std::make_shared<ParamListener>(get_node());
-    params = param_listener->get_params();
+    auto_declare<std::string>("arm_id", "panda");
+    auto_declare<int>("frequency", 30);
+
   } catch (const std::exception& e) {
     fprintf(stderr, "Exception thrown during init stage with message: %s \n", e.what());
     return CallbackReturn::ERROR;
@@ -34,10 +35,11 @@ controller_interface::CallbackReturn FrankaRobotStateBroadcaster::on_init() {
 
 controller_interface::CallbackReturn FrankaRobotStateBroadcaster::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
-  params = param_listener->get_params();
+  arm_id = get_node()->get_parameter("arm_id").as_string();
+  frequency = get_node()->get_parameter("frequency").as_int();
 
   franka_robot_state = std::make_unique<franka_semantic_components::FrankaRobotState>(
-      franka_semantic_components::FrankaRobotState(params.arm_id + "/" + state_interface_name));
+      franka_semantic_components::FrankaRobotState(arm_id + "/" + state_interface_name, arm_id));
 
   try {
     franka_state_publisher = get_node()->create_publisher<franka_msgs::msg::FrankaState>(
@@ -52,7 +54,7 @@ controller_interface::CallbackReturn FrankaRobotStateBroadcaster::on_configure(
             e.what());
     return CallbackReturn::ERROR;
   }
-  RCLCPP_DEBUG(get_node()->get_logger(), "configure successful");
+  RCLCPP_INFO(get_node()->get_logger(), "%s franka state broadcaster configuration successful", arm_id.c_str());
   return CallbackReturn::SUCCESS;
 }
 
