@@ -292,8 +292,8 @@ bool FrankaRobotState::get_values_as_message(franka_msgs::msg::FrankaState& mess
 
   message.time = robot_state_ptr->time.toSec();
   message.control_command_success_rate = robot_state_ptr->control_command_success_rate;
-  message.current_errors = errorsToMessage(robot_state_ptr->current_errors);
-  message.last_motion_errors = errorsToMessage(robot_state_ptr->last_motion_errors);
+//   message.current_errors = errorsToMessage(robot_state_ptr->current_errors);
+//   message.last_motion_errors = errorsToMessage(robot_state_ptr->last_motion_errors);
 
   switch (robot_state_ptr->robot_mode) {
     case franka::RobotMode::kOther:
