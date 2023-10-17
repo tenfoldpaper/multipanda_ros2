@@ -1,5 +1,6 @@
 #include <franka_hardware/helper_functions.hpp>
 // A dump of functions that are used by both hardware and multi_hardware interfaces.
+namespace franka_hardware {
 bool all_of_element_has_string(std::vector<std::string> vec, std::string content){
   if(vec.size() == 0){
     return false;
@@ -27,4 +28,5 @@ int check_command_mode_type(std::vector<std::string> interfaces){
     return 0;
   }
   return -1;
+}
 }
