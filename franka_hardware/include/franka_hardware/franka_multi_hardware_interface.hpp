@@ -32,6 +32,8 @@
 #include "franka_hardware/robot.hpp"
 #include "franka_hardware/franka_error_recovery_service_server.hpp"
 #include "franka_hardware/franka_param_service_server.hpp"
+#include "franka_hardware/helper_functions.hpp"
+
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -66,12 +68,12 @@ struct ArmContainer {
 
 class FrankaMultiHardwareInterface : public hardware_interface::SystemInterface {
  public:
-  // hardware_interface::return_type prepare_command_mode_switch(
-  //     const std::vector<std::string>& start_interfaces,
-  //     const std::vector<std::string>& stop_interfaces) override;
-  // hardware_interface::return_type perform_command_mode_switch(
-  //     const std::vector<std::string>& start_interfaces,
-  //     const std::vector<std::string>& stop_interfaces) override;
+  hardware_interface::return_type prepare_command_mode_switch(
+      const std::vector<std::string>& start_interfaces,
+      const std::vector<std::string>& stop_interfaces) override;
+  hardware_interface::return_type perform_command_mode_switch(
+      const std::vector<std::string>& start_interfaces,
+      const std::vector<std::string>& stop_interfaces) override;
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
   std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
@@ -82,6 +84,7 @@ class FrankaMultiHardwareInterface : public hardware_interface::SystemInterface 
                                         const rclcpp::Duration& period) override;
   CallbackReturn on_init(const hardware_interface::HardwareInfo& info) override;
   static const size_t kNumberOfJoints = 7;
+  size_t robot_count_;
 
  private:
   std::shared_ptr<FrankaExecutor> executor_;
@@ -89,7 +92,7 @@ class FrankaMultiHardwareInterface : public hardware_interface::SystemInterface 
   std::array<std::string, 6> cartesian_velocity_command_names{"tx","ty","tz","omega_x","omega_y","omega_z"};
 
   std::map<std::string, ArmContainer> arms_;
-
+  ControlMode control_mode_;
   // Commands
 
   static rclcpp::Logger getLogger();
