@@ -24,6 +24,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * initialization and joint state broadcaster
     * Read/write interfaces
     * FrankaState broadcaster
+    * Dual joint impedance example controller
 
 ## Known issues
 * When panda_ros2 is started with the robot in error state, whatever command controller that is started in the launch file will not work even when the error recovery is triggered, before a different type of command controller (i.e. different interface, like position/velocity) is loaded first.
@@ -51,7 +52,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 * Investigating multiple arm control
     * <s>Initialization</s>
     * <s>Reading joint states</s>
-    * Broadcasting franka states
+    * <s>Broadcasting franka states</s>
     * Controllers for:
         * Joint-level stuff
         * Cartesian-level stuff
