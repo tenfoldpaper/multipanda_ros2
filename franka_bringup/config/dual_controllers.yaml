@@ -8,8 +8,8 @@ controller_manager:
       type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
     franka_right_robot_state_broadcaster:
       type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
-    #dual_joint_impedance_example_controller:
-    #  type: franka_example_controllers/DualJointImpedanceExampleController
+    dual_joint_impedance_example_controller:
+     type: franka_example_controllers/DualJointImpedanceExampleController
     
 franka_left_robot_state_broadcaster:
   ros__parameters:

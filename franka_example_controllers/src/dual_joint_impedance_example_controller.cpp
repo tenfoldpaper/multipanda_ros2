@@ -32,6 +32,7 @@ DualJointImpedanceExampleController::command_interface_configuration() const {
       config.names.push_back(arm_container_pair.first + "_joint" + std::to_string(i) + "/effort");
     }
   }
+
   return config;
 }
 
@@ -52,6 +53,7 @@ controller_interface::return_type DualJointImpedanceExampleController::update(
     const rclcpp::Time& /*time*/,
     const rclcpp::Duration& /*period*/) {
   updateJointStates();
+  size_t k = 0;
   for(auto& arm_container_pair : arms_){
     auto &arm = arm_container_pair.second;
     Vector7d q_goal = arm.initial_q_;
@@ -64,9 +66,10 @@ controller_interface::return_type DualJointImpedanceExampleController::update(
     arm.dq_filtered_ = (1 - kAlpha) * arm.dq_filtered_ + kAlpha * arm.dq_;
     Vector7d tau_d_calculated =
         arm.k_gains_.cwiseProduct(q_goal - arm.q_) + arm.d_gains_.cwiseProduct(-arm.dq_filtered_);
-    for (int i = 0; i < num_joints; ++i) {
-      //command_interfaces_[i].set_value(tau_d_calculated(i));
-      RCLCPP_INFO(get_node()->get_logger(), "%s", command_interfaces_[i].get_name().c_str());
+
+    for (int i = 0; i < num_joints; i++) {
+      command_interfaces_[k].set_value(tau_d_calculated(i));
+      k++; // BIG assumption: That the command interfaces are always in the same order
     }
   }
   return controller_interface::return_type::OK;
@@ -84,6 +87,7 @@ CallbackReturn DualJointImpedanceExampleController::on_init() {
     fprintf(stderr, "Exception thrown during init stage with message: %s \n", e.what());
     return CallbackReturn::ERROR;
   }
+  RCLCPP_INFO(get_node()->get_logger(), "Finished initializing dual joint impedance example controller");
   return CallbackReturn::SUCCESS;
 }
 
@@ -130,6 +134,7 @@ CallbackReturn DualJointImpedanceExampleController::on_configure(
     arm.dq_filtered_.setZero();
     i++;
   }
+  RCLCPP_INFO(get_node()->get_logger(), "Finished configuring dual joint impedance example controller");
   return CallbackReturn::SUCCESS;
 }
 
@@ -145,17 +150,29 @@ CallbackReturn DualJointImpedanceExampleController::on_activate(
 }
 
 void DualJointImpedanceExampleController::updateJointStates() {
+  
   for(auto& arm_container_pair : arms_){
     auto &arm = arm_container_pair.second;
-    for (auto i = 0; i < num_joints; ++i) {
+    size_t k = 0;
+    for (size_t i = 0; i < state_interfaces_.size(); i++) {
       const auto& position_interface = state_interfaces_.at(2 * i);
       const auto& velocity_interface = state_interfaces_.at(2 * i + 1);
+      if(position_interface.get_prefix_name().find(arm_container_pair.first) == std::string::npos || 
+         velocity_interface.get_prefix_name().find(arm_container_pair.first) == std::string::npos ){
+          // if either position or velocity interface does not contain the ID of the arm, skip
+          continue;
+      };
 
       assert(position_interface.get_interface_name() == "position");
       assert(velocity_interface.get_interface_name() == "velocity");
 
-      arm.q_(i) = position_interface.get_value();
-      arm.dq_(i) = velocity_interface.get_value();
+      arm.q_(k) = position_interface.get_value();
+      arm.dq_(k) = velocity_interface.get_value();
+
+      k++;
+      if(k == 7){
+        break;
+      }
     }
   }
 }
