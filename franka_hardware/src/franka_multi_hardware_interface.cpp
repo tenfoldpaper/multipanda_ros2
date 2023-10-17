@@ -98,6 +98,7 @@ CallbackReturn FrankaMultiHardwareInterface::on_init(const hardware_interface::H
       return CallbackReturn::ERROR;
     }
     auto &arm = arms_[robot_name];
+    state_pointers_.insert(std::make_pair(robot_name, &arm.hw_franka_robot_state_));
     arm.robot_name_ = robot_name;
   
     try {
@@ -186,7 +187,7 @@ std::vector<StateInterface> FrankaMultiHardwareInterface::export_state_interface
     state_interfaces.emplace_back(StateInterface(
         arm.robot_name_, k_robot_state_interface_name,
         reinterpret_cast<double*>(  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            &arm.hw_franka_robot_state_addr_)));
+            &state_pointers_[arm_container_pair.first])));
     state_interfaces.emplace_back(StateInterface(
         arm.robot_name_, k_robot_model_interface_name,
         reinterpret_cast<double*>(  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)

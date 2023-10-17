@@ -61,7 +61,6 @@ struct ArmContainer {
   std::array<double, 16> hw_cartesian_velocities_;
 
   franka::RobotState hw_franka_robot_state_;
-  franka::RobotState* hw_franka_robot_state_addr_ = &hw_franka_robot_state_;
   Model* hw_franka_model_ptr_ = nullptr;
 
 };
@@ -92,6 +91,8 @@ class FrankaMultiHardwareInterface : public hardware_interface::SystemInterface 
   std::array<std::string, 6> cartesian_velocity_command_names{"tx","ty","tz","omega_x","omega_y","omega_z"};
 
   std::map<std::string, ArmContainer> arms_;
+  std::map<std::string, franka::RobotState*> state_pointers_;
+
   ControlMode control_mode_;
   // Commands
 
