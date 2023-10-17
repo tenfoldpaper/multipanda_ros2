@@ -140,13 +140,20 @@ def generate_launch_description():
             arguments=['joint_state_broadcaster'],
             output='screen',
         ),
-        # Node(
-        #     package='controller_manager',
-        #     executable='spawner',
-        #     arguments=['franka_robot_state_broadcaster'],
-        #     output='screen',
-        #     condition=UnlessCondition(use_fake_hardware),
-        # ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['franka_left_robot_state_broadcaster'],
+            output='screen',
+            condition=UnlessCondition(use_fake_hardware),
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['franka_right_robot_state_broadcaster'],
+            output='screen',
+            condition=UnlessCondition(use_fake_hardware),
+        ),
         # IncludeLaunchDescription(
         #     PythonLaunchDescriptionSource([PathJoinSubstitution(
         #         [FindPackageShare('franka_gripper'), 'launch', 'gripper.launch.py'])]),
