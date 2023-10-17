@@ -1,5 +1,9 @@
 # Changelog
 
+## Added 17.10.23
+* Added `write` interface
+* Fixed multi-arm hardware interface to work with Franka state broadcaster
+* Parametrized `franka_robot_state`'s `robot_name_`
 ## Added 16.10.23
 * Added basic multi-arm hardware interface. Currently, initialization and `read()` function work. 
 

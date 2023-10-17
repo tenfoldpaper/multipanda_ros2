@@ -13,13 +13,17 @@ The repo is still in active development, and I will try to address any missing f
 The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].
 
 ## Working (not thoroughly tested) features
-* FrankaState broadcaster
-* All joint-level control interfaces (torque, position, velocity); see their respective example controllers.
-* Cartesian velocity control interface and an example controller
-* Controllers are swappable using rqt_controller_manager
-* Runtime franka::ControlException error recovery via `~/service_server/error_recovery`
-* Runtime internal parameter setter services much like what is offered in the updated `franka_ros2`
-* Multi-arm initialization and joint state broadcaster
+* Single arm:
+    * FrankaState broadcaster
+    * All joint-level control interfaces (torque, position, velocity); see their respective example controllers.
+    * Cartesian velocity control interface and an example controller
+    * Controllers are swappable using rqt_controller_manager
+    * Runtime franka::ControlException error recovery via `~/service_server/error_recovery`
+    * Runtime internal parameter setter services much like what is offered in the updated `franka_ros2`
+* Multi arm:
+    * initialization and joint state broadcaster
+    * Read/write interfaces
+    * FrankaState broadcaster
 
 ## Known issues
 * When panda_ros2 is started with the robot in error state, whatever command controller that is started in the launch file will not work even when the error recovery is triggered, before a different type of command controller (i.e. different interface, like position/velocity) is loaded first.
