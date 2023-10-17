@@ -287,41 +287,6 @@ hardware_interface::return_type FrankaHardwareInterface::perform_command_mode_sw
   return hardware_interface::return_type::OK;
 }
 
-bool all_of_element_has_string(std::vector<std::string> vec, std::string content){
-  if(vec.size() == 0){
-    return false;
-  }
-  return std::all_of(
-        vec.begin(), vec.end(),
-        [&](std::string elem) { return elem.find(content) != std::string::npos; });
-  
-}
-// bool all_of_element_are_same(std::vector<std::string> vec){
-//   // Checks that all the elements are identical
-//   return std::all_of(
-//         vec.begin()+1, vec.end(),
-//         [&](std::string elem) { return vec[0] == elem; });
-// }
-int check_command_mode_type(std::vector<std::string> interfaces){
-  if(interfaces.size() != 0){
-    bool is_cartesian = all_of_element_has_string(interfaces, "ee_cartesian");
-    bool is_joint = all_of_element_has_string(interfaces, "joint");
-    if(!(is_cartesian || is_joint)){
-      return -1;
-    }
-    if(is_joint){
-      return 1;
-    }
-    if(is_cartesian){
-      return 2;
-    }
-  }
-  else{
-    return 0;
-  }
-  return -1;
-}
-
 hardware_interface::return_type FrankaHardwareInterface::prepare_command_mode_switch(
     const std::vector<std::string>& start_interfaces,
     const std::vector<std::string>& stop_interfaces) {

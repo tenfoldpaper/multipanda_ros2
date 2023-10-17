@@ -30,6 +30,7 @@ add_library(franka_hardware
         src/franka_error_recovery_service_server.cpp
         src/franka_executor.cpp
         src/control_mode.cpp
+        src/helper_functions.cpp
 )
 
 target_include_directories(
