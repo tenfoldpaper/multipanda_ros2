@@ -162,7 +162,7 @@ std::vector<StateInterface> FrankaMultiHardwareInterface::export_state_interface
   std::vector<StateInterface> state_interfaces;
   for (auto i = 0U; i < info_.joints.size(); i++) {
     
-    std::cout << get_ns(info_.joints[i].name) << std::endl;
+    // std::cout << get_ns(info_.joints[i].name) << std::endl;
     state_interfaces.emplace_back(StateInterface(
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &arms_[get_ns(info_.joints[i].name)].hw_positions_.at(get_joint_no(info_.joints[i].name))));
     state_interfaces.emplace_back(StateInterface(
@@ -200,10 +200,10 @@ std::vector<StateInterface> FrankaMultiHardwareInterface::export_state_interface
 std::vector<CommandInterface> FrankaMultiHardwareInterface::export_command_interfaces() {
   std::vector<CommandInterface> command_interfaces;
   command_interfaces.reserve(info_.joints.size());
-  RCLCPP_INFO(getLogger(), "%ld", info_.joints.size());
+  //RCLCPP_INFO(getLogger(), "%ld", info_.joints.size());
 
   for (auto i = 0U; i < info_.joints.size(); i++) {
-    RCLCPP_INFO(getLogger(), "%s", info_.joints[i].name.c_str());
+    //RCLCPP_INFO(getLogger(), "%s", info_.joints[i].name.c_str());
 
     command_interfaces.emplace_back(CommandInterface( // JOINT EFFORT
         info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &arms_[get_ns(info_.joints[i].name)].hw_commands_joint_effort_.at(get_joint_no(info_.joints[i].name))));
@@ -235,7 +235,6 @@ CallbackReturn FrankaMultiHardwareInterface::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   for(auto& arm_container_pair : arms_){
     auto &arm = arm_container_pair.second;
-    RCLCPP_INFO(getLogger(), "key: %s", arm_container_pair.first.c_str());
 
     arm.robot_->initializeContinuousReading();
     arm.hw_commands_joint_effort_.fill(0);
@@ -496,6 +495,7 @@ hardware_interface::return_type FrankaMultiHardwareInterface::perform_command_mo
     const std::vector<std::string>& /*stop_interfaces*/) {
 
   RCLCPP_INFO(this->getLogger(),"Performing command mode switch");
+  std::cout << "Current mode: " << control_mode_ << std::endl;
   for(auto& arm_container_pair : arms_){
     auto& arm = arm_container_pair.second;
     if(control_mode_ == ControlMode::None){

@@ -66,10 +66,10 @@ std::vector<StateInterface> FrankaHardwareInterface::export_state_interfaces() {
 std::vector<CommandInterface> FrankaHardwareInterface::export_command_interfaces() {
   std::vector<CommandInterface> command_interfaces;
   command_interfaces.reserve(info_.joints.size());
-  RCLCPP_INFO(getLogger(), "%ld", info_.joints.size());
+  //RCLCPP_INFO(getLogger(), "%ld", info_.joints.size());
 
   for (auto i = 0U; i < info_.joints.size(); i++) {
-    RCLCPP_INFO(getLogger(), "%s", info_.joints[i].name.c_str());
+    //RCLCPP_INFO(getLogger(), "%s", info_.joints[i].name.c_str());
     command_interfaces.emplace_back(CommandInterface( // JOINT EFFORT
         info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_joint_effort.at(i)));
     command_interfaces.emplace_back(CommandInterface( // JOINT POSITION
@@ -258,6 +258,7 @@ hardware_interface::return_type FrankaHardwareInterface::perform_command_mode_sw
     const std::vector<std::string>& /*stop_interfaces*/) {
 
   RCLCPP_INFO(this->getLogger(),"Performing command mode switch");
+  std::cout << "Current mode: " << control_mode_ << std::endl;
   if(control_mode_ == ControlMode::None){
     robot_->stopRobot();
     robot_->initializeContinuousReading();
