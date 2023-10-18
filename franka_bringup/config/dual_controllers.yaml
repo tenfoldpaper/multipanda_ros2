@@ -9,7 +9,9 @@ controller_manager:
     franka_right_robot_state_broadcaster:
       type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
     dual_joint_impedance_example_controller:
-     type: franka_example_controllers/DualJointImpedanceExampleController
+      type: franka_example_controllers/DualJointImpedanceExampleController
+    dual_joint_velocity_example_controller:
+      type: franka_example_controllers/DualJointVelocityExampleController
     
 franka_left_robot_state_broadcaster:
   ros__parameters:
@@ -60,4 +62,9 @@ dual_joint_impedance_example_controller:
         - 1.0
         - 0.5
     
-    
+dual_joint_velocity_example_controller:
+  ros__parameters:
+    arm_1:
+      arm_id: left
+    arm_2:
+      arm_id: right

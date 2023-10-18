@@ -32,7 +32,8 @@ add_library(
         src/joint_velocity_example_controller.cpp
         src/cartesian_velocity_example_controller.cpp
         src/motion_generator.cpp
-        src/dual_joint_impedance_example_controller.cpp)
+        src/dual_joint_impedance_example_controller.cpp
+        src/dual_joint_velocity_example_controller.cpp)
 target_include_directories(
         ${PROJECT_NAME}
         PUBLIC
