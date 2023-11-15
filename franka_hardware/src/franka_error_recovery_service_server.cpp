@@ -28,9 +28,16 @@ void FrankaErrorRecoveryServiceServer::triggerAutomaticRecovery(const franka_msg
     }
     else{
         try{
+
             this->robot_->doAutomaticErrorRecovery();
             this->robot_->setError(false);
+            this->robot_->stopRobot();
+            this->robot_->initializeContinuousReading();
             RCLCPP_INFO(this->get_logger(), "Successfully recovered from error.");
+            if(!this->robot_->getInitParamsSet()){
+                RCLCPP_INFO(this->get_logger(), "Setting default params");
+                this->robot_->setDefaultParams();
+            }
             response->success = true;
         }
         catch(franka::ControlException& e){
