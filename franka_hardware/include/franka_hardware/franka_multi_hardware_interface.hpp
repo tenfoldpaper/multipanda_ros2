@@ -34,11 +34,38 @@
 #include "franka_hardware/franka_param_service_server.hpp"
 #include "franka_hardware/helper_functions.hpp"
 
+
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 namespace franka_hardware {
 
-class FrankaHardwareInterface : public hardware_interface::SystemInterface {
+struct ArmContainer {
+  std::string robot_ip_;
+  std::string robot_name_;
+  std::shared_ptr<Robot> robot_;
+  std::shared_ptr<FrankaErrorRecoveryServiceServer> error_recovery_service_node_;
+  std::shared_ptr<FrankaParamServiceServer> param_service_node_;
+
+  std::array<double, 7> hw_commands_joint_effort_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 7> hw_commands_joint_position_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 7> hw_commands_joint_velocity_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 16> hw_commands_cartesian_position_;
+  std::array<double, 6> hw_commands_cartesian_velocity_;
+
+  // States
+  ControlMode control_mode_ = ControlMode::None;
+  std::array<double, 7> hw_positions_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 7> hw_velocities_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 7> hw_efforts_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 16> hw_cartesian_positions_;
+  std::array<double, 16> hw_cartesian_velocities_;
+
+  franka::RobotState hw_franka_robot_state_;
+  Model* hw_franka_model_ptr_ = nullptr;
+
+};
+
+class FrankaMultiHardwareInterface : public hardware_interface::SystemInterface {
  public:
   hardware_interface::return_type prepare_command_mode_switch(
       const std::vector<std::string>& start_interfaces,
@@ -56,42 +83,21 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
                                         const rclcpp::Duration& period) override;
   CallbackReturn on_init(const hardware_interface::HardwareInfo& info) override;
   static const size_t kNumberOfJoints = 7;
+  size_t robot_count_;
 
  private:
-  std::shared_ptr<Robot> robot_;
-  std::shared_ptr<FrankaErrorRecoveryServiceServer> error_recovery_service_node_;
-  std::shared_ptr<FrankaParamServiceServer> param_service_node_;
   std::shared_ptr<FrankaExecutor> executor_;
-
-
-  // Commands
-
   std::array<std::string, 16> cartesian_matrix_names{"00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15"};
   std::array<std::string, 6> cartesian_velocity_command_names{"tx","ty","tz","omega_x","omega_y","omega_z"};
-  std::array<double, kNumberOfJoints> hw_commands_joint_effort{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, kNumberOfJoints> hw_commands_joint_position{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, kNumberOfJoints> hw_commands_joint_velocity{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, 16> hw_commands_cartesian_position;
-  std::array<double, 6> hw_commands_cartesian_velocity;
- 
-  ControlMode control_mode_ = ControlMode::None;
-  // States
-  std::array<double, kNumberOfJoints> hw_positions_{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, kNumberOfJoints> hw_velocities_{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, kNumberOfJoints> hw_efforts_{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, 16> hw_cartesian_positions_;
-  std::array<double, 16> hw_cartesian_velocities_;
 
-  franka::RobotState hw_franka_robot_state_;
-  franka::RobotState* hw_franka_robot_state_addr_ = &hw_franka_robot_state_;
-  Model* hw_franka_model_ptr_ = nullptr;
-  
-  bool effort_interface_claimed_ = false;
-  bool effort_interface_running_ = false;
+  std::map<std::string, ArmContainer> arms_;
+  std::map<std::string, franka::RobotState*> state_pointers_;
+
+  ControlMode control_mode_;
+  // Commands
 
   static rclcpp::Logger getLogger();
 
-  const std::string k_robot_name{"panda"};
   const std::string k_robot_state_interface_name{"robot_state"};
   const std::string k_robot_model_interface_name{"robot_model"};
 };

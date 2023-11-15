@@ -28,7 +28,7 @@ namespace franka_semantic_components {
 class FrankaRobotState
     : public semantic_components::SemanticComponentInterface<franka_msgs::msg::FrankaState> {
  public:
-  explicit FrankaRobotState(const std::string& name);
+  explicit FrankaRobotState(const std::string& name, const std::string& robot_name);
 
   virtual ~FrankaRobotState() = default;
 
@@ -42,7 +42,7 @@ class FrankaRobotState
   franka::RobotState* robot_state_ptr;
 
  private:
-  const std::string robot_name_{"panda"};
+  std::string robot_name_{"panda"};
   const std::string state_interface_name_{"robot_state"};
 };
 

@@ -35,4 +35,17 @@
             Dummy cartesian velocity controller.
         </description>
     </class>
+
+    <class name="franka_example_controllers/DualJointImpedanceExampleController"
+           type="franka_example_controllers::DualJointImpedanceExampleController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            Dummy dual joint impedance controller.
+        </description>
+    </class>
+    <class name="franka_example_controllers/DualJointVelocityExampleController"
+           type="franka_example_controllers::DualJointVelocityExampleController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            Dummy dual joint impedance controller.
+        </description>
+    </class>
 </library>

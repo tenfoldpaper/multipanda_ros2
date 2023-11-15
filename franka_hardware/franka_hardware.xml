@@ -7,4 +7,13 @@
             Hardware interface for Franka Emika research robots
         </description>
     </class>
+
+    <class name="franka_hardware/FrankaMultiHardwareInterface"
+           type="franka_hardware::FrankaMultiHardwareInterface"
+           base_class_type="hardware_interface::SystemInterface">
+
+        <description>
+            Hardware interface for multiple Franka Emika research robots
+        </description>
+    </class>
 </library>

@@ -229,6 +229,11 @@ class Robot {
   virtual void setFullCollisionBehavior(
       const franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr& req);
 
+  void setDefaultParams();
+  bool getInitParamsSet(){
+    return init_params_set;
+  }
+
 //##############################//
 // Internal param setters end   //
 //##############################//
@@ -240,10 +245,12 @@ class Robot {
   std::unique_ptr<Model> franka_hardware_model_;
   std::mutex read_mutex_;
   std::mutex write_mutex_;
+  std::mutex robot_mutex_;
   std::atomic_bool finish_{false};
   bool stopped_ = true;
   std::mutex error_mutex_;
   bool has_error_ = false;
+  bool init_params_set = false;
   franka::RobotState current_state_;
   std::array<double, 7> tau_command_;
   std::array<double, 7> joint_position_command_ = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};

@@ -34,20 +34,26 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
   }
   try{
     robot_ = std::make_unique<franka::Robot>(robot_ip, rt_config);
+    setDefaultParams();
   }
   catch(franka::ControlException& e){
-    RCLCPP_INFO(logger, "Robot is in error state! Please trigger automatic recovery first.");
+    RCLCPP_ERROR(logger, "Robot is in control error state! Please trigger automatic recovery first.");
+    RCLCPP_ERROR(logger, "Error: %s\nType: %s", e.what(), typeid(e).name());
     setError(true);
+  }
+  catch(franka::CommandException& e){
+    RCLCPP_ERROR(logger, "Robot is in command error state! Please trigger automatic recovery first.");
+    RCLCPP_ERROR(logger, "Error: %s\nType: %s", e.what(), typeid(e).name());
+    setError(true);
+
+  }
+  catch(std::exception& e){
+    RCLCPP_ERROR(logger, "Unrecoverable error.\nError:%s\nType: %s", e.what(), typeid(e).name());
+    throw franka::Exception("ERROR");
   }
   // will need a boolean to set this for the first time;
   // after the necessary runtime services, this part can be removed.
-  robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
-  robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
-  robot_->setCollisionBehavior(
-        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
-        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
-        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
-        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
+  
   tau_command_.fill({});
   joint_velocity_command_.fill({});
   cartesian_position_command_.fill({});
@@ -94,6 +100,7 @@ void Robot::stopRobot() {
 void Robot::initializeTorqueControl() {
   assert(isStopped());
   stopped_ = false;
+  std::cout << "Initializing joint torque control" << std::endl;
   const auto kTorqueControl = [this]() {
     try{
       robot_->control(
@@ -120,6 +127,7 @@ void Robot::initializeTorqueControl() {
 void Robot::initializeJointPositionControl() {
   assert(isStopped());
   stopped_ = false;
+  std::cout << "Initializing joint position control" << std::endl;
   const auto kJointPositionControl = [this]() {
     try{
 
@@ -147,6 +155,7 @@ void Robot::initializeJointPositionControl() {
 void Robot::initializeJointVelocityControl() {
   assert(isStopped());
   stopped_ = false;
+  std::cout << "Initializing joint velocity control" << std::endl;
   const auto kJointVelocityControl = [this]() {
     try{
       robot_->control(
@@ -173,6 +182,7 @@ void Robot::initializeJointVelocityControl() {
 void Robot::initializeCartesianVelocityControl() {
   assert(isStopped());
   stopped_ = false;
+  std::cout << "Initializing cartesian velocity control" << std::endl;
   const auto kCartesianVelocityControl = [this]() {
     try{
       robot_->control(
@@ -198,6 +208,7 @@ void Robot::initializeCartesianVelocityControl() {
 void Robot::initializeCartesianPositionControl() {
   assert(isStopped());
   stopped_ = false;
+  std::cout << "Initializing cartesian position control" << std::endl;
   const auto kCartesianPositionControl = [this]() {
     try{
       robot_->control(
@@ -221,18 +232,50 @@ void Robot::initializeCartesianPositionControl() {
 }
 
 void Robot::initializeContinuousReading() {
+  std::cout << "Initializing continuous reading" << std::endl;
   assert(isStopped());
   stopped_ = false;
   const auto kReading = [this]() {
-    robot_->read([this](const franka::RobotState& state) {
-      {
-        std::lock_guard<std::mutex> lock(read_mutex_);
-        current_state_ = state;
-      }
-      return !finish_;
-    });
+    try{
+      robot_->read([this](const franka::RobotState& state) {
+        {
+          std::lock_guard<std::mutex> lock(read_mutex_);
+          current_state_ = state;
+        }
+        std::cout << "normal: " << current_state_.q[6] << " " << current_state_.robot_mode << std::endl;
+        if(current_state_.robot_mode == franka::RobotMode::kReflex){
+          throw franka::ControlException("Reflex!");
+        }
+        return !finish_;
+      });
+
+    }
+    catch(franka::ControlException& e){
+      std::cout <<  e.what() << std::endl;
+      setError(true);
+    }
   };
-  control_thread_ = std::make_unique<std::thread>(kReading);
+  const auto kErrorReading = [this](){
+    while(this->hasError()){
+      std::lock_guard<std::mutex> lock(read_mutex_);
+      current_state_ = robot_->readOnce();
+      std::cout << "error: " << current_state_.q[6] << " " << current_state_.robot_mode  << std::endl;
+
+      if(this->hasError() && current_state_.robot_mode == franka::RobotMode::kIdle){
+        std::cout << " ERROR SET TO FALSE " << std::endl;
+        this->setError(false);
+      }
+    }
+    return !finish_;
+  };
+  if(!hasError()){
+    std::cout << "NORMAL READING " << std::endl;
+    control_thread_ = std::make_unique<std::thread>(kReading);
+  }
+  else{
+    std::cout << "ERROR READING " << std::endl;
+    control_thread_ = std::make_unique<std::thread>(kErrorReading);
+  }
 }
 
 
@@ -345,6 +388,17 @@ void Robot::setFullCollisionBehavior(
       lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
       lower_force_thresholds_acceleration, upper_force_thresholds_acceleration,
       lower_force_thresholds_nominal, upper_force_thresholds_nominal);
+}
+
+void Robot::setDefaultParams(){
+  robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
+  robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
+  robot_->setCollisionBehavior(
+        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
+        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
+  init_params_set = true;
 }
 
 //##############################//

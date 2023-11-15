@@ -24,11 +24,13 @@ find_package(Franka REQUIRED) # Franka_DIR will provide the path to the libfrank
 add_library(franka_hardware
         SHARED
         src/franka_hardware_interface.cpp
+        src/franka_multi_hardware_interface.cpp
         src/robot.cpp
         src/franka_param_service_server.cpp
         src/franka_error_recovery_service_server.cpp
         src/franka_executor.cpp
         src/control_mode.cpp
+        src/helper_functions.cpp
 )
 
 target_include_directories(

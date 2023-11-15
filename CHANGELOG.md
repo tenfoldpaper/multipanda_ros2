@@ -1,5 +1,17 @@
 # Changelog
 
+## Added 18.10.23
+* Added working `dual_joint_velocity_example_controller`
+
+## Added 17.10.23
+* Added `write` interface
+* Fixed multi-arm hardware interface to work with Franka state broadcaster
+* Parametrized `franka_robot_state`'s `robot_name_`
+* Added working `dual_joint_impedance_example_controller`
+
+## Added 16.10.23
+* Added basic multi-arm hardware interface. Currently, initialization and `read()` function work. 
+
 ## Added 12.10.23
 * Added param setter services to allow run-time changing of stiffness, collision behavior, load, frames, etc.
 

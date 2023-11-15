@@ -3,8 +3,8 @@
 namespace franka_hardware{
 
 FrankaErrorRecoveryServiceServer::FrankaErrorRecoveryServiceServer(const rclcpp::NodeOptions & options,
-                                                                    std::shared_ptr<Robot> robot)
-    : rclcpp::Node("error_recovery_service_server", options), robot_(std::move(robot))
+                                                                    std::shared_ptr<Robot> robot, std::string prefix)
+    : rclcpp::Node(prefix+"error_recovery_service_server", options), robot_(std::move(robot))
 {
     error_recovery_service_ = create_service<franka_msgs::srv::ErrorRecovery>(
         "~/error_recovery",
@@ -28,9 +28,16 @@ void FrankaErrorRecoveryServiceServer::triggerAutomaticRecovery(const franka_msg
     }
     else{
         try{
+
             this->robot_->doAutomaticErrorRecovery();
             this->robot_->setError(false);
+            this->robot_->stopRobot();
+            this->robot_->initializeContinuousReading();
             RCLCPP_INFO(this->get_logger(), "Successfully recovered from error.");
+            if(!this->robot_->getInitParamsSet()){
+                RCLCPP_INFO(this->get_logger(), "Setting default params");
+                this->robot_->setDefaultParams();
+            }
             response->success = true;
         }
         catch(franka::ControlException& e){

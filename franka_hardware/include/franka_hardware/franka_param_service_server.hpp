@@ -36,7 +36,7 @@ namespace franka_hardware {
 
 class FrankaParamServiceServer : public rclcpp::Node {
  public:
-  FrankaParamServiceServer(const rclcpp::NodeOptions& options, std::shared_ptr<Robot> robot);
+  FrankaParamServiceServer(const rclcpp::NodeOptions& options, std::shared_ptr<Robot> robot, std::string prefix="");
 
  private:
   /**
