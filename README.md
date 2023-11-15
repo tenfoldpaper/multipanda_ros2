@@ -27,10 +27,9 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * Dual joint impedance & velocity example controllers
 
 ## Known issues
-* When panda_ros2 is started with the robot in error state, whatever command controller that is started in the launch file will not work even when the error recovery is triggered, before a different type of command controller (i.e. different interface, like position/velocity) is loaded first.
-* After error recovery, the command controller will not continue to publish the data. Reloading the controller is necessary.
+* After error recovery, the controller needs to be reloaded, since the respective control function of the robot is stopped.
 * Joint position controller might cause some bad motor behaviors. Suggest using torque or velocity for now.
-* When in error state/after error recovery, robot state will not update.
+
 
 ## Priority list
 * <s>Publishing FrankaState</s>
