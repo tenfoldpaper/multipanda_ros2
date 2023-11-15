@@ -150,15 +150,20 @@ hardware_interface::return_type FrankaHardwareInterface::write(const rclcpp::Tim
     return hardware_interface::return_type::ERROR;
   }
 
+
+  if(robot_->hasError()){
+    //RCLCPP_INFO(getLogger(), "write error");
+    // as soon as an error is returned, it prevents read/write from running in the control node loop.
+    // Need a way to make it recover from it...
+    //return hardware_interface::return_type::ERROR; 
+    return hardware_interface::return_type::OK;
+  }
   robot_->write(hw_commands_joint_effort, 
                 hw_commands_joint_position, 
                 hw_commands_joint_velocity, 
                 hw_commands_cartesian_position, 
                 hw_commands_cartesian_velocity);
-
-  if(robot_->hasError()){
-    return hardware_interface::return_type::ERROR;
-  }
+  //RCLCPP_INFO(getLogger(), "write end");
   return hardware_interface::return_type::OK;
 }
 
