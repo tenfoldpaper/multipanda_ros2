@@ -1,5 +1,8 @@
 # Changelog
 
+## Added 15.11.23
+* Fixed the issue where error recovery was not working at all. This is a monkey patch; it does not use `ros2_control`'s error return type handling at all.
+
 ## Added 18.10.23
 * Added working `dual_joint_velocity_example_controller`
 
