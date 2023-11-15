@@ -45,7 +45,6 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
     RCLCPP_ERROR(logger, "Robot is in command error state! Please trigger automatic recovery first.");
     RCLCPP_ERROR(logger, "Error: %s\nType: %s", e.what(), typeid(e).name());
     setError(true);
-
   }
   catch(std::exception& e){
     RCLCPP_ERROR(logger, "Unrecoverable error.\nError:%s\nType: %s", e.what(), typeid(e).name());
@@ -81,6 +80,14 @@ void Robot::write(const std::array<double, 7>& efforts,
 
 franka::RobotState Robot::read() {
   std::lock_guard<std::mutex> lock(read_mutex_);
+  if(hasError() || isStopped()){ // either the robot is in error, or it doesn't have an active control/read loop running
+    try{
+      current_state_ = robot_->readOnce();
+    }
+    catch(franka::InvalidOperationException& e){
+      std::cout << "Invalid Operation Exception: " << e.what() << std::endl;
+    }
+  }
   return {current_state_};
 }
 franka_hardware::Model* Robot::getModel() {
@@ -93,6 +100,7 @@ void Robot::stopRobot() {
     control_thread_->join();
     finish_ = false;
     stopped_ = true;
+    std::cout << "Stopping" << std::endl;
   }
 }
 
@@ -242,40 +250,26 @@ void Robot::initializeContinuousReading() {
           std::lock_guard<std::mutex> lock(read_mutex_);
           current_state_ = state;
         }
-        std::cout << "normal: " << current_state_.q[6] << " " << current_state_.robot_mode << std::endl;
         if(current_state_.robot_mode == franka::RobotMode::kReflex){
+          this->has_error_ = true;
           throw franka::ControlException("Reflex!");
         }
         return !finish_;
-      });
+      }); // robot_->read()
 
     }
     catch(franka::ControlException& e){
-      std::cout <<  e.what() << std::endl;
+      std::cout << "Control Exception: " << e.what() << std::endl;
       setError(true);
     }
-  };
-  const auto kErrorReading = [this](){
-    while(this->hasError()){
-      std::lock_guard<std::mutex> lock(read_mutex_);
-      current_state_ = robot_->readOnce();
-      std::cout << "error: " << current_state_.q[6] << " " << current_state_.robot_mode  << std::endl;
-
-      if(this->hasError() && current_state_.robot_mode == franka::RobotMode::kIdle){
-        std::cout << " ERROR SET TO FALSE " << std::endl;
-        this->setError(false);
-      }
+    catch(franka::InvalidOperationException& e){
+      std::cout << "Invalid Operation Exception: " << e.what() << std::endl;
+      setError(true);
     }
-    return !finish_;
+    
+    return;
   };
-  if(!hasError()){
-    std::cout << "NORMAL READING " << std::endl;
-    control_thread_ = std::make_unique<std::thread>(kReading);
-  }
-  else{
-    std::cout << "ERROR READING " << std::endl;
-    control_thread_ = std::make_unique<std::thread>(kErrorReading);
-  }
+  control_thread_ = std::make_unique<std::thread>(kReading);
 }
 
 

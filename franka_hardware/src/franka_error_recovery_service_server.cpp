@@ -32,7 +32,7 @@ void FrankaErrorRecoveryServiceServer::triggerAutomaticRecovery(const franka_msg
             this->robot_->doAutomaticErrorRecovery();
             this->robot_->setError(false);
             this->robot_->stopRobot();
-            this->robot_->initializeContinuousReading();
+            // this->robot_->initializeContinuousReading(); triggering this causes an error. Better just make it manual.
             RCLCPP_INFO(this->get_logger(), "Successfully recovered from error.");
             if(!this->robot_->getInitParamsSet()){
                 RCLCPP_INFO(this->get_logger(), "Setting default params");
