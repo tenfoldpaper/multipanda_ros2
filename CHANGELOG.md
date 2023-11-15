@@ -1,5 +1,8 @@
 # Changelog
 
+## Added 18.10.23
+* Added working `dual_joint_velocity_example_controller`
+
 ## Added 17.10.23
 * Added `write` interface
 * Fixed multi-arm hardware interface to work with Franka state broadcaster
