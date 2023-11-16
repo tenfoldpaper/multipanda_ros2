@@ -301,15 +301,15 @@ hardware_interface::return_type FrankaMultiHardwareInterface::write(const rclcpp
       return hardware_interface::return_type::ERROR;
     }
 
+    if(arm.robot_->hasError()){
+      return hardware_interface::return_type::OK;
+    }
     arm.robot_->write(arm.hw_commands_joint_effort_, 
                       arm.hw_commands_joint_position_, 
                       arm.hw_commands_joint_velocity_, 
                       arm.hw_commands_cartesian_position_, 
                       arm.hw_commands_cartesian_velocity_);
 
-    if(arm.robot_->hasError()){
-      return hardware_interface::return_type::ERROR;
-    }
   }
   return hardware_interface::return_type::OK;
 }
