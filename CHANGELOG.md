@@ -1,5 +1,8 @@
 # Changelog
 
+## Added 16.11.23
+* Implemented the error recovery fix from 15.11.23 to multi-arm
+
 ## Added 15.11.23
 * Fixed the issue where error recovery was not working at all. This is a monkey patch; it does not use `ros2_control`'s error return type handling at all.
 

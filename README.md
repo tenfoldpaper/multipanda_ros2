@@ -5,7 +5,7 @@ Franka Emika has dropped software support for robots older than FR3, which leave
 
 This repository attempts to remedy that somewhat, by bringing existing features from franka_ros over to ROS2 specifically for the Panda robots.
 
-As of 12.10.23, almost all single-robot `franka_ros` features have been migrated, including different controller interfaces, error recovery, and runtime parameter setters.
+As of 16.11.23, almost all single-robot `franka_ros` features have been migrated, including different controller interfaces, error recovery, and runtime parameter setters. Multi-arm support is also available via `franka_multi_hardware_interface`, launched via `dual_franka_launch.py`.
 
 The repo is still in active development, and I will try to address any missing features or bugs as soon as possible.
 
@@ -15,8 +15,8 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 ## Working (not thoroughly tested) features
 * Single arm:
     * FrankaState broadcaster
-    * All joint-level control interfaces (torque, position, velocity); see their respective example controllers.
-    * Cartesian velocity control interface and an example controller
+    * All control interfaces (torque, position, velocity, Cartesian).
+    * Example controllers for all interfaces
     * Controllers are swappable using rqt_controller_manager
     * Runtime franka::ControlException error recovery via `~/service_server/error_recovery`
     * Runtime internal parameter setter services much like what is offered in the updated `franka_ros2`
@@ -24,6 +24,8 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * initialization and joint state broadcaster
     * Read/write interfaces
     * FrankaState broadcaster
+    * Swappable controllers
+    * Error recovery and parameter setters
     * Dual joint impedance & velocity example controllers
 
 ## Known issues
@@ -58,6 +60,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
         * Cartesian-level stuff
     * Splitting all broadcasters into its own nodes
     * Cleaning up parametrization
+* Test out gripper
 * Make reusable impedance controllers with proper subscribers for general use
 * Add extensive tutorials!
 
