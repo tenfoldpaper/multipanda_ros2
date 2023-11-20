@@ -33,7 +33,8 @@ add_executable(franka_control2_node src/franka_control2_node.cpp)
 ament_target_dependencies(franka_control2_node 
   controller_manager
   Franka
-  franka_msgs)
+  franka_msgs
+  realtime_tools)
   
 target_include_directories(franka_control2_node
   PRIVATE
