@@ -80,7 +80,9 @@ CallbackReturn FrankaMultiHardwareInterface::on_init(const hardware_interface::H
                    hardware_interface::HW_IF_EFFORT);
     }
   }
-
+  // only one executor for the class!
+  executor_ = std::make_shared<FrankaExecutor>();
+  
   for(size_t i = 1; i <= robot_count_; i++){
     // Setup arm container
     std::string suffix = "_" + std::to_string(i);
@@ -120,7 +122,7 @@ CallbackReturn FrankaMultiHardwareInterface::on_init(const hardware_interface::H
     // Start the service nodes
     arm.error_recovery_service_node_ = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), arm.robot_, robot_name + "_");
     arm.param_service_node_ = std::make_shared<FrankaParamServiceServer>(rclcpp::NodeOptions(), arm.robot_, robot_name + "_");
-    executor_ = std::make_shared<FrankaExecutor>();
+    
     executor_->add_node(arm.error_recovery_service_node_);
     executor_->add_node(arm.param_service_node_);
     
