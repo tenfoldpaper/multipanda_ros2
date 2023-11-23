@@ -94,8 +94,8 @@ def generate_launch_description():
                  'rate': 30}],
         ),
         Node(
-            package='controller_manager',
-            executable='ros2_control_node',
+            package='franka_control2',
+            executable='franka_control2_node',
             parameters=[{'robot_description': robot_description}, franka_controllers],
             remappings=[('joint_states', 'franka/joint_states')],
             output={
