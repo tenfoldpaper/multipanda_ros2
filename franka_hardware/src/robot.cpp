@@ -83,6 +83,9 @@ franka::RobotState Robot::read() {
   if(hasError() || isStopped()){ // either the robot is in error, or it doesn't have an active control/read loop running
     try{
       current_state_ = robot_->readOnce();
+      if(hasError()){
+        stopRobot();
+      }
     }
     catch(franka::InvalidOperationException& e){
       std::cout << "Invalid Operation Exception: " << e.what() << std::endl;
@@ -98,6 +101,7 @@ void Robot::stopRobot() {
   if (!stopped_) {
     finish_ = true;
     control_thread_->join();
+    robot_->stop();
     finish_ = false;
     stopped_ = true;
     std::cout << "Stopping" << std::endl;

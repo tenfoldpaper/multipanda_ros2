@@ -38,6 +38,28 @@ void FrankaErrorRecoveryServiceServer::triggerAutomaticRecovery(const franka_msg
                 RCLCPP_INFO(this->get_logger(), "Setting default params");
                 this->robot_->setDefaultParams();
             }
+            auto current_cm = robot_->getControlMode();
+            RCLCPP_INFO_STREAM(this->get_logger(), "Restarting the control loop. Current cm: " << current_cm);
+
+            std::lock_guard<std::mutex> lock(robot_->read_mutex_);
+            if(current_cm == ControlMode::None){
+                robot_->initializeContinuousReading();
+            }
+            else if(current_cm == ControlMode::JointTorque){
+                robot_->initializeTorqueControl();
+            }
+            else if(current_cm == ControlMode::JointPosition){
+                robot_->initializeJointPositionControl();
+            }
+            else if(current_cm == ControlMode::JointVelocity){
+                robot_->initializeJointVelocityControl();
+            }
+            else if(current_cm == ControlMode::CartesianPose){
+                robot_->initializeCartesianPositionControl();
+            }
+            else if(current_cm == ControlMode::CartesianVelocity){
+                robot_->initializeCartesianVelocityControl();
+            }
             response->success = true;
         }
         catch(franka::ControlException& e){

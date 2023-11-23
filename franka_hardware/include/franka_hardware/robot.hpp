@@ -27,6 +27,7 @@
 #include <franka/exception.h>
 #include <franka_hardware/model.hpp>
 #include <rclcpp/logger.hpp>
+#include "franka_hardware/control_mode.h"
 
 #include <franka_msgs/srv/set_cartesian_stiffness.hpp>
 #include <franka_msgs/srv/set_force_torque_collision_behavior.hpp>
@@ -56,7 +57,12 @@ class Robot {
 
   /// Stops the currently running loop and closes the connection with the robot.
   virtual ~Robot();
-
+  void setControlMode(ControlMode cm){
+    control_mode_ = cm;
+  };
+  ControlMode getControlMode(){
+    return control_mode_;
+  };
   /**
    * Starts a torque control loop. Before using this method make sure that no other
    * control or reading loop is currently active.
@@ -117,6 +123,7 @@ class Robot {
 
   /// @return true if there is no control or reading loop running.
   bool isStopped() const;
+
 
 
 //##############################//
@@ -234,16 +241,17 @@ class Robot {
     return init_params_set;
   }
 
+
 //##############################//
 // Internal param setters end   //
 //##############################//
+  std::mutex read_mutex_;
 
  private:
   std::unique_ptr<std::thread> control_thread_;
   std::unique_ptr<franka::Robot> robot_;
   std::unique_ptr<franka::Model> model_;
   std::unique_ptr<Model> franka_hardware_model_;
-  std::mutex read_mutex_;
   std::mutex write_mutex_;
   std::mutex robot_mutex_;
   std::atomic_bool finish_{false};
@@ -252,6 +260,7 @@ class Robot {
   bool has_error_ = false;
   bool init_params_set = false;
   franka::RobotState current_state_;
+  ControlMode control_mode_;
   std::array<double, 7> tau_command_;
   std::array<double, 7> joint_position_command_ = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};
   std::array<double, 7> joint_velocity_command_;

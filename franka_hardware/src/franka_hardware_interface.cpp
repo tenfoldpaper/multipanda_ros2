@@ -288,6 +288,7 @@ hardware_interface::return_type FrankaHardwareInterface::perform_command_mode_sw
     robot_->stopRobot();
     robot_->initializeCartesianVelocityControl();
   }
+  robot_->setControlMode(control_mode_);
   
 
   return hardware_interface::return_type::OK;
