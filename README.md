@@ -19,6 +19,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * Example controllers for all interfaces
     * Controllers are swappable using rqt_controller_manager
     * Runtime franka::ControlException error recovery via `~/service_server/error_recovery`
+        * Upon recovery, the previously executed control loop will be executed again, so no reloading necessary.
     * Runtime internal parameter setter services much like what is offered in the updated `franka_ros2`
 * Multi arm:
     * initialization and joint state broadcaster
@@ -29,7 +30,6 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * Dual joint impedance & velocity example controllers
 
 ## Known issues
-* After error recovery, the controller needs to be reloaded, since the respective control function of the robot is stopped.
 * Joint position controller might cause some bad motor behaviors. Suggest using torque or velocity for now.
 
 
@@ -50,7 +50,8 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * <s>Load settings</s>
 * Clean up base acceleration-dependent values in Franka State
 * <s>Clean up dependency tree for packages</s>
-* Test it out with moveit! 2
+* <s>Test it out with moveit! 2</s>
+    * Implement quality-of-life functions for moveit
 * Investigating multiple arm control
     * <s>Initialization</s>
     * <s>Reading joint states</s>
@@ -66,7 +67,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 
 ## Installation Guide
 
-(Tested on Ubuntu 22.04, ROS2 Humble, Panda 4.2.2, and Libfranka 0.9.2)
+(Tested on Ubuntu 22.04, ROS2 Humble, Panda 4.2.2 & 4.2.1, and Libfranka 0.9.2)
 
 1. Build libfranka 0.9.2 from source by following the [instructions][libfranka-instructions].
 2. Clone this repository into your workspace's `src` folder.

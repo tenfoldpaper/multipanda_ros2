@@ -1,5 +1,8 @@
 # Changelog
 
+## Added 23.11.23
+* Implemented control loop re-running upon error recovery
+
 ## Added 16.11.23
 * Implemented the error recovery fix from 15.11.23 to multi-arm
 
