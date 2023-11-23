@@ -43,11 +43,14 @@ def load_yaml(package_name, file_path):
 def generate_launch_description():
     robot_ip_parameter_name = 'robot_ip'
     use_fake_hardware_parameter_name = 'use_fake_hardware'
+    load_gripper_parameter_name = 'load_gripper'
     fake_sensor_commands_parameter_name = 'fake_sensor_commands'
 
     robot_ip = LaunchConfiguration(robot_ip_parameter_name)
     use_fake_hardware = LaunchConfiguration(use_fake_hardware_parameter_name)
+    load_gripper = LaunchConfiguration(load_gripper_parameter_name)
     fake_sensor_commands = LaunchConfiguration(fake_sensor_commands_parameter_name)
+
 
     # Command-line arguments
 
@@ -59,7 +62,7 @@ def generate_launch_description():
     franka_xacro_file = os.path.join(get_package_share_directory('franka_description'), 'robots',
                                      'panda_arm.urdf.xacro')
     robot_description_config = Command(
-        [FindExecutable(name='xacro'), ' ', franka_xacro_file, ' hand:=true',
+        [FindExecutable(name='xacro'), ' ', franka_xacro_file, ' hand:=', load_gripper,
          ' robot_ip:=', robot_ip, ' use_fake_hardware:=', use_fake_hardware,
          ' fake_sensor_commands:=', fake_sensor_commands])
 
@@ -69,7 +72,7 @@ def generate_launch_description():
                                               'srdf',
                                               'panda_arm.srdf.xacro')
     robot_description_semantic_config = Command(
-        [FindExecutable(name='xacro'), ' ', franka_semantic_xacro_file, ' hand:=true']
+        [FindExecutable(name='xacro'), ' ', franka_semantic_xacro_file, ' hand:=', load_gripper]
     )
     robot_description_semantic = {
         'robot_description_semantic': robot_description_semantic_config
@@ -221,6 +224,12 @@ def generate_launch_description():
         use_fake_hardware_parameter_name,
         default_value='false',
         description='Use fake hardware')
+    load_gripper_arg = DeclareLaunchArgument(
+            load_gripper_parameter_name,
+            default_value='false',
+            description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
+                        'without an end-effector.')
+    
     fake_sensor_commands_arg = DeclareLaunchArgument(
         fake_sensor_commands_parameter_name,
         default_value='false',
@@ -231,11 +240,13 @@ def generate_launch_description():
             [FindPackageShare('franka_gripper'), 'launch', 'gripper.launch.py'])]),
         launch_arguments={'robot_ip': robot_ip,
                           use_fake_hardware_parameter_name: use_fake_hardware}.items(),
+        condition=IfCondition(load_gripper)
     )
     return LaunchDescription(
         [robot_arg,
          use_fake_hardware_arg,
          fake_sensor_commands_arg,
+         load_gripper_arg,
          db_arg,
          rviz_node,
          robot_state_publisher,
