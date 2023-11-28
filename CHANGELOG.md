@@ -1,5 +1,8 @@
 # Changelog
 
+## Added 28.11.23
+* Added dual panda arm moveit configurations and launch files. Still some bugs remaining, but plan & execute works.
+
 ## Added 23.11.23
 * Implemented control loop re-running upon error recovery
 

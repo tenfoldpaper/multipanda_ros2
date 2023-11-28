@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="dual_panda">
+  <xacro:arg name="arm_id_1" default="left"/>
+  <xacro:arg name="arm_id_2" default="right"/>
+  <xacro:arg name="parent_frame" default="world"/>
+  <xacro:arg name="hand_1" default="false"/>
+  <xacro:arg name="hand_2" default="false"/>
+
+  <xacro:property name="arm_id_1" value="$(arg arm_id_1)"/>
+  <xacro:property name="arm_id_2" value="$(arg arm_id_2)"/>
+  <xacro:property name="parent_frame" value="$(arg parent_frame)"/>
+
+  <xacro:include filename="$(find franka_moveit_config)/srdf/multi_panda_arm.xacro"/>
+  <xacro:panda_arm arm_id="${arm_id_1}" parent_frame="${parent_frame}"/>
+  <xacro:panda_arm arm_id="${arm_id_2}" parent_frame="${parent_frame}"/>
+  
+  <group name="dual_panda_arm">
+    <group name="${arm_id_1}_arm" />
+    <group name="${arm_id_2}_arm" />
+    <!-- <group name="right_ee" />
+    <group name="left_ee" /> -->
+  </group>
+
+
+  <xacro:if value="$(arg hand_1)">
+    <xacro:include filename="$(find franka_moveit_config)/srdf/hand.xacro"/>
+    <xacro:hand arm_id="${arm_id_1}"/>
+
+    <xacro:include filename="$(find franka_moveit_config)/srdf/panda_arm_hand.xacro"/>
+    <xacro:panda_arm_hand arm_id="${arm_id_1}"/>
+  </xacro:if>
+
+  <xacro:if value="$(arg hand_2)">
+    <xacro:include filename="$(find franka_moveit_config)/srdf/hand.xacro"/>
+    <xacro:hand arm_id="${arm_id_2}"/>
+
+    <xacro:include filename="$(find franka_moveit_config)/srdf/panda_arm_hand.xacro"/>
+    <xacro:panda_arm_hand arm_id="${arm_id_2}"/>
+  </xacro:if>
+
+</robot>

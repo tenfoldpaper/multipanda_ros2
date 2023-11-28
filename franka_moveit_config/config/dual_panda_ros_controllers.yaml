@@ -1,0 +1,47 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+
+    dual_panda_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+dual_panda_arm_controller:
+  ros__parameters:
+    command_interfaces:
+      - effort
+    state_interfaces:
+      - position
+      - velocity
+    joints:
+      - right_joint1
+      - right_joint2
+      - right_joint3
+      - right_joint4
+      - right_joint5
+      - right_joint6
+      - right_joint7
+      - left_joint1
+      - left_joint2
+      - left_joint3
+      - left_joint4
+      - left_joint5
+      - left_joint6
+      - left_joint7
+    gains:
+      left_joint1: { p: 600., d: 30., i: 0., i_clamp: 1. }
+      left_joint2: { p: 600., d: 30., i: 0., i_clamp: 1. }
+      left_joint3: { p: 600., d: 30., i: 0., i_clamp: 1. }
+      left_joint4: { p: 600., d: 30., i: 0., i_clamp: 1. }
+      left_joint5: { p: 250., d: 10., i: 0., i_clamp: 1. }
+      left_joint6: { p: 150., d: 10., i: 0., i_clamp: 1. }
+      left_joint7: { p: 50., d: 5., i: 0., i_clamp: 1. }
+      right_joint1: { p: 600., d: 30., i: 0., i_clamp: 1. }
+      right_joint2: { p: 600., d: 30., i: 0., i_clamp: 1. }
+      right_joint3: { p: 600., d: 30., i: 0., i_clamp: 1. }
+      right_joint4: { p: 600., d: 30., i: 0., i_clamp: 1. }
+      right_joint5: { p: 250., d: 10., i: 0., i_clamp: 1. }
+      right_joint6: { p: 150., d: 10., i: 0., i_clamp: 1. }
+      right_joint7: { p: 50., d: 5., i: 0., i_clamp: 1. }

@@ -1,0 +1,40 @@
+controller_names:
+  - dual_panda_arm_controller
+  - panda_gripper_1
+  - panda_gripper_2
+
+dual_panda_arm_controller:
+  action_ns: follow_joint_trajectory
+  type: FollowJointTrajectory
+  default: false
+  joints:
+    - left_joint1
+    - left_joint2
+    - left_joint3
+    - left_joint4
+    - left_joint5
+    - left_joint6
+    - left_joint7
+    - right_joint1
+    - right_joint2
+    - right_joint3
+    - right_joint4
+    - right_joint5
+    - right_joint6
+    - right_joint7
+
+panda_gripper_1:
+    action_ns: gripper_1_action
+    type: GripperCommand
+    default: true
+    joints:
+      - left_finger_joint1
+      - left_finger_joint2
+
+panda_gripper_2:
+    action_ns: gripper_2_action
+    type: GripperCommand
+    default: true
+    joints:
+      - right_finger_joint1
+      - right_finger_joint2

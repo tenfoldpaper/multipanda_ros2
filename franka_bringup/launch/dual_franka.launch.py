@@ -87,7 +87,7 @@ def generate_launch_description():
             description='Unique arm ID of robot 2.'),
         DeclareLaunchArgument(
             use_rviz_parameter_name,
-            default_value='false',
+            default_value='true',
             description='Visualize the robot in Rviz'),
         DeclareLaunchArgument(
             use_fake_hardware_parameter_name,
