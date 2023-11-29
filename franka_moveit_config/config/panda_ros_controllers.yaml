@@ -25,10 +25,10 @@ panda_arm_controller:
       - panda_joint6
       - panda_joint7
     gains:
-      panda_joint1: { p: 600., d: 30., i: 0., i_clamp: 1. }
-      panda_joint2: { p: 600., d: 30., i: 0., i_clamp: 1. }
-      panda_joint3: { p: 600., d: 30., i: 0., i_clamp: 1. }
-      panda_joint4: { p: 600., d: 30., i: 0., i_clamp: 1. }
-      panda_joint5: { p: 250., d: 10., i: 0., i_clamp: 1. }
-      panda_joint6: { p: 150., d: 10., i: 0., i_clamp: 1. }
-      panda_joint7: { p: 50., d: 5., i: 0., i_clamp: 1. }
+      panda_joint1: { p: 600., d: 30., i: 0., i_clamp: 1., ff_velocity_scale: 1. }
+      panda_joint2: { p: 600., d: 30., i: 0., i_clamp: 1., ff_velocity_scale: 1. }
+      panda_joint3: { p: 600., d: 30., i: 0., i_clamp: 1., ff_velocity_scale: 1. }
+      panda_joint4: { p: 600., d: 30., i: 0., i_clamp: 1., ff_velocity_scale: 1. }
+      panda_joint5: { p: 250., d: 10., i: 0., i_clamp: 1., ff_velocity_scale: 1. }
+      panda_joint6: { p: 150., d: 10., i: 0., i_clamp: 1., ff_velocity_scale: 1. }
+      panda_joint7: { p: 50., d: 5., i: 0., i_clamp: 1., ff_velocity_scale: 1. }
