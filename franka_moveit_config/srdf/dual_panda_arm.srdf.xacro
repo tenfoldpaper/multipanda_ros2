@@ -2,18 +2,18 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="dual_panda">
   <xacro:arg name="arm_id_1" default="left"/>
   <xacro:arg name="arm_id_2" default="right"/>
-  <xacro:arg name="parent_frame" default="world"/>
   <xacro:arg name="hand_1" default="false"/>
   <xacro:arg name="hand_2" default="false"/>
+  <xacro:arg name="parent_frame" default="world"/>
 
   <xacro:property name="arm_id_1" value="$(arg arm_id_1)"/>
   <xacro:property name="arm_id_2" value="$(arg arm_id_2)"/>
-  <xacro:property name="parent_frame" value="$(arg parent_frame)"/>
 
   <xacro:include filename="$(find franka_moveit_config)/srdf/multi_panda_arm.xacro"/>
-  <xacro:panda_arm arm_id="${arm_id_1}" parent_frame="${parent_frame}"/>
-  <xacro:panda_arm arm_id="${arm_id_2}" parent_frame="${parent_frame}"/>
-  
+  <xacro:panda_arm arm_id="${arm_id_1}" />
+  <xacro:panda_arm arm_id="${arm_id_2}" />
+  <virtual_joint name="virtual_joint" type="fixed" parent_frame="$(arg parent_frame)" child_link="base_link"/>
+
   <group name="dual_panda_arm">
     <group name="${arm_id_1}_arm" />
     <group name="${arm_id_2}_arm" />
