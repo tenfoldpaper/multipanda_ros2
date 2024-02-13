@@ -52,7 +52,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 * <s>Clean up dependency tree for packages</s>
 * <s>Test it out with moveit! 2</s>
     * Implement tutorials for multi-arm moveit
-    * bug fixing with SRDF/URDF not finding the `base_link` defined in the dual panda URDF
+    * <s>bug fixing with SRDF/URDF not finding the `base_link` defined in the dual panda URDF</s>
     * Implement quality-of-life functions for moveit
 * Investigating multiple arm control
     * <s>Initialization</s>
