@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(franka_gripper)
 
-# Default to C++14
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -19,12 +19,14 @@ find_package(rclcpp_components REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
-
 find_package(Franka REQUIRED)
 
+# Real gripper setup
 add_library(gripper_server SHARED
         src/gripper_action_server.cpp)
+
 target_link_libraries(gripper_server Franka::Franka)
+
 target_include_directories(gripper_server PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
@@ -38,7 +40,9 @@ ament_target_dependencies(gripper_server
         sensor_msgs
         std_srvs
         control_msgs)
+        
 rclcpp_components_register_node(gripper_server PLUGIN "franka_gripper::GripperActionServer" EXECUTABLE franka_gripper_node)
+
 install(TARGETS
         gripper_server
         ARCHIVE DESTINATION lib

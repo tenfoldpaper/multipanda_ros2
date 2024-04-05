@@ -1,0 +1,7 @@
+geometry_msgs/Pose[] via_poses # orientation zero will keep current orientation
+float64 v_scale # (0-1] of maximum velocity to be used for motion
+---
+SimpleActionResult result
+---
+float32 progress
+float32 time_to_completion

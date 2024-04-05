@@ -19,6 +19,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetLoad.srv"
   "msg/GraspEpsilon.msg"
   "msg/FrankaState.msg"
+  "msg/FrankaModel.msg"
   "msg/Errors.msg"
   DEPENDENCIES std_msgs builtin_interfaces
 )

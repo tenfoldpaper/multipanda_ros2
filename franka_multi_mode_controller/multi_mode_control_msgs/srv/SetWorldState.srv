@@ -1,0 +1,5 @@
+int32[] items
+bool[] values
+int32 HUMAN_PRESENT = 0
+int32 OBJECT_IN_HAND = 1
+---

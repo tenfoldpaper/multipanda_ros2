@@ -1,0 +1,6 @@
+int32 mode
+float64 timeout
+int32 AUTO = 0
+int32 MANUAL = 1
+int32 PROGRAM = 2
+---

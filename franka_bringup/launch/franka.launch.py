@@ -75,7 +75,7 @@ def generate_launch_description():
                 use_fake_hardware_parameter_name)),
         DeclareLaunchArgument(
             load_gripper_parameter_name,
-            default_value='true',
+            default_value='false',
             description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
                         'without an end-effector.'),
         Node(

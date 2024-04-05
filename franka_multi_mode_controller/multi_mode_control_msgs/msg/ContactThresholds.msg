@@ -1,0 +1,9 @@
+float64[6]   f_max
+float64[6]   f_min
+JointArray[] tau_max
+JointArray[] tau_min
+float64      f_abs_max
+float64      m_abs_max
+bool         abs_mode
+bool         directional_mode
+bool         torque_mode

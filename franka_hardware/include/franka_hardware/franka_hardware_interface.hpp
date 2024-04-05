@@ -84,7 +84,7 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
 
   franka::RobotState hw_franka_robot_state_;
   franka::RobotState* hw_franka_robot_state_addr_ = &hw_franka_robot_state_;
-  Model* hw_franka_model_ptr_ = nullptr;
+  ModelBase* hw_franka_model_ptr_ = nullptr;
   
   bool effort_interface_claimed_ = false;
   bool effort_interface_running_ = false;

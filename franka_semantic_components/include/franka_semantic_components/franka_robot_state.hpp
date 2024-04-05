@@ -37,7 +37,7 @@ class FrankaRobotState
    * \return FrankaRobotState message from values;
    */
   bool get_values_as_message(franka_msgs::msg::FrankaState& message);
-
+  franka::RobotState* get_robot_state_ptr();
  protected:
   franka::RobotState* robot_state_ptr;
 
