@@ -1,16 +1,17 @@
-# (WIP) ROS 2 port of franka_ros for Panda (FER) robots
+# multipanda_ros2
+## A sim- and real Panda robot integration based on the `ros2_control` framework
 
-This project is for porting over the various functionalities from franka_ros into ROS2 for Panda robots.
-Franka Emika has dropped software support for robots older than FR3, which leaves a lot of older hardware outdated and unable to migrate to ROS2.
+This project implements most (and eventually all) features from the original `franka_ros` repository in ROS2 Humble, specifically for the Franka Emika Robot (Panda).
+This project significantly expands upon the original `franka_ros2` from the company, who dropped the support for the Pandas.
 
-This repository attempts to remedy that somewhat, by bringing existing features from franka_ros over to ROS2 specifically for the Panda robots.
+Additionally, a one-arm mujoco simulation has been integrated, meaning you can now run the same controller on both simulated and real robots. 
 
-As of 16.11.23, almost all single-robot `franka_ros` features have been migrated, including different controller interfaces, error recovery, and runtime parameter setters. Multi-arm support is also available via `franka_multi_hardware_interface`, launched via `dual_franka_launch.py`.
+As of 24.04.05, the real robot interfaces are more or less complete, though more extensive testing is still needed.
 
-The repo is still in active development, and I will try to address any missing features or bugs as soon as possible.
+It is still under active development, with the current target feature being the multi-arm mujoco simulation integration.
 
-## Credits
-The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].
+Extensive tutorials and documentations will come soon.
+
 
 ## Working (not thoroughly tested) features
 * Single arm:
@@ -21,51 +22,20 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
     * Runtime franka::ControlException error recovery via `~/service_server/error_recovery`
         * Upon recovery, the previously executed control loop will be executed again, so no reloading necessary.
     * Runtime internal parameter setter services much like what is offered in the updated `franka_ros2`
+* MuJoCo single arm:
+    * Torque and joint velocity interfaces
+    * Gripper server with identical interface to the real gripper (i.e. action servers)
+    * Example controllers for the real single-arm listed above, that correspond to those interfaces, work out of the box.
+    * FrankaState implements the basics: torque, joint position/velocity, `O_T_EE` and `O_F_ext_hat`.
+    * Model provides all the existing functions: `pose`, `zeroJacobian`, `bodyJacobian`, `mass`, `gravity`, `coriolis`.
+        * Gravity for now just returns the corresponding `qfrc_gravcomp` force from mujoco.
+        * Coriolis = `qfrc_bias - qfrc_gravcomp`
 * Multi arm:
-    * initialization and joint state broadcaster
-    * Read/write interfaces
-    * FrankaState broadcaster
-    * Swappable controllers
-    * Error recovery and parameter setters
-    * Dual joint impedance & velocity example controllers
+    * All the features of the single arm, minus the Cartesian interfaces.
+    * multimode controller; documentation coming soon.
 
 ## Known issues
 * Joint position controller might cause some bad motor behaviors. Suggest using torque or velocity for now.
-
-
-## Priority list
-* <s>Publishing FrankaState</s>
-* Completely replicate the functionalities of `franka_hw`
-    * <s>Implement joint limits interface (position, velocity, effort)</s> Joint limits are not really working in ros2_control; they need to be implemented at controller level.
-    * <s>Adding different joint interfaces (joint {velocity, position}</s> and cartesian {<s>velocity</s>, pose})
-    * <s>Adding logic for switching to different joint interfaces</s>
-* <s>Adding error recovery services</s>
-    * <s>franka_ros2 crashes right away if the E-stop is pressed or a controller exception occurs.</s>
-    * <s>franka_ros2 does not start if the robot is already in error mode before the node is started.</s>
-* <s>Adding additional example controllers (Cartesian, joint velocity/position, etc. )</s>
-* <s>Add reconfiguration service for:</s>
-    * <s>Cartesian, Joint impedance</s>
-    * <s>Force torque, full collision behaviors</s>
-    * <s>EE, K frames</s>
-    * <s>Load settings</s>
-* Clean up base acceleration-dependent values in Franka State
-* <s>Clean up dependency tree for packages</s>
-* <s>Test it out with moveit! 2</s>
-    * Implement tutorials for multi-arm moveit
-    * <s>bug fixing with SRDF/URDF not finding the `base_link` defined in the dual panda URDF</s>
-    * Implement quality-of-life functions for moveit
-* Investigating multiple arm control
-    * <s>Initialization</s>
-    * <s>Reading joint states</s>
-    * <s>Broadcasting franka states</s>
-    * Controllers for:
-        * Joint-level stuff
-        * Cartesian-level stuff
-    * Splitting all broadcasters into its own nodes
-    * Cleaning up parametrization
-* Test out gripper
-* Make reusable impedance controllers with proper subscribers for general use
-* Add extensive tutorials!
 
 ## Installation Guide
 
@@ -74,12 +44,15 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 1. Build libfranka 0.9.2 from source by following the [instructions][libfranka-instructions].
 2. Build mujoco from source by following the [instructions][mujoco-instructions] (tested with 3.1.3).
 3. Clone this repository (i.e. the multipanda) into your workspace's `src` folder.
-4. Adjust the mujoco xml file location in `franka_mujoco_hardware_interface.cpp`. (TODO: Parametrize)
+4. Adjust the path to GLFW and mujoco in `franka_hardware` package's `CMakeLists.txt`.
 5. Source the workspace, then in your workspace root, call: `colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release -DFranka_DIR:PATH=/path/to/libfranka/build`
 6. Add the build path to your `LD_LIBRARY_PATH`: `LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/path/to/libfranka/build:/path/to/mujoco/build/lib"`
 7. To run:
     1. with real robot, source the workspace, and run `ros2 launch franka_bringup franka.launch.py robot_ip:=<fci-ip>`.
-    2. with sim robot, source the workspace, and run `ros2 launch franka_bringup franka_sim.launch.py robot_ip:=<fci-ip>`.
+    2. with sim robot, source the workspace, and run `ros2 launch franka_bringup franka_sim.launch.py`.
+
+## Credits
+The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].
 
 ## License
 
