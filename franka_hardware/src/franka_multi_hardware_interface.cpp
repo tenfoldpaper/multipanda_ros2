@@ -25,10 +25,10 @@ CallbackReturn FrankaMultiHardwareInterface::on_init(const hardware_interface::H
   // First get number of robots
   std::stringstream rc_stream(info_.hardware_parameters.at("robot_count"));
   rc_stream >> robot_count_;
-  if(robot_count_ < 2U){
-    RCLCPP_FATAL(getLogger(), "Configured robot count is less than 2. Please use FrankaHardwareInterface instead.");
-    return CallbackReturn::ERROR;
-  }
+  // if(robot_count_ < 2U){
+  //   RCLCPP_FATAL(getLogger(), "Configured robot count is less than 2. Please use FrankaHardwareInterface instead.");
+  //   return CallbackReturn::ERROR;
+  // }
 
   if (info_.joints.size() != kNumberOfJoints * robot_count_) {
     RCLCPP_FATAL(getLogger(), "Got %ld joints. Expected %ld.", info_.joints.size(),
@@ -101,6 +101,7 @@ CallbackReturn FrankaMultiHardwareInterface::on_init(const hardware_interface::H
     }
     auto &arm = arms_[robot_name];
     state_pointers_.insert(std::make_pair(robot_name, &arm.hw_franka_robot_state_));
+    model_pointers_.insert(std::make_pair(robot_name, nullptr));
     arm.robot_name_ = robot_name;
   
     try {
@@ -193,7 +194,7 @@ std::vector<StateInterface> FrankaMultiHardwareInterface::export_state_interface
     state_interfaces.emplace_back(StateInterface(
         arm.robot_name_, k_robot_model_interface_name,
         reinterpret_cast<double*>(  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            &arm.hw_franka_model_ptr_)));
+            &model_pointers_[arm_container_pair.first])));
   }
   
   return state_interfaces;
@@ -235,6 +236,7 @@ std::vector<CommandInterface> FrankaMultiHardwareInterface::export_command_inter
 
 CallbackReturn FrankaMultiHardwareInterface::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
+  control_mode_ = ControlMode::None;
   for(auto& arm_container_pair : arms_){
     auto &arm = arm_container_pair.second;
 
@@ -264,10 +266,21 @@ hardware_interface::return_type FrankaMultiHardwareInterface::read(const rclcpp:
   
   for(auto& arm_container_pair: arms_){
     auto &arm = arm_container_pair.second;
-    if (arm.hw_franka_model_ptr_ == nullptr) {
-      arm.hw_franka_model_ptr_ = arm.robot_->getModel();
+    if (model_pointers_[arm_container_pair.first] == nullptr) {
+      model_pointers_[arm_container_pair.first] = arm.robot_->getModel();
     }
     arm.hw_franka_robot_state_ = arm.robot_->read();
+    // so this works as expected...
+    // auto cor = arm.hw_franka_model_ptr_->coriolis(arm.hw_franka_robot_state_);
+    // std::cout << cor[0] << " " 
+    //           << cor[1] << " " 
+    //           << cor[2] << " " 
+    //           << cor[3] << " " 
+    //           << cor[4] << " " 
+    //           << cor[5] << " " 
+    //           << cor[6] << " " 
+    //   << std::endl;
+
     arm.hw_positions_ = arm.hw_franka_robot_state_.q;
     arm.hw_velocities_ = arm.hw_franka_robot_state_.dq;
     arm.hw_efforts_ = arm.hw_franka_robot_state_.tau_J;
@@ -430,6 +443,7 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
   ////////////////////////////////////////////////////////////////
   if(start_type != 0){
     // If start_type is not empty, i.e. 1 or 2
+    RCLCPP_INFO(this->getLogger(), "start type: %d", start_type);
     is_effort = all_of_element_has_string(start_interfaces, "effort");
     is_position = all_of_element_has_string(start_interfaces, "position");
     is_velocity = all_of_element_has_string(start_interfaces, "velocity");
@@ -455,6 +469,7 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
 
   switch(start_type){
     case 1:
+      RCLCPP_INFO(this->getLogger(), "case 1 start type: %d", start_type);
       if(start_interfaces.size() != kNumberOfJoints * robot_count_){
         RCLCPP_ERROR(this->getLogger(), "Requested joint start interface's size is not %ld (got %ld)", kNumberOfJoints * robot_count_, start_interfaces.size());
         return hardware_interface::return_type::ERROR;
@@ -471,12 +486,13 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
       break;
 
     case 2:
-
+      RCLCPP_INFO(this->getLogger(), "case 2 start type: %d", start_type);
       if(start_interfaces.size() != 16U * robot_count_ && start_interfaces.size() != 6U * robot_count_){
         RCLCPP_ERROR(this->getLogger(), "Requested Cartesian start interface's size is not %ld nor %ld (got %ld)", 16U * robot_count_, 6U * robot_count_, start_interfaces.size());
         return hardware_interface::return_type::ERROR;
       }
       if(is_position){
+        RCLCPP_INFO(this->getLogger(), "if is_position control_mode_ CartesianPose");
         control_mode_ = ControlMode::CartesianPose;
       }
       if(is_velocity){

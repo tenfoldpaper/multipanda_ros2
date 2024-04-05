@@ -11,6 +11,12 @@
             The joint impedance example controller moves joint 4 and 5 in a very compliant periodic movement.
         </description>
     </class>
+    <class name="franka_example_controllers/CartesianImpedanceExampleController"
+           type="franka_example_controllers::CartesianImpedanceExampleController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            The cartesian impedance example controller moves the robot to a small offset from the current position.
+        </description>
+    </class>
     <class name="franka_example_controllers/MoveToStartExampleController"
            type="franka_example_controllers::MoveToStartExampleController" base_class_type="controller_interface::ControllerInterface">
         <description>
@@ -36,16 +42,22 @@
         </description>
     </class>
 
-    <class name="franka_example_controllers/DualJointImpedanceExampleController"
-           type="franka_example_controllers::DualJointImpedanceExampleController" base_class_type="controller_interface::ControllerInterface">
+    <class name="franka_example_controllers/MultiJointImpedanceExampleController"
+           type="franka_example_controllers::MultiJointImpedanceExampleController" base_class_type="controller_interface::ControllerInterface">
         <description>
-            Dummy dual joint impedance controller.
+            Dummy multi joint impedance controller.
         </description>
     </class>
     <class name="franka_example_controllers/DualJointVelocityExampleController"
            type="franka_example_controllers::DualJointVelocityExampleController" base_class_type="controller_interface::ControllerInterface">
         <description>
             Dummy dual joint impedance controller.
+        </description>
+    </class>
+    <class name="franka_example_controllers/ModelExampleController"
+           type="franka_example_controllers::ModelExampleController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            The franka model example controller evaluates and prints the dynamic model ofFranka Robotics Robots.
         </description>
     </class>
 </library>

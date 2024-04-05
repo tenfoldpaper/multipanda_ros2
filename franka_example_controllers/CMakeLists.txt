@@ -19,6 +19,8 @@ find_package(controller_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(hardware_interface REQUIRED)
+find_package(franka_semantic_components REQUIRED)
+find_package(generate_parameter_library)
 find_package(franka_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -27,12 +29,14 @@ add_library(
         SHARED
         src/gravity_compensation_example_controller.cpp
         src/joint_impedance_example_controller.cpp
+        src/cartesian_impedance_example_controller.cpp
         src/move_to_start_example_controller.cpp
         src/joint_position_example_controller.cpp
         src/joint_velocity_example_controller.cpp
         src/cartesian_velocity_example_controller.cpp
         src/motion_generator.cpp
-        src/dual_joint_impedance_example_controller.cpp
+        src/model_example_controller.cpp
+        src/multi_joint_impedance_example_controller.cpp
         src/dual_joint_velocity_example_controller.cpp)
 target_include_directories(
         ${PROJECT_NAME}
@@ -47,10 +51,13 @@ ament_target_dependencies(
         pluginlib
         rclcpp
         rclcpp_lifecycle
+        franka_semantic_components
 )
 
+generate_parameter_library(franka_example_controllers_parameters src/model_example_controller_parameters.yaml)
+
 pluginlib_export_plugin_description_file(
-        controller_interface franka_example_controllers.xml)
+       controller_interface franka_example_controllers.xml)
 
 install(
         TARGETS

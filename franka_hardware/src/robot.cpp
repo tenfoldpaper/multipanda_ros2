@@ -26,6 +26,12 @@ namespace franka_hardware {
 
 Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
   franka::RealtimeConfig rt_config = franka::RealtimeConfig::kEnforce;
+  
+  // measurement code
+  robot_ip_ = robot_ip;
+  tau_msmt_.reserve(max_count_);
+  // measurement code
+  
   if (!franka::hasRealtimeKernel()) {
     rt_config = franka::RealtimeConfig::kIgnore;
     RCLCPP_WARN(
@@ -58,7 +64,7 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
   cartesian_position_command_.fill({});
   cartesian_velocity_command_.fill({});
   model_ = std::make_unique<franka::Model>(robot_->loadModel());
-  franka_hardware_model_ = std::make_unique<Model>(model_.get());
+  franka_hardware_model_ = std::make_unique<ModelFranka>(model_.get());
 }
 
 Robot::~Robot() {
@@ -93,7 +99,7 @@ franka::RobotState Robot::read() {
   }
   return {current_state_};
 }
-franka_hardware::Model* Robot::getModel() {
+franka_hardware::ModelFranka* Robot::getModel() {
   return franka_hardware_model_.get();
 }
 
@@ -113,6 +119,8 @@ void Robot::initializeTorqueControl() {
   assert(isStopped());
   stopped_ = false;
   std::cout << "Initializing joint torque control" << std::endl;
+  logged_ = false;
+  cycle_count_ = 0;
   const auto kTorqueControl = [this]() {
     try{
       robot_->control(
@@ -123,6 +131,20 @@ void Robot::initializeTorqueControl() {
           }
           std::lock_guard<std::mutex> lock(write_mutex_);
           franka::Torques out(tau_command_);
+          /* Uncomment for logging */
+          // if(cycle_count_ < max_count_){
+          //   double time = this->get_wall_time();
+          //   this->measureTau(tau_command_, time);
+          //   this->increaseCounter();
+          // }
+          // else{
+          //   if(!logged_){
+          //     std::cout << "Writing franka file" << std::endl;
+          //     this->write_tau_to_file("franka_" + robot_ip_);
+          //     logged_ = true;
+          //   }
+          // }
+          /* Uncomment for logging */
           out.motion_finished = finish_;
           return out;
         },

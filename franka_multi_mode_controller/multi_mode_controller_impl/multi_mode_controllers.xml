@@ -1,0 +1,8 @@
+<library path="multi_mode_controller_impl">
+    <class name="multi_mode_controller/SingleMultiModeController"
+           type="multi_mode_controller::SingleMultiModeController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            Single multi mode tester
+        </description>
+    </class>
+</library>

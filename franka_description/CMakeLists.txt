@@ -14,7 +14,7 @@ endif()
 
 # Install launch files.
 install(DIRECTORY
-  launch robots meshes rviz
+  launch robots meshes rviz mujoco
   DESTINATION share/${PROJECT_NAME}/
 )
 

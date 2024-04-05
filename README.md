@@ -72,10 +72,14 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 (Tested on Ubuntu 22.04, ROS2 Humble, Panda 4.2.2 & 4.2.1, and Libfranka 0.9.2)
 
 1. Build libfranka 0.9.2 from source by following the [instructions][libfranka-instructions].
-2. Clone this repository into your workspace's `src` folder.
-3. Source the workspace, then in your workspace root, call: `colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release -DFranka_DIR:PATH=/path/to/libfranka/build`
-4. Add the build path to your `LD_LIBRARY_PATH`: `LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/path/to/libfranka/build"`
-5. To test, source the workspace, and run `ros2 launch franka_bringup franka.launch.py robot_ip:=<fci-ip>`.
+2. Build mujoco from source by following the [instructions][mujoco-instructions] (tested with 3.1.3).
+3. Clone this repository (i.e. the multipanda) into your workspace's `src` folder.
+4. Adjust the mujoco xml file location in `franka_mujoco_hardware_interface.cpp`. (TODO: Parametrize)
+5. Source the workspace, then in your workspace root, call: `colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release -DFranka_DIR:PATH=/path/to/libfranka/build`
+6. Add the build path to your `LD_LIBRARY_PATH`: `LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/path/to/libfranka/build:/path/to/mujoco/build/lib"`
+7. To run:
+    1. with real robot, source the workspace, and run `ros2 launch franka_bringup franka.launch.py robot_ip:=<fci-ip>`.
+    2. with sim robot, source the workspace, and run `ros2 launch franka_bringup franka_sim.launch.py robot_ip:=<fci-ip>`.
 
 ## License
 
@@ -88,3 +92,5 @@ All packages of `panda_ros2` are licensed under the [Apache 2.0 license][apache-
 [mcbed-humble]: https://github.com/mcbed/franka_ros2/tree/humble
 
 [libfranka-instructions]: https://frankaemika.github.io/docs/installation_linux.html
+
+[mujoco-instructions]: https://mujoco.readthedocs.io/en/latest/programming/#building-mujoco-from-source

@@ -17,6 +17,9 @@
 #include <array>
 #include <atomic>
 #include <iostream>
+#include <fstream> // measurement include
+#include <time.h> // measurement include
+#include <sys/time.h> // measurement include
 #include <memory>
 #include <mutex>
 #include <string>
@@ -25,7 +28,7 @@
 #include <franka/model.h>
 #include <franka/robot.h>
 #include <franka/exception.h>
-#include <franka_hardware/model.hpp>
+#include <franka_hardware/model_franka.hpp>
 #include <rclcpp/logger.hpp>
 #include "franka_hardware/control_mode.h"
 
@@ -39,6 +42,15 @@
 
 
 namespace franka_hardware {
+
+// data measurement
+struct tau_measurement{
+  tau_measurement(const std::array<double,7> tau, double wall_time) 
+    : tau_(tau), wall_time_(wall_time){};
+  std::array<double,7> tau_;
+  double wall_time_;
+};
+// data measurement 
 
 class Robot {
  public:
@@ -88,7 +100,7 @@ class Robot {
    * Return pointer to the franka robot model object .
    * @return pointer to the current robot model.
    */
-  virtual franka_hardware::Model* getModel();
+  virtual franka_hardware::ModelFranka* getModel();
   /**
    * Get the current robot state in a thread-safe way.
    * @return current robot state.
@@ -239,19 +251,67 @@ class Robot {
   void setDefaultParams();
   bool getInitParamsSet(){
     return init_params_set;
-  }
+  };
 
 
 //##############################//
 // Internal param setters end   //
 //##############################//
+  // Measurement functions //
+  double get_wall_time(){
+        struct timeval time;
+        if (gettimeofday(&time,NULL)){
+            //  Handle error
+            return 0;
+        }
+        return (double)time.tv_sec + (double)time.tv_usec * .000001;
+  }
+  void measureTau(const std::array<double,7>& tau, double end_time){
+    tau_msmt_[cycle_count_] = tau_measurement(tau, end_time);
+  };
+  void increaseCounter(){
+    cycle_count_++;
+  }
+  void write_tau_to_file(std::string file_name){
+    std::ofstream logfile;
+    logfile.open(file_name + "_tau.txt");
+    // populate header
+    
+    logfile << std::fixed << "time,"
+            << "arm,"
+            << "tau1,"
+            << "tau2,"
+            << "tau3,"
+            << "tau4,"
+            << "tau5,"
+            << "tau6,"
+            << "tau7\n";
+    for(int i=0; i<cycle_count_;i++){
+      logfile << tau_msmt_[i].wall_time_ << "," 
+              << 0                       << ","
+              << tau_msmt_[i].tau_[0] << ","
+              << tau_msmt_[i].tau_[1] << ","
+              << tau_msmt_[i].tau_[2] << ","
+              << tau_msmt_[i].tau_[3] << ","
+              << tau_msmt_[i].tau_[4] << ","
+              << tau_msmt_[i].tau_[5] << ","
+              << tau_msmt_[i].tau_[6] << "\n";
+    }
+    logfile.close();
+  }
+  std::vector<tau_measurement> tau_msmt_;
+  int cycle_count_;
+  const int max_count_ = 30000;
+  bool logged_ = false;
+  std::string robot_ip_;
+  // Measurement functions //
   std::mutex read_mutex_;
 
  private:
   std::unique_ptr<std::thread> control_thread_;
   std::unique_ptr<franka::Robot> robot_;
   std::unique_ptr<franka::Model> model_;
-  std::unique_ptr<Model> franka_hardware_model_;
+  std::unique_ptr<ModelFranka> franka_hardware_model_;
   std::mutex write_mutex_;
   std::mutex robot_mutex_;
   std::atomic_bool finish_{false};

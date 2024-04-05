@@ -4,3 +4,4 @@
 COLCON_IGNORE
 AMENT_IGNORE
 cmake-build-*/
+franka_multi_mode_controller/mm_demo_scripts/*

@@ -15,6 +15,7 @@
 #include "franka_semantic_components/franka_robot_state.hpp"
 
 #include <cstring>
+#include <iostream>
 #include "rclcpp/logging.hpp"
 namespace {
 
@@ -151,6 +152,26 @@ FrankaRobotState::FrankaRobotState(const std::string& name, const std::string& r
   interface_names_.emplace_back(name_);
   robot_name_ = robot_name;
   // TODO: Set default values to NaN
+}
+
+franka::RobotState* FrankaRobotState::get_robot_state_ptr(){
+  const std::string full_interface_name = robot_name_ + "/" + state_interface_name_;
+
+  auto franka_state_interface =
+      std::find_if(state_interfaces_.cbegin(), state_interfaces_.cend(),
+                   [&full_interface_name](const auto& interface) {
+                     return interface.get().get_name() == full_interface_name;
+                   });
+
+  if (franka_state_interface != state_interfaces_.end()) {
+    robot_state_ptr = bit_cast<franka::RobotState*>((*franka_state_interface).get().get_value());
+  } else {
+    RCLCPP_ERROR(rclcpp::get_logger("franka_state_semantic_component"),
+                 "Franka state interface does not exist! Did you assign the loaned state in the "
+                 "controller?");
+    return NULL;
+  }
+  return robot_state_ptr;
 }
 
 bool FrankaRobotState::get_values_as_message(franka_msgs::msg::FrankaState& message) {

@@ -25,8 +25,12 @@
   </link>
 
   <xacro:include filename="$(find franka_description)/robots/panda_arm.xacro"/>
+  <!--
   <xacro:panda_arm arm_id="$(arg arm_id_1)" connected_to="base_link" rpy="${-90 * pi/180} 0 ${-90 * pi/180}"  xyz="-143.26e-3 +600e-3 924.51e-3" safety_distance="0.03"/>
   <xacro:panda_arm arm_id="$(arg arm_id_2)" connected_to="base_link" rpy="${+90 * pi/180} 0 ${+90 * pi/180}"  xyz="-143.26e-3 -600e-3 924.51e-3" safety_distance="0.03"/>
+  -->
+  <xacro:panda_arm arm_id="$(arg arm_id_1)" connected_to="base_link" rpy="0 0 0"  xyz="0 +0.26 0" safety_distance="0.03"/>
+  <xacro:panda_arm arm_id="$(arg arm_id_2)" connected_to="base_link" rpy="0 0 0"  xyz="0 -0.26 0" safety_distance="0.03"/>
 
   <xacro:if value="$(arg hand_1)">
     <xacro:include filename="$(find franka_description)/robots/hand.xacro"/>

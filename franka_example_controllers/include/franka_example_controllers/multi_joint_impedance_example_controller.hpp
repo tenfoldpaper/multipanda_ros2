@@ -27,7 +27,7 @@ namespace franka_example_controllers {
 /**
  * The joint impedance example controller moves joint 4 and 5 in a very compliant periodic movement.
  */
-class DualJointImpedanceExampleController : public controller_interface::ControllerInterface {
+class MultiJointImpedanceExampleController : public controller_interface::ControllerInterface {
  public:
   using Vector7d = Eigen::Matrix<double, 7, 1>;
   struct ArmContainer{
@@ -51,6 +51,7 @@ class DualJointImpedanceExampleController : public controller_interface::Control
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
 
  private:
+  int num_robots;
   const int num_joints = 7;
   std::map<std::string, ArmContainer> arms_;
   rclcpp::Time start_time_;

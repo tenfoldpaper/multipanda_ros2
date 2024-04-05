@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <franka_example_controllers/dual_joint_impedance_example_controller.hpp>
+#include <franka_example_controllers/multi_joint_impedance_example_controller.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -24,7 +24,7 @@
 namespace franka_example_controllers {
 
 controller_interface::InterfaceConfiguration
-DualJointImpedanceExampleController::command_interface_configuration() const {
+MultiJointImpedanceExampleController::command_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
   for(auto& arm_container_pair : arms_){
@@ -37,7 +37,7 @@ DualJointImpedanceExampleController::command_interface_configuration() const {
 }
 
 controller_interface::InterfaceConfiguration
-DualJointImpedanceExampleController::state_interface_configuration() const {
+MultiJointImpedanceExampleController::state_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
   for(auto& arm_container_pair : arms_){
@@ -49,7 +49,7 @@ DualJointImpedanceExampleController::state_interface_configuration() const {
   return config;
 }
 
-controller_interface::return_type DualJointImpedanceExampleController::update(
+controller_interface::return_type MultiJointImpedanceExampleController::update(
     const rclcpp::Time& /*time*/,
     const rclcpp::Duration& /*period*/) {
   updateJointStates();
@@ -75,32 +75,33 @@ controller_interface::return_type DualJointImpedanceExampleController::update(
   return controller_interface::return_type::OK;
 }
 
-CallbackReturn DualJointImpedanceExampleController::on_init() {
+CallbackReturn MultiJointImpedanceExampleController::on_init() {
   try {
-    auto_declare<std::string>("arm_1.arm_id", "panda");
-    auto_declare<std::vector<double>>("arm_1.k_gains", {});
-    auto_declare<std::vector<double>>("arm_1.d_gains", {});
-    auto_declare<std::string>("arm_2.arm_id", "panda");
-    auto_declare<std::vector<double>>("arm_2.k_gains", {});
-    auto_declare<std::vector<double>>("arm_2.d_gains", {});
+    rclcpp::Parameter arm_count;
+    bool bHas_arm_count = get_node()->get_parameter("arm_count", arm_count);
+    //num_robots = get_node()->get_parameter("arm_count").as_int();
+    if(!bHas_arm_count){
+      fprintf(stderr, "Failed to get arm_count parameter. Make sure it's set in the yaml file.\n");
+      return CallbackReturn::ERROR;
+    }
+    num_robots = arm_count.as_int();
+
   } catch (const std::exception& e) {
-    fprintf(stderr, "Exception thrown during init stage with message: %s \n", e.what());
+    fprintf(stderr, "Failed to get arm_count parameter. Make sure it's set in the yaml file.\n%s \n", e.what());
     return CallbackReturn::ERROR;
   }
-  RCLCPP_INFO(get_node()->get_logger(), "Finished initializing dual joint impedance example controller");
+  RCLCPP_INFO(get_node()->get_logger(), "Finished initializing multi joint impedance example controller for %d arms", num_robots);
   return CallbackReturn::SUCCESS;
 }
 
-CallbackReturn DualJointImpedanceExampleController::on_configure(
+CallbackReturn MultiJointImpedanceExampleController::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
-  rclcpp::Parameter arm_id_1_param = this->get_node()->get_parameter("arm_1.arm_id");
-  rclcpp::Parameter arm_id_2_param = this->get_node()->get_parameter("arm_2.arm_id");
-  if(arm_id_1_param.as_string() == arm_id_2_param.as_string()){
-    RCLCPP_FATAL(this->get_node()->get_logger(), "Arms do not have unique ids!");
-    return CallbackReturn::ERROR;
+  
+  for(int i = 1; i <= num_robots; i++){
+    std::string arm_id_param_name = "arm_" + std::to_string(i) + ".arm_id";
+    rclcpp::Parameter arm_id_param = this->get_node()->get_parameter(arm_id_param_name);
+    arms_.insert(std::make_pair(arm_id_param.as_string(), ArmContainer()));
   }
-  arms_.insert(std::make_pair(arm_id_1_param.as_string(), ArmContainer()));
-  arms_.insert(std::make_pair(arm_id_2_param.as_string(), ArmContainer()));
   
   int i = 1;
   for(auto& arm_container_pair : arms_){
@@ -134,11 +135,11 @@ CallbackReturn DualJointImpedanceExampleController::on_configure(
     arm.dq_filtered_.setZero();
     i++;
   }
-  RCLCPP_INFO(get_node()->get_logger(), "Finished configuring dual joint impedance example controller");
+  RCLCPP_INFO(get_node()->get_logger(), "Finished configuring multi joint impedance example controller");
   return CallbackReturn::SUCCESS;
 }
 
-CallbackReturn DualJointImpedanceExampleController::on_activate(
+CallbackReturn MultiJointImpedanceExampleController::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   updateJointStates();
   for(auto& arm_container_pair : arms_){
@@ -149,7 +150,7 @@ CallbackReturn DualJointImpedanceExampleController::on_activate(
   return CallbackReturn::SUCCESS;
 }
 
-void DualJointImpedanceExampleController::updateJointStates() {
+void MultiJointImpedanceExampleController::updateJointStates() {
   
   for(auto& arm_container_pair : arms_){
     auto &arm = arm_container_pair.second;
@@ -180,5 +181,5 @@ void DualJointImpedanceExampleController::updateJointStates() {
 }  // namespace franka_example_controllers
 #include "pluginlib/class_list_macros.hpp"
 // NOLINTNEXTLINE
-PLUGINLIB_EXPORT_CLASS(franka_example_controllers::DualJointImpedanceExampleController,
+PLUGINLIB_EXPORT_CLASS(franka_example_controllers::MultiJointImpedanceExampleController,
                        controller_interface::ControllerInterface)
