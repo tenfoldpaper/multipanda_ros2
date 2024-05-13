@@ -1,20 +1,24 @@
 # multipanda_ros2
 ## A sim- and real Panda robot integration based on the `ros2_control` framework
 
-This project implements most (and eventually all) features from the original `franka_ros` repository in ROS2 Humble, specifically for the Franka Emika Robot (Panda).
+This project implements most features from the original `franka_ros` repository in ROS2 Humble, specifically for the Franka Emika Robot (Panda).
 This project significantly expands upon the original `franka_ros2` from the company, who dropped the support for the Pandas.
 
-Additionally, a one-arm mujoco simulation has been integrated, meaning you can now run the same controller on both simulated and real robots. 
+Additionally, multi-arm mujoco simulation has been integrated, meaning you can now run the same controller on both simulated and real robots. 
 
-As of 24.04.05, the real robot interfaces are more or less complete, though more extensive testing is still needed.
+Currently, there is no support for the newer FER3.
 
-It is still under active development, with the current target feature being the multi-arm mujoco simulation integration.
+As of 13.05.24, both the real and simulation robot interfaces are complete.
+
+The current state of the repository reflects the one shown in ICRA24 Expo.
 
 ## Documentation
 
 Documentation for this project is available [here](./docs/main.md).
 
 ## Working (not thoroughly tested) features
+More thorough information is available in the documentation.
+
 * Real robot:
     * FrankaState broadcaster
     * All control interfaces (torque, position, velocity, Cartesian).
@@ -81,7 +85,7 @@ The original version is forked from mcbed's port of franka_ros2 for [humble][mcb
 
 ## License
 
-All packages of `panda_ros2` are licensed under the [Apache 2.0 license][apache-2.0], following `franka_ros2`.
+All packages of `multipanda_ros2` are licensed under the [Apache 2.0 license][apache-2.0], following `franka_ros2`.
 
 [apache-2.0]: https://www.apache.org/licenses/LICENSE-2.0.html
 [fci-docs]: https://frankaemika.github.io/docs
