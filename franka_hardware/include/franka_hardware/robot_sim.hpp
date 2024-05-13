@@ -10,6 +10,7 @@
 
 namespace franka_hardware{
   class FrankaMujocoHardwareInterface; // for friending
+  class FrankaMujocoMultiHardwareInterface; // for friending
 
 class RobotSim{
 public:
@@ -28,6 +29,7 @@ private:
     std::array<int, 7UL> joint_qpos_indices_; // for qpos (nq x 1) indexing
     std::array<int, 7UL> joint_qvel_indices_; // for qvel (nv x 1) indexing
     std::array<int, 7UL> act_trq_indices_; // part of nu
+    std::array<int, 7UL> act_pos_indices_; // part of nu
     std::array<int, 7UL> act_vel_indices_; // part of nu
 
     std::array<int, 2UL> gripper_joint_indices_;
@@ -54,6 +56,7 @@ private:
     bool has_gripper_;
 
     friend class FrankaMujocoHardwareInterface;
+    friend class FrankaMujocoMultiHardwareInterface;
     
 };
 } // namespace franka_hardware

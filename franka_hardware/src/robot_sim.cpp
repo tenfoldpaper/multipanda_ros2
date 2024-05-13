@@ -120,6 +120,9 @@ bool RobotSim::populateIndices(){
       if(robot_name_ + "_act_trq" + std::to_string(n+1) == temp_name){
         act_trq_indices_[n] = i;
       }
+      if(robot_name_ + "_act_pos" + std::to_string(n+1) == temp_name){
+        act_pos_indices_[n] = i;
+      }
       if(robot_name_ + "_act_vel" + std::to_string(n+1) == temp_name){
         act_vel_indices_[n] = i;
       }
@@ -277,6 +280,7 @@ bool RobotSim::setModelIndices(){
                                      joint_qpos_indices_,
                                      joint_qvel_indices_,
                                      act_trq_indices_,
+                                     act_pos_indices_,
                                      act_vel_indices_);
   return true;
 }

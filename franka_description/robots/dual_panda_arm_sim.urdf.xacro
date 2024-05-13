@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda">
+  <xacro:arg name="arm_id_1" default="left"/> <!-- Name of this panda -->
+  <xacro:arg name="arm_id_2" default="right"/> <!-- Name of this panda -->
+  <xacro:arg name="hand_1" default="false"/> <!-- Should a franka_gripper be mounted at the flange?" -->
+  <xacro:arg name="hand_2" default="false"/> <!-- Should a franka_gripper be mounted at the flange?" -->
+  <xacro:arg name="scene_xml" default="scene.xml"/> <!-- Path to the scene_xml --> 
+  <xacro:arg name="mj_yaml" default=""/> <!-- Path to the scene_xml --> 
+  
+  <link name="base_link">
+    <visual>
+      <geometry>
+         <box size="0.1 0.1 0.1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </visual>
+    <collision>
+      <geometry>
+         <box size="0.1 0.1 0.1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+  </link>
+
+  <xacro:include filename="$(find franka_description)/robots/panda_arm.xacro"/>
+  <!--
+  <xacro:panda_arm arm_id="$(arg arm_id_1)" connected_to="base_link" rpy="${-90 * pi/180} 0 ${-90 * pi/180}"  xyz="-143.26e-3 +600e-3 924.51e-3" safety_distance="0.03"/>
+  <xacro:panda_arm arm_id="$(arg arm_id_2)" connected_to="base_link" rpy="${+90 * pi/180} 0 ${+90 * pi/180}"  xyz="-143.26e-3 -600e-3 924.51e-3" safety_distance="0.03"/>
+  -->
+  <xacro:panda_arm arm_id="$(arg arm_id_1)" connected_to="base_link" rpy="0 0 0"  xyz="0 +0.26 0" safety_distance="0.03"/>
+  <xacro:panda_arm arm_id="$(arg arm_id_2)" connected_to="base_link" rpy="0 0 0"  xyz="0 -0.26 0" safety_distance="0.03"/>
+
+  <xacro:if value="$(arg hand_1)">
+    <xacro:include filename="$(find franka_description)/robots/hand.xacro"/>
+    <xacro:hand ns="$(arg arm_id_1)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id_1)_link8" safety_distance="0.03"/>
+  </xacro:if>
+  <xacro:if value="$(arg hand_2)">
+    <xacro:include filename="$(find franka_description)/robots/hand.xacro"/>
+    <xacro:hand ns="$(arg arm_id_2)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id_2)_link8" safety_distance="0.03"/>
+  </xacro:if>
+  <xacro:include filename="$(find franka_description)/robots/dual_panda_arm_sim.ros2_control.xacro"/>
+  <xacro:panda_arm_sim_ros2_control ns_1="$(arg arm_id_1)" ns_2="$(arg arm_id_2)" hand_1="$(arg hand_1)" hand_2="$(arg hand_2)" scene_xml="$(arg scene_xml)" mj_yaml="$(arg mj_yaml)"/>
+</robot>

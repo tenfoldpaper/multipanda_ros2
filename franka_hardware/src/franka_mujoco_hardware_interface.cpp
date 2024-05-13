@@ -48,8 +48,8 @@ CallbackReturn FrankaMujocoHardwareInterface::on_init(const hardware_interface::
   for (const auto& joint : info_.joints) {
 
     // Check number of command interfaces
-    if (joint.command_interfaces.size() != 2) { // 3 if including position
-      RCLCPP_FATAL(getLogger(), "Joint '%s' has %ld command interfaces found. 2 expected.",
+    if (joint.command_interfaces.size() != 3) { // 3 if including position
+      RCLCPP_FATAL(getLogger(), "Joint '%s' has %ld command interfaces found. 3 expected.",
                    joint.name.c_str(), joint.command_interfaces.size());
       return CallbackReturn::ERROR;
     }
@@ -57,7 +57,7 @@ CallbackReturn FrankaMujocoHardwareInterface::on_init(const hardware_interface::
   //   // Check that the interfaces are named correctly
     for (const auto & cmd_interface : joint.command_interfaces){
       if (cmd_interface.name != hardware_interface::HW_IF_EFFORT &&   // Effort "effort"
-          // cmd_interface.name != hardware_interface::HW_IF_POSITION && // Joint position "position"
+          cmd_interface.name != hardware_interface::HW_IF_POSITION && // Joint position "position"
           cmd_interface.name != hardware_interface::HW_IF_VELOCITY //&& // Joint velocity "velocity"
           // cmd_interface.name != "cartesian_position" &&               // Cartesian position
           // cmd_interface.name != "cartesian_velocity"                  // Cartesian velocity
@@ -74,11 +74,11 @@ CallbackReturn FrankaMujocoHardwareInterface::on_init(const hardware_interface::
                    joint.name.c_str(), joint.state_interfaces.size());
       return CallbackReturn::ERROR;
     }
-  //   if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION) {
-  //     RCLCPP_FATAL(getLogger(), "Joint '%s' has unexpected state interface '%s'. Expected '%s'",
-  //                  joint.name.c_str(), joint.state_interfaces[0].name.c_str(),
-  //                  hardware_interface::HW_IF_POSITION);
-  //   }
+    // if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION) {
+    //   RCLCPP_FATAL(getLogger(), "Joint '%s' has unexpected state interface '%s'. Expected '%s'",
+    //                joint.name.c_str(), joint.state_interfaces[0].name.c_str(),
+    //                hardware_interface::HW_IF_POSITION);
+    // }
     for (const auto & state_interface : joint.state_interfaces){
       if (state_interface.name != hardware_interface::HW_IF_EFFORT &&   // Effort "effort"
           state_interface.name != hardware_interface::HW_IF_POSITION && // Joint position "position"
@@ -112,8 +112,6 @@ CallbackReturn FrankaMujocoHardwareInterface::on_init(const hardware_interface::
   robot_->populateIndices();
 
   // // Start the service nodes
-  // error_recovery_service_node_ = std::make_shared<FrankaErrorRecoveryServiceServer>(rclcpp::NodeOptions(), robot_);
-  // param_service_node_ = std::make_shared<FrankaParamServiceServer>(rclcpp::NodeOptions(), robot_);
   if(robot_->has_gripper_){
     gripper_states_ptr_ = std::make_shared<std::array<double, 3>>();
     gripper_action_node_ = std::make_shared<franka_gripper::GripperSimActionServer>(rclcpp::NodeOptions());
@@ -124,11 +122,18 @@ CallbackReturn FrankaMujocoHardwareInterface::on_init(const hardware_interface::
 
   mj_visualizer_ = std::make_shared<MujocoVisualizer>(m_, d_);
   mj_thread_ = boost::thread(std::mem_fn(&MujocoVisualizer::startMujoco), mj_visualizer_);
-  // executor_->add_node(error_recovery_service_node_);
-  // executor_->add_node(param_service_node_);
   
-  hw_commands_joint_effort.fill(0);
-  hw_commands_joint_velocity.fill(0);
+  hw_commands_joint_effort_.fill(0);
+  hw_commands_joint_position_.fill(0);
+  hw_commands_joint_velocity_.fill(0);
+
+  // set the gains on the position and velocity to 0 to disable them at the start
+  for(size_t i=0; i<kNumberOfJoints; i++){
+    set_torque_control(m_, robot_->act_trq_indices_[i], 0);
+    set_position_servo(m_, robot_->act_pos_indices_[i], 0);
+    set_velocity_servo(m_, robot_->act_vel_indices_[i], 0);
+  }
+
   mj_resetDataKeyframe(m_, d_, 0); // reset the simulation to the "home" keyframe defined in the scene.xml
   mj_step(m_, d_); // step once to prepare the model and data
   control_mode_ = ControlMode::None;
@@ -162,16 +167,14 @@ std::vector<StateInterface> FrankaMujocoHardwareInterface::export_state_interfac
 std::vector<CommandInterface> FrankaMujocoHardwareInterface::export_command_interfaces() {
   std::vector<CommandInterface> command_interfaces;
   command_interfaces.reserve(info_.joints.size());
-  //RCLCPP_INFO(getLogger(), "%ld", info_.joints.size());
 
   for (auto i = 0U; i < info_.joints.size(); i++) {
-    //RCLCPP_INFO(getLogger(), "%s", info_.joints[i].name.c_str());
     command_interfaces.emplace_back(CommandInterface( // JOINT EFFORT
-        info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_joint_effort.at(i)));
-    // command_interfaces.emplace_back(CommandInterface( // JOINT POSITION
-    //     info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_joint_position.at(i)));
+        info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_joint_effort_.at(i)));
+    command_interfaces.emplace_back(CommandInterface( // JOINT POSITION
+        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_joint_position_.at(i)));
     command_interfaces.emplace_back(CommandInterface( // JOINT VELOCITY
-        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_commands_joint_velocity.at(i)));
+        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_commands_joint_velocity_.at(i)));
   }
 
   return command_interfaces;
@@ -179,7 +182,7 @@ std::vector<CommandInterface> FrankaMujocoHardwareInterface::export_command_inte
 
 CallbackReturn FrankaMujocoHardwareInterface::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
-  hw_commands_joint_effort.fill(0);
+  hw_commands_joint_effort_.fill(0);
   RCLCPP_INFO(getLogger(), "Started");
   return CallbackReturn::SUCCESS;
 }
@@ -211,28 +214,33 @@ hardware_interface::return_type FrankaMujocoHardwareInterface::read(const rclcpp
 hardware_interface::return_type FrankaMujocoHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
   std::lock_guard<std::mutex> guard(mj_mutex_);
-  if (std::any_of(hw_commands_joint_effort.begin(), hw_commands_joint_effort.end(),
+  if (std::any_of(hw_commands_joint_effort_.begin(), hw_commands_joint_effort_.end(),
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
-  // if (std::any_of(hw_commands_joint_position.begin(), hw_commands_joint_position.end(),
-  //                 [](double c) { return !std::isfinite(c); })) {
-  //   return hardware_interface::return_type::ERROR;
-  // }
-  if (std::any_of(hw_commands_joint_velocity.begin(), hw_commands_joint_velocity.end(),
+  if (std::any_of(hw_commands_joint_position_.begin(), hw_commands_joint_position_.end(),
+                  [](double c) { return !std::isfinite(c); })) {
+    return hardware_interface::return_type::ERROR;
+  }
+  if (std::any_of(hw_commands_joint_velocity_.begin(), hw_commands_joint_velocity_.end(),
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
 
   switch(control_mode_){
     case ControlMode::JointTorque:
-      for(int i = 0; i < kNumberOfJoints; i++){
-        d_->ctrl[robot_->act_trq_indices_[i]] = hw_commands_joint_effort[i];
+      for(size_t i = 0; i < kNumberOfJoints; i++){
+        d_->ctrl[robot_->act_trq_indices_[i]] = hw_commands_joint_effort_[i];
+      }
+      break;
+    case ControlMode::JointPosition:
+      for(size_t i = 0; i < kNumberOfJoints; i++){
+        d_->ctrl[robot_->act_pos_indices_[i]] = hw_commands_joint_position_[i];
       }
       break;
     case ControlMode::JointVelocity:
-      for(int i = 0; i < kNumberOfJoints; i++){
-        d_->ctrl[robot_->act_vel_indices_[i]] = hw_commands_joint_velocity[i];
+      for(size_t i = 0; i < kNumberOfJoints; i++){
+        d_->ctrl[robot_->act_vel_indices_[i]] = hw_commands_joint_velocity_[i];
       }
       break;
     default:
@@ -244,7 +252,7 @@ hardware_interface::return_type FrankaMujocoHardwareInterface::write(const rclcp
       break;
   }
   if(robot_->has_gripper_){
-    d_->ctrl[robot_->gripper_act_idx_] = gripper_states_ptr_->at(0);//hw_commands_gripper;
+    d_->ctrl[robot_->gripper_act_idx_] = gripper_states_ptr_->at(0);
   }
   mj_step2(m_, d_);
   return hardware_interface::return_type::OK;
@@ -293,8 +301,7 @@ hardware_interface::return_type FrankaMujocoHardwareInterface::prepare_command_m
     is_position = all_of_element_has_string(stop_interfaces, "position");
     is_velocity = all_of_element_has_string(stop_interfaces, "velocity");
     is_duplicate = (is_effort && is_position) || (is_effort && is_velocity) || (is_velocity && is_position);
-    // if(!(is_effort || is_position || is_velocity)){
-    if(!(is_effort || is_velocity)){
+    if(!(is_effort || is_position || is_velocity)){
       RCLCPP_ERROR(this->getLogger(), "Requested stop interface is not a supported type!\n" \
                                   "Please make sure they are either effort or velocity.");
       return hardware_interface::return_type::ERROR;
@@ -316,11 +323,11 @@ hardware_interface::return_type FrankaMujocoHardwareInterface::prepare_command_m
       
       for(size_t i = 0 ; i < kNumberOfJoints; i++){
         if(is_effort){
-          hw_commands_joint_effort[i] = 0;
+          hw_commands_joint_effort_[i] = 0;
         }
         // position command is not reset, since that can be dangerous
         else if(is_velocity){
-          hw_commands_joint_velocity[i] = 0;
+          hw_commands_joint_velocity_[i] = 0;
         }
       }
       control_mode_ = ControlMode::None;
@@ -357,7 +364,7 @@ hardware_interface::return_type FrankaMujocoHardwareInterface::prepare_command_m
     is_position = all_of_element_has_string(start_interfaces, "position");
     is_velocity = all_of_element_has_string(start_interfaces, "velocity");
     is_duplicate = (is_effort && is_position) || (is_effort && is_velocity) || (is_velocity && is_position);
-    if(!(is_effort || is_velocity)){
+    if(!(is_effort || is_position || is_velocity)){
       RCLCPP_ERROR(this->getLogger(), "Requested start interface is not a supported type!\n" \
                                   "Please make sure they are either effort or velocity.");
       return hardware_interface::return_type::ERROR;
@@ -385,9 +392,9 @@ hardware_interface::return_type FrankaMujocoHardwareInterface::prepare_command_m
       if(is_effort){
         control_mode_ = ControlMode::JointTorque;
       }
-      // if(is_position){
-      //   control_mode_ = ControlMode::JointPosition;
-      // }
+      if(is_position){
+        control_mode_ = ControlMode::JointPosition;
+      }
       if(is_velocity){
         control_mode_ = ControlMode::JointVelocity;
       }
@@ -408,34 +415,35 @@ hardware_interface::return_type FrankaMujocoHardwareInterface::perform_command_m
 
   RCLCPP_INFO(this->getLogger(),"Performing command mode switch");
   std::cout << "Current mode: " << control_mode_ << std::endl;
-  // for simulation, nothing needs to be done;
-  // the write loop will handle the switching depending on the control mode.
-  // if(control_mode_ == ControlMode::None){
-  //   robot_->stopRobot();
-  //   robot_->initializeContinuousReading();
-  // }
-  // else if(control_mode_ == ControlMode::JointTorque){
-  //   robot_->stopRobot();
-  //   robot_->initializeTorqueControl();
-  // }
-  // else if(control_mode_ == ControlMode::JointPosition){
-  //   robot_->stopRobot();
-  //   robot_->initializeJointPositionControl();
-  // }
-  // else if(control_mode_ == ControlMode::JointVelocity){
-  //   robot_->stopRobot();
-  //   robot_->initializeJointVelocityControl();
-  // }
-  // else if(control_mode_ == ControlMode::CartesianPose){
-  //   robot_->stopRobot();
-  //   robot_->initializeCartesianPositionControl();
-  // }
-  // else if(control_mode_ == ControlMode::CartesianVelocity){
-  //   robot_->stopRobot();
-  //   robot_->initializeCartesianVelocityControl();
-  // }
-  // robot_->setControlMode(control_mode_);
   
+  if(control_mode_ == ControlMode::None){
+    for(size_t i=0; i<kNumberOfJoints; i++){
+      set_torque_control(m_, robot_->act_trq_indices_[i], 0);
+      set_position_servo(m_, robot_->act_pos_indices_[i], 0);
+      set_velocity_servo(m_, robot_->act_vel_indices_[i], 0);
+    }
+  }
+  else if(control_mode_ == ControlMode::JointTorque){
+    for(size_t i=0; i<kNumberOfJoints; i++){
+      set_torque_control(m_, robot_->act_trq_indices_[i], 1);
+      set_position_servo(m_, robot_->act_pos_indices_[i], 0);
+      set_velocity_servo(m_, robot_->act_vel_indices_[i], 0);
+    }
+  }
+  else if(control_mode_ == ControlMode::JointPosition){
+    for(size_t i=0; i<kNumberOfJoints; i++){
+      set_torque_control(m_, robot_->act_trq_indices_[i], 0);
+      set_position_servo(m_, robot_->act_pos_indices_[i], 100);
+      set_velocity_servo(m_, robot_->act_vel_indices_[i], 0);
+    }
+  }
+  else if(control_mode_ == ControlMode::JointVelocity){
+    for(size_t i=0; i<kNumberOfJoints; i++){
+      set_torque_control(m_, robot_->act_trq_indices_[i], 0);
+      set_position_servo(m_, robot_->act_pos_indices_[i], 0);
+      set_velocity_servo(m_, robot_->act_vel_indices_[i], 10);
+    }
+  }
 
   return hardware_interface::return_type::OK;
 }

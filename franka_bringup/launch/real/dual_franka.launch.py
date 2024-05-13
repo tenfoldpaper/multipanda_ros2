@@ -62,13 +62,13 @@ def generate_launch_description():
          ' fake_sensor_commands:=', fake_sensor_commands])
 
     rviz_file = os.path.join(get_package_share_directory('franka_description'), 'rviz',
-                             'visualize_franka.rviz')
+                             'visualize_dual_franka.rviz')
 
     franka_controllers = PathJoinSubstitution(
         [
             FindPackageShare('franka_bringup'),
             'config',
-            'dual_multimode.yaml',
+            'dual_controllers.yaml',
         ]
     )
 
@@ -109,18 +109,6 @@ def generate_launch_description():
             description='Use Franka Gripper as an end-effector, otherwise, robot 2 is loaded '
                         'without an end-effector.'),
         Node(
-            package='controller_manager',
-            executable='ros2_control_node',
-            parameters=[{'robot_description': robot_description}, franka_controllers],
-            remappings=[('joint_states', 'franka/joint_states')],
-            output={
-                'stdout': 'screen',
-                'stderr': 'screen',
-            },
-            prefix=['stdbuf -o L'],
-            on_exit=Shutdown(),
-        ),
-        Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
             name='robot_state_publisher',
@@ -137,6 +125,17 @@ def generate_launch_description():
         ),
         Node(
             package='controller_manager',
+            executable='ros2_control_node',
+            parameters=[{'robot_description': robot_description}, franka_controllers],
+            remappings=[('joint_states', 'franka/joint_states')],
+            output={
+                'stdout': 'screen',
+                'stderr': 'screen',
+            },
+            on_exit=Shutdown(),
+        ),
+        Node(
+            package='controller_manager',
             executable='spawner',
             arguments=['joint_state_broadcaster'],
             output='screen',
@@ -144,50 +143,41 @@ def generate_launch_description():
         Node(
             package='controller_manager',
             executable='spawner',
-            arguments=['single_multi_mode_controller'],
+            arguments=['franka_left_robot_state_broadcaster'],
             output='screen',
             condition=UnlessCondition(use_fake_hardware),
         ),
-        # # Node(
-        # #     package='panda_motion_generators',
-        # #     executable='panda_poly_c2_joint_motion_generator_node',
-        # #     arguments=['left_joint_via_motion', '/left/get_robot_states', 'single_multi_mode_controller', 'panda_joint_impedance_controller', '/left/panda_joint_impedance_controller/desired_pose'],
-        # #     output='screen',
-        # #     prefix=['stdbuf -o L'],
-        # # ),
-        # # Node(
-        # #     package='panda_motion_generators',
-        # #     executable='panda_poly_c2_joint_motion_generator_node',
-        # #     arguments=['right_joint_via_motion', '/right/get_robot_states', 'single_multi_mode_controller', 'panda_joint_impedance_controller', '/right/panda_joint_impedance_controller/desired_pose'],
-        # #     output='screen',
-        # #     prefix=['stdbuf -o L'],
-        # # ),
-        # # Node(
-        # #     package='panda_motion_generators',
-        # #     executable='panda_dq_c1_cartesian_motion_generator_node',
-        # #     arguments=['twin_cartesian_via_motion', '/left_and_right/get_robot_states', 'single_multi_mode_controller', 'dual_cartesian_impedance_controller', '/left_and_right/dual_cartesian_impedance_controller/desired_pose'],
-        # #     output='screen',
-        # #     prefix=['stdbuf -o L'],
-        # # ),
-        # # Node(
-        # #     package='panda_motion_generators',
-        # #     executable='panda_dq_c1_cartesian_motion_generator_node',
-        # #     arguments=['coupled_cartesian_via_motion', '/left_and_right/get_robot_states', 'single_multi_mode_controller', 'des_coupled_dual_cartesian_impedance_controller', '/left_and_right/des_coupled_dual_cartesian_impedance_controller/desired_pose'],
-        # #     output='screen',
-        # #     prefix=['stdbuf -o L'],
-        # # ),
-        # Node(package='rviz2',
-        #      executable='rviz2',
-        #      name='rviz2',
-        #      arguments=['--display-config', rviz_file],
-        #      condition=IfCondition(use_rviz)
-        #      ),
-        Node(package='mm_demo_scripts',
-             executable='resource_logger',
-             name='resource_logger',
-             output='screen',
-             prefix=['stdbuf -o L']
-             )
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['franka_right_robot_state_broadcaster'],
+            output='screen',
+            condition=UnlessCondition(use_fake_hardware),
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['left_robot_state_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['right_robot_state_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['left_robot_model_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['right_robot_model_broadcaster'],
+            output='screen',
+        ),
         # IncludeLaunchDescription(
         #     PythonLaunchDescriptionSource([PathJoinSubstitution(
         #         [FindPackageShare('franka_gripper'), 'launch', 'gripper.launch.py'])]),
@@ -196,5 +186,12 @@ def generate_launch_description():
         #     condition=IfCondition(load_gripper_1)
 
         # ),
+
+        Node(package='rviz2',
+             executable='rviz2',
+             name='rviz2',
+             arguments=['--display-config', rviz_file],
+             condition=IfCondition(use_rviz)
+             )
 
     ])

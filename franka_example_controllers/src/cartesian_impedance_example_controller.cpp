@@ -97,7 +97,7 @@ controller_interface::return_type CartesianImpedanceExampleController::update(
     pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                       jacobian.transpose() * jacobian_transpose_pinv) *
-                         (n_stiffness * (q - q) -
+                         (n_stiffness * (desired_qn - q) -
                           (2.0 * sqrt(n_stiffness)) * qD);
 
   tau_d <<  tau_task + coriolis + tau_nullspace;
@@ -134,14 +134,17 @@ CallbackReturn CartesianImpedanceExampleController::on_activate(
   desired = Matrix4d(franka_robot_model_->getPoseMatrix(franka::Frame::kEndEffector).data());
   desired_position = Vector3d(desired.block<3,1>(0,3));
   desired_orientation = Quaterniond(desired.block<3,3>(0,0));
+  desired_qn = Vector7d(franka_robot_model_->getRobotState()->q.data());
 
+  double pos_stiff = 400.0;
+  double rot_stiff = 20.0;
   stiffness.setIdentity();
-  stiffness.topLeftCorner(3, 3) << 400 * Matrix3d::Identity();
-  stiffness.bottomRightCorner(3, 3) << 20 * Matrix3d::Identity();
+  stiffness.topLeftCorner(3, 3) << pos_stiff * Matrix3d::Identity();
+  stiffness.bottomRightCorner(3, 3) << rot_stiff * Matrix3d::Identity();
   // Simple critical damping
   damping.setIdentity();
-  damping.topLeftCorner(3,3) << 40 * Matrix3d::Identity();
-  damping.bottomRightCorner(3, 3) << 8.944 * Matrix3d::Identity();
+  damping.topLeftCorner(3,3) << 2 * sqrt(pos_stiff) * Matrix3d::Identity();
+  damping.bottomRightCorner(3, 3) << 0.8 * 2 * sqrt(rot_stiff) * Matrix3d::Identity();
   n_stiffness = 10.0;
 
   return CallbackReturn::SUCCESS;

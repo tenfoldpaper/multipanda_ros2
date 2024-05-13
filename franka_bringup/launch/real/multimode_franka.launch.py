@@ -46,12 +46,12 @@ def generate_launch_description():
     use_rviz = LaunchConfiguration(use_rviz_parameter_name)
 
     franka_xacro_file = os.path.join(get_package_share_directory('franka_description'), 'robots',
-                                     'single_panda_arm.urdf.xacro')
+                                     'panda_arm.urdf.xacro')
     robot_description = Command(
         [FindExecutable(name='xacro'), ' ', franka_xacro_file, 
-         ' hand_1:=', load_gripper_1,
-         ' robot_ip_1:=', robot_ip_1,
-         ' arm_id_1:=', arm_id_1,
+         ' hand:=', load_gripper_1,
+         ' robot_ip:=', robot_ip_1,
+         ' arm_id:=', arm_id_1,
          ' use_fake_hardware:=', use_fake_hardware,
          ' fake_sensor_commands:=', fake_sensor_commands])
 

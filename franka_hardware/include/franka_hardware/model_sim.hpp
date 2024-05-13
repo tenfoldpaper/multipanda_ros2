@@ -57,6 +57,7 @@ class ModelSim : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-type
                   std::array<int, 7UL> joint_qpos_indices,
                   std::array<int, 7UL> joint_qvel_indices,
                   std::array<int, 7UL> act_trq_indices,
+                  std::array<int, 7UL> act_pos_indices,
                   std::array<int, 7UL> act_vel_indices){
     link_indices_ = link_indices;
     joint_site_indices_ = joint_site_indices;
@@ -64,6 +65,7 @@ class ModelSim : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-type
     joint_qpos_indices_ = joint_qpos_indices;
     joint_qvel_indices_ = joint_qvel_indices;
     act_trq_indices_ = act_trq_indices;
+    act_pos_indices_ = act_pos_indices;
     act_vel_indices_ = act_vel_indices;
   };
   /**
@@ -234,6 +236,7 @@ class ModelSim : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-type
   std::array<int, 7UL> joint_qpos_indices_;
   std::array<int, 7UL> joint_qvel_indices_;
   std::array<int, 7UL> act_trq_indices_;
+  std::array<int, 7UL> act_pos_indices_;
   std::array<int, 7UL> act_vel_indices_;
 
   /**

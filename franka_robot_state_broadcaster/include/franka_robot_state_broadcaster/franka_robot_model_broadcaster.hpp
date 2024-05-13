@@ -52,6 +52,7 @@ class FrankaRobotModelBroadcaster : public controller_interface::ControllerInter
         realtime_franka_model_publisher;   
     std::unique_ptr<franka_semantic_components::FrankaRobotModel> franka_robot_model;
     size_t arm_count;
+    rclcpp::Time last_pub_;
     int frequency;
 };
 

@@ -8,6 +8,9 @@ controller_manager:
     cartesian_impedance_example_controller:
       type: franka_example_controllers/CartesianImpedanceExampleController
 
+    joint_position_example_controller:
+      type: franka_example_controllers/JointPositionExampleController
+
     joint_velocity_example_controller:
       type: franka_example_controllers/JointVelocityExampleController
     
@@ -17,13 +20,19 @@ controller_manager:
     franka_robot_state_broadcaster:
       type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
 
-    model_example_controller:
-      type: franka_example_controllers/ModelExampleController
+    franka_robot_model_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
     
 
 franka_robot_state_broadcaster:
   ros__parameters:
     arm_id: panda
+    frequency: 60
+    
+franka_robot_model_broadcaster:
+  ros__parameters:
+    arm_id: panda
+    frequency: 60
 
 joint_impedance_example_controller:
   ros__parameters:
@@ -48,27 +57,11 @@ joint_impedance_example_controller:
 cartesian_impedance_example_controller:
   ros__parameters:
     arm_id: panda
-
-joint_velocity_example_controller:
+    
+joint_position_example_controller:
   ros__parameters:
     arm_id: panda
-    k_gains:
-      - 24.0
-      - 24.0
-      - 24.0
-      - 24.0
-      - 10.0
-      - 6.0
-      - 2.0
-    d_gains:
-      - 2.0
-      - 2.0
-      - 2.0
-      - 1.0
-      - 1.0
-      - 1.0
-      - 0.5
 
-model_example_controller:
+joint_velocity_example_controller:
   ros__parameters:
     arm_id: panda

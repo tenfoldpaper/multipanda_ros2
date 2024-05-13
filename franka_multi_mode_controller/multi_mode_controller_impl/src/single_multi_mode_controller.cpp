@@ -147,13 +147,13 @@ CallbackReturn SingleMultiModeController::on_configure(
 
 //*************** Custom init functions *************//
 bool SingleMultiModeController::initServices(){
-  set_ctrl_srv_ = this->get_node()->create_service<SetControllers>("set_controllers", 
+  set_ctrl_srv_ = this->get_node()->create_service<SetControllers>("~/set_controllers", 
                                                   std::bind(&SingleMultiModeController::setControllersCallback, 
                                                             this, 
                                                             std::placeholders::_1, 
                                                             std::placeholders::_2));
 
-  get_ctrl_srv_ = this->get_node()->create_service<GetControllers>("get_controllers",
+  get_ctrl_srv_ = this->get_node()->create_service<GetControllers>("~/get_controllers",
                                                   std::bind(&SingleMultiModeController::getControllersCallback, 
                                                             this, 
                                                             std::placeholders::_1, 

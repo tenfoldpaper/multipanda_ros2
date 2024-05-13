@@ -1,0 +1,62 @@
+<mujocoinclude>
+  <worldbody>
+
+    <body name="obj_box_01" pos="0.5 -0.13 0.061">
+        <geom name="obj_box_01" type="box" size="0.03 0.03 0.03" friction="2 0.005 0.0001" solimp="0.998 0.998 0.001" solref="0.001 1" density="100" rgba="1 0.56 0.43 1"/>
+        <joint name="obj_box_01_joint" type="free" damping="0.0005"/>
+    </body>
+    <body name="sphere_01" pos="0.5 0 0.8" mocap="true">
+        <geom name="sphere_01" type="sphere" size="0.1" rgba="0 1 0 1"/>
+    </body>
+    <!-- <body name="obj_box_02" pos="0.5 0.1 0.25">
+        <geom name="obj_box_02" type="box" size="0.03 0.03 0.05" solimp="0.998 0.998 0.001" solref="0.001 1" density="500" rgba="1 0.56 0.43 1"/>
+        <joint name="obj_box_02_joint" type="free" damping="0.0005"/>
+    </body>  -->
+    <!-- <body name="obj_box_01" pos="0.0 0.0 0.25">
+        <geom name="obj_box_01" fromto="0.0 0.0 0.5  0.0 0.0 0.0"  size="0.04" type="box" rgba="1 0.56 0.43 1"/>
+    </body> 
+
+    <body name="obj_box_02" pos="0.0 0.0 0.25">
+        <geom name="obj_box_02" fromto="0.0 0.0 0.5  0.0 0.0 0.0"  size="0.04" type="box" rgba="1 0.56 0.43 1"/>
+    </body> 
+
+    <body name="obj_box_03" pos="0.0 0.0 0.25">
+        <geom name="obj_box_03" fromto="0.0 0.0 0.5  0.0 0.0 0.0"  size="0.04" type="box" rgba="1 0.56 0.43 1"/>
+    </body> 
+
+    <body name="obj_box_04" pos="0.0 0.0 0.25">
+        <geom name="obj_box_04" fromto="0.0 0.0 0.5  0.0 0.0 0.0"  size="0.04" type="box" rgba="1 0.56 0.43 1"/>
+    </body> 
+
+    <body name="obj_box_05" pos="0.0 0.0 0.25">
+        <geom name="obj_box_05" fromto="0.0 0.0 0.5  0.0 0.0 0.0"  size="0.04" type="box" rgba="1 0.56 0.43 1"/>
+    </body>  -->
+
+    <!-- <body name="obj_box_06" pos="0.5 0.0 1.13"> -->
+        <!-- <geom name="obj_box_06" fromto="0.0 0.0 0.2 0.0 0.0 0.0" solimp="0.998 0.998 0.001" solref="0.001 1" density="500" friction="0.95 0.3 0.1" size="0.03" type="box" rgba="1 0.56 0.43 1"/> -->
+        <!-- <geom name="obj_box_06" type="box" size="0.03 0.03 0.05" solimp="0.998 0.998 0.001" solref="0.001 1" density="500" rgba="1 0.56 0.43 1"/>
+        <joint name="object_joint" type="free" damping="0.0005"/>
+    </body> -->
+
+    <!-- <body name="obj_cylinder_01" pos="0.0 0.0 0.25">
+        <geom name="obj_cylinder_01" fromto="0.0 0.0 0.5  0.0 0.0 0.0" size="0.04" type="cylinder" rgba="1 0.56 0.43 1"/>
+    </body> 
+
+    <body name="obj_cylinder_02" pos="0.0 0.0 0.25">
+        <geom name="obj_cylinder_02" fromto="0.0 0.0 0.5  0.0 0.0 0.0" size="0.04" type="cylinder" rgba="1 0.56 0.43 1"/>
+    </body> 
+
+    <body name="obj_cylinder_03" pos="0.0 0.0 0.25">
+        <geom name="obj_cylinder_03" fromto="0.0 0.0 0.5  0.0 0.0 0.0" size="0.04" type="cylinder" rgba="1 0.56 0.43 1"/>
+    </body> 
+
+    <body name="obj_cylinder_04" pos="0.0 0.0 0.25">
+        <geom name="obj_cylinder_04" fromto="0.0 0.0 0.5  0.0 0.0 0.0" size="0.04" type="cylinder" rgba="1 0.56 0.43 1"/>
+    </body> 
+
+    <body name="obj_cylinder_05" pos="0.0 0.0 0.25">
+        <geom name="obj_cylinder_05" fromto="0.0 0.0 0.5  0.0 0.0 0.0" size="0.04" type="cylinder" rgba="1 0.56 0.43 1"/>
+    </body>  -->
+    
+  </worldbody>
+</mujocoinclude>

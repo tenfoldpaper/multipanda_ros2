@@ -1,0 +1,64 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    sim_multi_mode_controller:
+      type: multi_mode_controller/SingleMultiModeController
+    
+    mj_left_state_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
+    
+    mj_left_model_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
+    
+    mj_right_state_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
+    
+    mj_right_model_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
+
+mj_left_state_broadcaster:
+  ros__parameters:
+    arm_id: mj_left
+    frequency: 100
+
+mj_left_model_broadcaster:
+  ros__parameters:
+    arm_id: mj_left
+    frequency: 100
+
+mj_right_state_broadcaster:
+  ros__parameters:
+    arm_id: mj_right
+    frequency: 100
+
+mj_right_model_broadcaster:
+  ros__parameters:
+    arm_id: mj_right
+    frequency: 100
+    
+sim_multi_mode_controller:
+  ros__parameters:
+    arm_count: 2
+    arm_1:
+      arm_id: mj_left
+    arm_2:
+      arm_id: mj_right
+    controllers: ["panda_joint_impedance_controller", 
+                  "panda_joint_velocity_controller",
+                  "comless_coupled_dual_cartesian_impedance_controller", 
+                  "dual_cartesian_impedance_controller",
+                  "des_coupled_dual_cartesian_impedance_controller"]
+    resources:
+        comless_coupled_dual_cartesian_impedance_controller: ["mj_left&mj_right"]
+        dual_cartesian_impedance_controller: ["mj_left&mj_right"]
+        des_coupled_dual_cartesian_impedance_controller: ["mj_left&mj_right"]
+        panda_joint_impedance_controller: ["mj_left","mj_right"]
+        panda_joint_velocity_controller: ["mj_left","mj_right"]
+    start_controllers:
+        names: ["dual_cartesian_impedance_controller"]
+        resources:
+            dual_cartesian_impedance_controller: ["mj_left&mj_right"]

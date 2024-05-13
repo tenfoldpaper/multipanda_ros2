@@ -1,20 +1,17 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:macro name="panda_arm_ros2_control" params="ns_1 robot_ip_1 use_fake_hardware:=^|false fake_sensor_commands:=^|false">
-    <ros2_control name="FrankaMultiHardwareInterface" type="system">
+  <xacro:macro name="panda_arm_sim_ros2_control" params="ns_1 ns_2 hand_1 hand_2 scene_xml mj_yaml">
+    <ros2_control name="FrankaMujocoMultiHardwareInterface" type="system">
       <hardware>
-        <param name="robot_count">1</param>
-        <xacro:if value="${use_fake_hardware}">
-          <plugin>fake_components/GenericSystem</plugin>
-          <param name="fake_sensor_commands">${fake_sensor_commands}</param>
-          <param name="state_following_offset">0.0</param>
-        </xacro:if>
-        <xacro:unless value="${use_fake_hardware}">
-          <plugin>franka_hardware/FrankaMultiHardwareInterface</plugin>
-          <param name="robot_ip_1">${robot_ip_1}</param>
-        </xacro:unless>
+        <param name="robot_count">2</param>
+        <plugin>franka_hardware/FrankaMujocoMultiHardwareInterface</plugin>
         <param name="ns_1">${ns_1}</param>
+        <param name="ns_2">${ns_2}</param>
+        <param name="hand_1">${hand_1}</param>
+        <param name="hand_2">${hand_2}</param>
+        <param name="scene_xml">${scene_xml}</param>
+        <param name="mj_yaml">${mj_yaml}</param>
       </hardware>
 
       <xacro:macro name="configure_joint" params="joint_name initial_position">
@@ -36,6 +33,14 @@
       <xacro:configure_joint joint_name="${ns_1}_joint5" initial_position="0.0"/>
       <xacro:configure_joint joint_name="${ns_1}_joint6" initial_position="${pi/2}"/>
       <xacro:configure_joint joint_name="${ns_1}_joint7" initial_position="${pi/4}"/>
+
+      <xacro:configure_joint joint_name="${ns_2}_joint1" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint2" initial_position="${-pi/4}"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint3" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint4" initial_position="${-3*pi/4}"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint5" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint6" initial_position="${pi/2}"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint7" initial_position="${pi/4}"/>
 
     </ros2_control>
   </xacro:macro>

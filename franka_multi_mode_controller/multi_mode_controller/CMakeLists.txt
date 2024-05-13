@@ -71,8 +71,10 @@ add_library(multi_mode_controller SHARED
   src/comless_dual_joint_impedance_controller.cpp
   src/panda_cartesian_impedance_controller.cpp
   src/dual_cartesian_impedance_controller.cpp
+  src/twin_cartesian_impedance_controller.cpp
   src/des_coupled_dual_cartesian_impedance_controller.cpp
   src/panda_joint_impedance_controller.cpp
+  src/panda_joint_velocity_controller.cpp
   src/twin_joint_impedance_controller.cpp)
 
 target_include_directories(

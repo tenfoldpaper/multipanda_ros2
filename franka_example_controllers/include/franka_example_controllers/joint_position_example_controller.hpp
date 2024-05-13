@@ -45,8 +45,6 @@ class JointPositionExampleController : public controller_interface::ControllerIn
   Vector7d initial_q_;
   Vector7d dq_;
   Vector7d dq_filtered_;
-  Vector7d k_gains_;
-  Vector7d d_gains_;
   rclcpp::Time start_time_;
   rclcpp::Duration init_time_ = rclcpp::Duration(0, 0);
   void updateJointStates();

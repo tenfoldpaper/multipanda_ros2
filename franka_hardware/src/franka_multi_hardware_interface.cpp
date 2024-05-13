@@ -141,26 +141,6 @@ CallbackReturn FrankaMultiHardwareInterface::on_init(const hardware_interface::H
   return CallbackReturn::SUCCESS;
 }
 
-// Function for extracting ns in joint names
-std::string get_ns(std::string const& s)
-{
-    std::string::size_type pos = s.find('_');
-    if (pos != std::string::npos)
-    {
-        return s.substr(0, pos);
-    }
-    else
-    {
-        return s;
-    }
-}
-
-// Function for extracting joint number
-int get_joint_no(std::string const& s){
-  int no = s.back() - '0' - 1;
-  return no;
-}
-
 std::vector<StateInterface> FrankaMultiHardwareInterface::export_state_interfaces() {
   std::vector<StateInterface> state_interfaces;
   for (auto i = 0U; i < info_.joints.size(); i++) {
@@ -236,10 +216,10 @@ std::vector<CommandInterface> FrankaMultiHardwareInterface::export_command_inter
 
 CallbackReturn FrankaMultiHardwareInterface::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
-  control_mode_ = ControlMode::None;
   for(auto& arm_container_pair : arms_){
     auto &arm = arm_container_pair.second;
 
+    arm.control_mode_ = ControlMode::None;
     arm.robot_->initializeContinuousReading();
     arm.hw_commands_joint_effort_.fill(0);
   }
@@ -254,6 +234,7 @@ CallbackReturn FrankaMultiHardwareInterface::on_deactivate(
   RCLCPP_INFO(getLogger(), "trying to Stop...");
   for(auto arm_container_pair : arms_){
     auto &arm = arm_container_pair.second;
+    arm.control_mode_ = ControlMode::None;
     arm.robot_->stopRobot();
   }
   RCLCPP_INFO(getLogger(), "Stopped");
@@ -333,13 +314,7 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
     const std::vector<std::string>& start_interfaces,
     const std::vector<std::string>& stop_interfaces) {
   RCLCPP_INFO(this->getLogger(),"Preparing command mode switch");
-  for(auto& start_item : start_interfaces){
-    RCLCPP_INFO(this->getLogger(),"++ %s", start_item.c_str());
-  }
-  for(auto& stop_item : stop_interfaces){
-    RCLCPP_INFO(this->getLogger(),"-- %s", stop_item.c_str());
-  }
-  
+
   bool is_effort;
   bool is_position;
   bool is_velocity;
@@ -352,156 +327,175 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
   ////////////////////////////////////////////////////////////////
   //              Verify that the names are valid               //
   ////////////////////////////////////////////////////////////////
-  int stop_type = check_command_mode_type(stop_interfaces);
+  for(auto& arm : arms_){
+    std::vector<std::string> arm_stop_interfaces;
 
-  if(stop_type == -1){
-    RCLCPP_ERROR(this->getLogger(), "Requested stop interfaces do not all have the same type!\n" \
-                                    "Please make sure they are either Cartesian or Joint.");
-    return hardware_interface::return_type::ERROR;
-  }
-
-  if(stop_type != 0){
-    // If stop_type is not empty, i.e. 1 or 2
-    is_effort = all_of_element_has_string(stop_interfaces, "effort");
-    is_position = all_of_element_has_string(stop_interfaces, "position");
-    is_velocity = all_of_element_has_string(stop_interfaces, "velocity");
-    is_duplicate = (is_effort && is_position) || (is_effort && is_velocity) || (is_velocity && is_position);
-    if(!(is_effort || is_position || is_velocity)){
-      RCLCPP_ERROR(this->getLogger(), "Requested stop interface is not a supported type!\n" \
-                                  "Please make sure they are either effort, position or velocity.");
-      return hardware_interface::return_type::ERROR;
+    // query what is the requested stop interface's arm
+    for(auto& stop : stop_interfaces){
+      if(stop.find(arm.first) != std::string::npos){
+        arm_stop_interfaces.push_back(stop);
+      }
     }
-    if((is_duplicate)){
-      RCLCPP_ERROR(this->getLogger(), "Requested stop interface has a confusing name!\n" \
-                                  "Please make sure they are either effort (for joints), position or velocity, only.");
-      return hardware_interface::return_type::ERROR;
-    }
-  }
-
-  switch(stop_type){
-    case 1: // stop the joint controllers
-      // Make sure there are 7
-      if(stop_interfaces.size() != kNumberOfJoints * robot_count_){
-        RCLCPP_ERROR(this->getLogger(), "Requested joint stop interface's size is not %ld (got %ld)", kNumberOfJoints*robot_count_, stop_interfaces.size());
+    int stop_type = check_command_mode_type(arm_stop_interfaces);
+    if(stop_type > 0){
+      // If stop_type is not empty, i.e. 1 or 2
+      is_effort = all_of_element_has_string(stop_interfaces, "effort");
+      is_position = all_of_element_has_string(stop_interfaces, "position");
+      is_velocity = all_of_element_has_string(stop_interfaces, "velocity");
+      is_duplicate = (is_effort && is_position) || (is_effort && is_velocity) || (is_velocity && is_position);
+      if(!(is_effort || is_position || is_velocity)){
+        RCLCPP_ERROR(this->getLogger(), "Requested stop interface is not a supported type!\n" \
+                                    "Please make sure they are either effort, position or velocity.");
         return hardware_interface::return_type::ERROR;
       }
-      for(auto& arm_container_pair : arms_){
-        auto& arm = arm_container_pair.second;
+      if((is_duplicate)){
+        RCLCPP_ERROR(this->getLogger(), "Requested stop interface has a confusing name!\n" \
+                                    "Please make sure they are either effort, position or velocity, only.");
+        return hardware_interface::return_type::ERROR;
+      }
+    }
+    switch(stop_type){
+      case -1: 
+        RCLCPP_ERROR(this->getLogger(), "Requested stop interfaces do not all have the same type!\n" \
+                                      "Please make sure they are either Cartesian or Joint.");
+        return hardware_interface::return_type::ERROR;
+      
+      case 0: // if size is 0, move on to the next arm
+        continue;
+        break;
+
+      case 1: // stop the joint controllers
+        // Make sure there are 7
+        if(arm_stop_interfaces.size() != kNumberOfJoints){
+          RCLCPP_ERROR(this->getLogger(), "Requested joint stop interface's size is not 7 (got %ld)", arm_stop_interfaces.size());
+          return hardware_interface::return_type::ERROR;
+        }
         for(size_t i = 0 ; i < kNumberOfJoints; i++){
           if(is_effort){
-            arm.hw_commands_joint_effort_[i] = 0;
+            arm.second.hw_commands_joint_effort_[i] = 0;
           }
           // position command is not reset, since that can be dangerous
           else if(is_velocity){
-            arm.hw_commands_joint_velocity_[i] = 0;
+            arm.second.hw_commands_joint_velocity_[i] = 0;
           }
         }
-      }
-      control_mode_ = ControlMode::None;
-      break;
+        arm.second.control_mode_ = ControlMode::None;
+        arm.second.switch_cm_ = true;
+        break;
 
-    case 2: // stop the cartesian controllers
-      if(is_position){
-        if(stop_interfaces.size() != 16U * robot_count_){
-          RCLCPP_ERROR(this->getLogger(), "Requested Cartesian position stop interface's size is not %ld (got %ld)", 16 * robot_count_, stop_interfaces.size());
-          return hardware_interface::return_type::ERROR;
+      case 2:
+        if(is_position){
+          if(stop_interfaces.size() != 16U){
+            RCLCPP_ERROR(this->getLogger(), "Requested Cartesian position stop interface's size is not %ld (got %ld)", 16, stop_interfaces.size());
+            return hardware_interface::return_type::ERROR;
+          }
         }
-      }
-      if(is_velocity){
-        if(stop_interfaces.size() != 6U * robot_count_){
-          RCLCPP_ERROR(this->getLogger(), "Requested Cartesian velocity stop interface's size is not %ld (got %ld)", 6 * robot_count_, stop_interfaces.size());
-          return hardware_interface::return_type::ERROR;
+        if(is_velocity){
+          if(stop_interfaces.size() != 6U){
+            RCLCPP_ERROR(this->getLogger(), "Requested Cartesian velocity stop interface's size is not %ld (got %ld)", 6, arm_stop_interfaces.size());
+            return hardware_interface::return_type::ERROR;
 
-        }
-        // set the commands to zero
-        for(auto& arm_container_pair : arms_){
-          auto& arm = arm_container_pair.second;
+          }
+          // set the commands to zero
           for(int i = 0; i < 6; i++){
-            arm.hw_commands_cartesian_velocity_[i] = 0;
+            arm.second.hw_commands_cartesian_velocity_[i] = 0;
           }
         }
-      }
-      control_mode_ = ControlMode::None;
-      break;
+        arm.second.control_mode_ = ControlMode::None;
+        arm.second.switch_cm_ = true;
+        break;
 
-    default:
-      break;
+      default:
+        break;
+    }
   }
 
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
   //              Handle the start case                         //
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-  int start_type = check_command_mode_type(start_interfaces);
-  
-  if(start_type == -1){
-    RCLCPP_ERROR(this->getLogger(), "Requested start interfaces do not all have the same type!\n" \
+  for(auto& arm : arms_){
+    std::vector<std::string> arm_start_interfaces;
+
+    // query what is the requested stop interface's arm
+    for(auto& start : start_interfaces){
+      if(start.find(arm.first) != std::string::npos){
+        arm_start_interfaces.push_back(start);
+      }
+    }
+    int start_type = check_command_mode_type(arm_start_interfaces);
+    // ////////////////////////////////////////////////////////////////
+    // //              Verify that the names are valid               //
+    // ////////////////////////////////////////////////////////////////
+    if(start_type > 0){
+      // If start_type is not empty, i.e. 1 or 2
+      is_effort = all_of_element_has_string(start_interfaces, "effort");
+      is_position = all_of_element_has_string(start_interfaces, "position");
+      is_velocity = all_of_element_has_string(start_interfaces, "velocity");
+      is_duplicate = (is_effort && is_position) || (is_effort && is_velocity) || (is_velocity && is_position);
+      if(!(is_effort || is_position || is_velocity)){
+        RCLCPP_ERROR(this->getLogger(), "Requested start interface is not a supported type!\n" \
+                                    "Please make sure they are either effort, position or velocity.");
+        return hardware_interface::return_type::ERROR;
+      }
+      if((is_duplicate)){
+        RCLCPP_ERROR(this->getLogger(), "Requested start interface has a confusing name!\n" \
+                                    "Please make sure they are either effort, position or velocity, only.");
+        return hardware_interface::return_type::ERROR;
+      }
+      // Just in case: only allow new controller to be started if the current control mode is NONE
+      if(arm.second.control_mode_ != ControlMode::None){
+        RCLCPP_ERROR(this->getLogger(), "Switching between control modes without stopping it first is not supported.\n"\
+                                        "Please stop the running controller first.");
+        return hardware_interface::return_type::ERROR;
+      }
+    }
+    switch(start_type){
+      case 0: // if size is 0, move on to the next arm
+        continue;
+        break;
+
+      case -1:
+        RCLCPP_ERROR(this->getLogger(), "Requested start interfaces do not all have the same type!\n" \
                                     "Please make sure they are either Cartesian or Joint.");
-    return hardware_interface::return_type::ERROR;
-  }
-  ////////////////////////////////////////////////////////////////
-  //              Verify that the names are valid               //
-  ////////////////////////////////////////////////////////////////
-  if(start_type != 0){
-    // If start_type is not empty, i.e. 1 or 2
-    RCLCPP_INFO(this->getLogger(), "start type: %d", start_type);
-    is_effort = all_of_element_has_string(start_interfaces, "effort");
-    is_position = all_of_element_has_string(start_interfaces, "position");
-    is_velocity = all_of_element_has_string(start_interfaces, "velocity");
-    is_duplicate = (is_effort && is_position) || (is_effort && is_velocity) || (is_velocity && is_position);
-    if(!(is_effort || is_position || is_velocity)){
-      RCLCPP_ERROR(this->getLogger(), "Requested start interface is not a supported type!\n" \
-                                  "Please make sure they are either effort (for joints), position or velocity.");
-      return hardware_interface::return_type::ERROR;
-    }
-    if((is_duplicate)){
-      RCLCPP_ERROR(this->getLogger(), "Requested start interface has a confusing name!\n" \
-                                  "Please make sure they are either effort (for joints), position or velocity, only.");
-      return hardware_interface::return_type::ERROR;
-    }
-  }
-
-  // Just in case: only allow new controller to be started if the current control mode is NONE
-  if(control_mode_ != ControlMode::None){
-    RCLCPP_ERROR(this->getLogger(), "Switching between control modes without stopping it first is not supported.\n"\
-                                    "Please stop the running controller first.");
-    return hardware_interface::return_type::ERROR;
-  }
-
-  switch(start_type){
-    case 1:
-      RCLCPP_INFO(this->getLogger(), "case 1 start type: %d", start_type);
-      if(start_interfaces.size() != kNumberOfJoints * robot_count_){
-        RCLCPP_ERROR(this->getLogger(), "Requested joint start interface's size is not %ld (got %ld)", kNumberOfJoints * robot_count_, start_interfaces.size());
         return hardware_interface::return_type::ERROR;
-      }
-      if(is_effort){
-        control_mode_ = ControlMode::JointTorque;
-      }
-      if(is_position){
-        control_mode_ = ControlMode::JointPosition;
-      }
-      if(is_velocity){
-        control_mode_ = ControlMode::JointVelocity;
-      }
-      break;
+      case 1:
+        if(arm_start_interfaces.size() != kNumberOfJoints){
+          RCLCPP_ERROR(this->getLogger(), "Requested joint start interface's size is not %ld (got %ld)", kNumberOfJoints, arm_start_interfaces.size());
+          return hardware_interface::return_type::ERROR;
+        }
+        if(is_effort){
+          arm.second.control_mode_ = ControlMode::JointTorque;
+          arm.second.switch_cm_ = true;
+        }
+        if(is_position){
+          arm.second.control_mode_ = ControlMode::JointPosition;
+          arm.second.switch_cm_ = true;
+        }
+        if(is_velocity){
+          arm.second.control_mode_ = ControlMode::JointVelocity;
+          arm.second.switch_cm_ = true;
+        }
+        break;
 
-    case 2:
-      RCLCPP_INFO(this->getLogger(), "case 2 start type: %d", start_type);
-      if(start_interfaces.size() != 16U * robot_count_ && start_interfaces.size() != 6U * robot_count_){
-        RCLCPP_ERROR(this->getLogger(), "Requested Cartesian start interface's size is not %ld nor %ld (got %ld)", 16U * robot_count_, 6U * robot_count_, start_interfaces.size());
-        return hardware_interface::return_type::ERROR;
-      }
-      if(is_position){
-        RCLCPP_INFO(this->getLogger(), "if is_position control_mode_ CartesianPose");
-        control_mode_ = ControlMode::CartesianPose;
-      }
-      if(is_velocity){
-        control_mode_ = ControlMode::CartesianVelocity;
-      }
-      break;
+      case 2:
+        RCLCPP_INFO(this->getLogger(), "case 2 start type: %d", start_type);
+        if(arm_start_interfaces.size() != 16U && arm_start_interfaces.size() != 6U){
+          RCLCPP_ERROR(this->getLogger(), "Requested Cartesian start interface's size is not %ld nor %ld (got %ld)", 16U, 6U, arm_start_interfaces.size());
+          return hardware_interface::return_type::ERROR;
+        }
+        if(is_position){
+          arm.second.control_mode_ = ControlMode::CartesianPose;
+          arm.second.switch_cm_ = true;
+        }
+        if(is_velocity){
+          arm.second.control_mode_ = ControlMode::CartesianVelocity;
+          arm.second.switch_cm_ = true;
+        }
+        break;
 
-    default:
-      break;
+      default:
+        break;
+    }
   }
 
   return hardware_interface::return_type::OK;
@@ -513,35 +507,38 @@ hardware_interface::return_type FrankaMultiHardwareInterface::perform_command_mo
     const std::vector<std::string>& /*stop_interfaces*/) {
 
   RCLCPP_INFO(this->getLogger(),"Performing command mode switch");
-  std::cout << "Current mode: " << control_mode_ << std::endl;
   for(auto& arm_container_pair : arms_){
     auto& arm = arm_container_pair.second;
-    if(control_mode_ == ControlMode::None){
-      arm.robot_->stopRobot();
-      arm.robot_->initializeContinuousReading();
-    }
-    else if(control_mode_ == ControlMode::JointTorque){
-      arm.robot_->stopRobot();
-      arm.robot_->initializeTorqueControl();
-    }
-    else if(control_mode_ == ControlMode::JointPosition){
-      arm.robot_->stopRobot();
-      arm.robot_->initializeJointPositionControl();
-    }
-    else if(control_mode_ == ControlMode::JointVelocity){
-      arm.robot_->stopRobot();
-      arm.robot_->initializeJointVelocityControl();
-    }
-    else if(control_mode_ == ControlMode::CartesianPose){
-      arm.robot_->stopRobot();
-      arm.robot_->initializeCartesianPositionControl();
-    }
-    else if(control_mode_ == ControlMode::CartesianVelocity){
-      arm.robot_->stopRobot();
-      arm.robot_->initializeCartesianVelocityControl();
+    RCLCPP_INFO_STREAM(this->getLogger(), "Arm " << arm.robot_name_ << 
+                                          " current mode: " << arm.control_mode_);
+    if(arm.switch_cm_){
+      if(arm.control_mode_ == ControlMode::None){
+        arm.robot_->stopRobot();
+        arm.robot_->initializeContinuousReading();
+      }
+      else if(arm.control_mode_ == ControlMode::JointTorque){
+        arm.robot_->stopRobot();
+        arm.robot_->initializeTorqueControl();
+      }
+      else if(arm.control_mode_ == ControlMode::JointPosition){
+        arm.robot_->stopRobot();
+        arm.robot_->initializeJointPositionControl();
+      }
+      else if(arm.control_mode_ == ControlMode::JointVelocity){
+        arm.robot_->stopRobot();
+        arm.robot_->initializeJointVelocityControl();
+      }
+      else if(arm.control_mode_ == ControlMode::CartesianPose){
+        arm.robot_->stopRobot();
+        arm.robot_->initializeCartesianPositionControl();
+      }
+      else if(arm.control_mode_ == ControlMode::CartesianVelocity){
+        arm.robot_->stopRobot();
+        arm.robot_->initializeCartesianVelocityControl();
+      }
+      arm.switch_cm_ = false;
     }
   }
-
   return hardware_interface::return_type::OK;
 }
 

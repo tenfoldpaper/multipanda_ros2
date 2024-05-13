@@ -26,106 +26,100 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    robot_ip_1_parameter_name = 'robot_ip_1'
-    robot_ip_2_parameter_name = 'robot_ip_2'
-    
+    arm_id_1_parameter_name = "arm_id_1"
+    arm_id_2_parameter_name = "arm_id_2"
     load_gripper_1_parameter_name = 'load_gripper_1'
     load_gripper_2_parameter_name = 'load_gripper_2'
-
-    arm_id_1_parameter_name = 'arm_id_1'
-    arm_id_2_parameter_name = 'arm_id_2'
-    use_fake_hardware_parameter_name = 'use_fake_hardware'
-    fake_sensor_commands_parameter_name = 'fake_sensor_commands'
     use_rviz_parameter_name = 'use_rviz'
-
-    robot_ip_1 = LaunchConfiguration(robot_ip_1_parameter_name)
-    robot_ip_2 = LaunchConfiguration(robot_ip_2_parameter_name)
+    scene_xml_parameter_name = 'scene_xml'
+    mj_yaml_parameter_name = 'mj_yaml'
 
     arm_id_1 = LaunchConfiguration(arm_id_1_parameter_name)
     arm_id_2 = LaunchConfiguration(arm_id_2_parameter_name)
-
     load_gripper_1 = LaunchConfiguration(load_gripper_1_parameter_name)
     load_gripper_2 = LaunchConfiguration(load_gripper_2_parameter_name)
-    
-    use_fake_hardware = LaunchConfiguration(use_fake_hardware_parameter_name)
-    fake_sensor_commands = LaunchConfiguration(fake_sensor_commands_parameter_name)
     use_rviz = LaunchConfiguration(use_rviz_parameter_name)
+    scene_xml = LaunchConfiguration(scene_xml_parameter_name)
+    mj_yaml = LaunchConfiguration(mj_yaml_parameter_name)
 
     franka_xacro_file = os.path.join(get_package_share_directory('franka_description'), 'robots',
-                                     'dual_panda_arm.urdf.xacro')
+                                     'dual_panda_arm_sim.urdf.xacro')
+    default_scene_xml_file = os.path.join(get_package_share_directory('franka_description'), 'mujoco', 'franka', 'dual_scene.xml')
+    default_mj_yaml_file = os.path.join(get_package_share_directory('franka_bringup'), 'config', 'mujoco', 'mj_objects.yaml')
+
     robot_description = Command(
         [FindExecutable(name='xacro'), ' ', franka_xacro_file, 
-         ' hand_1:=', load_gripper_1, ' hand_2:=', load_gripper_2,
-         ' robot_ip_1:=', robot_ip_1, ' robot_ip_2:=', robot_ip_2, 
-         ' arm_id_1:=', arm_id_1, ' arm_id_2:=', arm_id_2,
-         ' use_fake_hardware:=', use_fake_hardware,
-         ' fake_sensor_commands:=', fake_sensor_commands])
+            ' arm_id_1:=', arm_id_1, 
+            ' arm_id_2:=', arm_id_2,
+            ' hand_1:=', load_gripper_1,
+            ' hand_2:=', load_gripper_2,
+            ' scene_xml:=', scene_xml,
+            ' mj_yaml:=', mj_yaml])
 
     rviz_file = os.path.join(get_package_share_directory('franka_description'), 'rviz',
-                             'visualize_franka.rviz')
+                             'visualize_dual_franka.rviz')
 
     franka_controllers = PathJoinSubstitution(
         [
             FindPackageShare('franka_bringup'),
             'config',
-            'dual_controllers.yaml',
+            'dual_sim_multimode.yaml',
         ]
     )
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            robot_ip_1_parameter_name,
-            description='Hostname or IP address of robot 1.'),
-        DeclareLaunchArgument(
-            robot_ip_2_parameter_name,
-            description='Hostname or IP address of robot 2.'),
-        DeclareLaunchArgument(
-            arm_id_1_parameter_name,
-            description='Unique arm ID of robot 1.'),
-        DeclareLaunchArgument(
-            arm_id_2_parameter_name,
-            description='Unique arm ID of robot 2.'),
-        DeclareLaunchArgument(
             use_rviz_parameter_name,
-            default_value='true',
+            default_value='false',
             description='Visualize the robot in Rviz'),
         DeclareLaunchArgument(
-            use_fake_hardware_parameter_name,
-            default_value='false',
-            description='Use fake hardware'),
+            arm_id_1_parameter_name,
+            default_value='mj_left',
+            description='Unique name of robot 1.'
+        ),
         DeclareLaunchArgument(
-            fake_sensor_commands_parameter_name,
-            default_value='false',
-            description="Fake sensor commands. Only valid when '{}' is true".format(
-                use_fake_hardware_parameter_name)),
+            arm_id_2_parameter_name,
+            default_value='mj_right',
+            description='Unique name of robot 2.'
+        ),
         DeclareLaunchArgument(
             load_gripper_1_parameter_name,
             default_value='true',
-            description='Use Franka Gripper as an end-effector, otherwise, robot 1 is loaded '
-                        'without an end-effector.'),
+            description='Load robot 1 with franka gripper.'),
         DeclareLaunchArgument(
             load_gripper_2_parameter_name,
             default_value='true',
-            description='Use Franka Gripper as an end-effector, otherwise, robot 2 is loaded '
-                        'without an end-effector.'),
-        Node(
+            description='Load robot 2 with franka gripper.'),
+        DeclareLaunchArgument(
+            scene_xml_parameter_name,
+            default_value=default_scene_xml_file,
+            description='The path to the mujoco xml file that you want to load.'
+        ),
+        DeclareLaunchArgument(
+            mj_yaml_parameter_name,
+            default_value=default_mj_yaml_file,
+            description='The path to the mujoco object yaml file that you want to load.'
+        ),
+        Node( # RVIZ dependency
             package='robot_state_publisher',
             executable='robot_state_publisher',
             name='robot_state_publisher',
             output='screen',
             parameters=[{'robot_description': robot_description}],
         ),
-        Node(
+        Node( # RVIZ dependency
             package='joint_state_publisher',
             executable='joint_state_publisher',
             name='joint_state_publisher',
             parameters=[
-                {'source_list': ['franka/joint_states', 'panda_gripper/joint_states'],
+                {'source_list': ['franka/joint_states', 
+                                '/mj_left_gripper_sim_node/joint_states',
+                                '/mj_right_gripper_sim_node/joint_states'],
                  'rate': 30}],
         ),
         Node(
-            package='controller_manager',
-            executable='ros2_control_node',
+            package='franka_control2',
+            executable='franka_control2_node',
             parameters=[{'robot_description': robot_description}, franka_controllers],
             remappings=[('joint_states', 'franka/joint_states')],
             output={
@@ -134,7 +128,7 @@ def generate_launch_description():
             },
             on_exit=Shutdown(),
         ),
-        Node(
+        Node( # RVIZ dependency
             package='controller_manager',
             executable='spawner',
             arguments=['joint_state_broadcaster'],
@@ -143,26 +137,51 @@ def generate_launch_description():
         Node(
             package='controller_manager',
             executable='spawner',
-            arguments=['franka_left_robot_state_broadcaster'],
+            arguments=['sim_multi_mode_controller'],
             output='screen',
-            condition=UnlessCondition(use_fake_hardware),
         ),
         Node(
             package='controller_manager',
             executable='spawner',
-            arguments=['franka_right_robot_state_broadcaster'],
+            arguments=['mj_left_state_broadcaster'],
             output='screen',
-            condition=UnlessCondition(use_fake_hardware),
         ),
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource([PathJoinSubstitution(
-        #         [FindPackageShare('franka_gripper'), 'launch', 'gripper.launch.py'])]),
-        #     launch_arguments={robot_ip_1_parameter_name: robot_ip_1,
-        #                       use_fake_hardware_parameter_name: use_fake_hardware}.items(),
-        #     condition=IfCondition(load_gripper_1)
-
-        # ),
-
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['mj_right_state_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['mj_left_model_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['mj_right_model_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package="panda_motion_generators",
+            executable="panda_poly_c2_joint_motion_generator_node",
+            arguments=["mj_left_joint_via_motion",
+                       "/mj_left/get_robot_states",
+                       "sim_multi_mode_controller",
+                       "panda_joint_impedance_controller",
+                       "/mj_left/panda_joint_impedance_controller/desired_pose"]
+        ),
+        Node(
+            package="panda_motion_generators",
+            executable="panda_poly_c2_joint_motion_generator_node",
+            arguments=["mj_right_joint_via_motion",
+                       "/mj_right/get_robot_states",
+                       "sim_multi_mode_controller",
+                       "panda_joint_impedance_controller",
+                       "/mj_right/panda_joint_impedance_controller/desired_pose"]
+        ),
         Node(package='rviz2',
              executable='rviz2',
              name='rviz2',

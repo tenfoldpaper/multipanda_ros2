@@ -1,7 +1,7 @@
 <mujoco model="panda">
   <compiler angle="radian" meshdir="assets"/>
 
-  <option timestep="0.01" iterations="50" tolerance="1e-9" solver="Newton" jacobian="dense" cone="pyramidal"/>
+  <option timestep="0.001" iterations="50" tolerance="1e-9" solver="Newton" jacobian="dense" cone="pyramidal"/>
 
   <default>
     <default class="panda">
@@ -137,19 +137,19 @@
         <site name="panda_joint1_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
         <inertial mass="4.970684" pos="0.003875 0.002081 -0.04762"
             fullinertia="0.70337 0.70661 0.0091170 -0.00013900 0.0067720 0.019169"/>
-        <joint name="panda_joint1" range="-2.7437 2.7437"/>
+        <joint name="panda_joint1" range="-2.7437 2.7437" damping="0.0665" frictionloss="0.2450"/>
         <geom material="white" mesh="link1" class="visual"/>
         <geom mesh="link1_c" class="collision"/>
         <body name="panda_link2" quat="1 -1 0 0" gravcomp="1">
           <site name="panda_joint2_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
           <inertial mass="0.646926" pos="-0.003141 -0.02872 0.003495"
               fullinertia="0.0079620 2.8110e-2 2.5995e-2 -3.925e-3 1.0254e-2 7.04e-4"/>
-          <joint name="panda_joint2" range="-1.7837 1.7837"/>
+          <joint name="panda_joint2" range="-1.7837 1.7837" damping="0.1987" frictionloss="0.1523"/>
           <geom material="white" mesh="link2" class="visual"/>
           <geom mesh="link2_c" class="collision"/>
           <body name="panda_link3" pos="0 -0.316 0" quat="1 1 0 0" gravcomp="1">
             <site name="panda_joint3_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
-            <joint name="panda_joint3" range="-2.9007 2.9007"/>
+            <joint name="panda_joint3" range="-2.9007 2.9007" damping="0.0399" frictionloss="0.1827"/>
             <inertial mass="3.228604" pos="2.7518e-2 3.9252e-2 -6.6502e-2"
                 fullinertia="3.7242e-2 3.6155e-2 1.083e-2 -4.761e-3 -1.1396e-2 -1.2805e-2"/>
             <geom mesh="link3_0" material="white" class="visual"/>
@@ -161,7 +161,7 @@
               <site name="panda_joint4_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
               <inertial mass="3.587895" pos="-5.317e-2 1.04419e-1 2.7454e-2"
                   fullinertia="2.5853e-2 1.9552e-2 2.8323e-2 7.796e-3 -1.332e-3 8.641e-3"/>
-              <joint name="panda_joint4" range="-3.0421 -0.1518"/>
+              <joint name="panda_joint4" range="-3.0421 -0.1518" damping="0.2257" frictionloss="0.3591"/>
               <geom mesh="link4_0" material="white" class="visual"/>
               <geom mesh="link4_1" material="white" class="visual"/>
               <geom mesh="link4_2" material="black" class="visual"/>
@@ -171,7 +171,7 @@
                 <site name="panda_joint5_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>          
                 <inertial mass="1.225946" pos="-1.1953e-2 4.1065e-2 -3.8437e-2"
                     fullinertia="3.5549e-2 2.9474e-2 8.627e-3 -2.117e-3 -4.037e-3 2.29e-4"/>
-                <joint name="panda_joint5" range="-2.8065 2.8065"/>
+                <joint name="panda_joint5" range="-2.8065 2.8065" damping="0.1023" frictionloss="0.2669"/>
                 <geom mesh="link5_0" material="black" class="visual"/>
                 <geom mesh="link5_1" material="white" class="visual"/>
                 <geom mesh="link5_2" material="white" class="visual"/>
@@ -182,7 +182,7 @@
                   <site name="panda_joint6_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
                   <inertial mass="1.666555" pos="6.0149e-2 -1.4117e-2 -1.0517e-2"
                       fullinertia="1.964e-3 4.354e-3 5.433e-3 1.09e-4 -1.158e-3 3.41e-4"/>
-                  <joint name="panda_joint6" range="0.5445 4.5169"/>
+                  <joint name="panda_joint6" range="0.5445 4.5169" damping="-0.0132" frictionloss="0.1658"/>
                   <geom mesh="link6_0" material="off_white" class="visual"/>
                   <geom mesh="link6_1" material="white" class="visual"/>
                   <geom mesh="link6_2" material="black" class="visual"/>
@@ -205,7 +205,7 @@
                     <site name="panda_joint7_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
                     <inertial mass="7.35522e-01" pos="1.0517e-2 -4.252e-3 6.1597e-2"
                         fullinertia="1.2516e-2 1.0027e-2 4.815e-3 -4.28e-4 -1.196e-3 -7.41e-4"/>
-                    <joint name="panda_joint7" range="-3.0159 3.0159"/>
+                    <joint name="panda_joint7" range="-3.0159 3.0159" damping="0.0638" frictionloss="1.2109"/>
                     <geom mesh="link7_0" material="white" class="visual"/>
                     <geom mesh="link7_1" material="black" class="visual"/>
                     <geom mesh="link7_2" material="black" class="visual"/>
@@ -291,6 +291,14 @@
     <motor name="panda_act_trq5" joint="panda_joint5" ctrlrange="-12 12" ctrllimited="true"/>
     <motor name="panda_act_trq6" joint="panda_joint6" ctrlrange="-12 12" ctrllimited="true"/>
     <motor name="panda_act_trq7" joint="panda_joint7" ctrlrange="-12 12" ctrllimited="true"/>
+
+    <position name="panda_act_pos1" joint="panda_joint1" kp="10" kv="1"/>
+    <position name="panda_act_pos2" joint="panda_joint2" kp="10" kv="1"/>
+    <position name="panda_act_pos3" joint="panda_joint3" kp="10" kv="1"/>
+    <position name="panda_act_pos4" joint="panda_joint4" kp="10" kv="1"/>
+    <position name="panda_act_pos5" joint="panda_joint5" kp="10" kv="1"/>
+    <position name="panda_act_pos6" joint="panda_joint6" kp="10" kv="1"/>
+    <position name="panda_act_pos7" joint="panda_joint7" kp="10" kv="1"/>
 
     <velocity name="panda_act_vel1" joint="panda_joint1" kv="1"/>
     <velocity name="panda_act_vel2" joint="panda_joint2" kv="1"/>

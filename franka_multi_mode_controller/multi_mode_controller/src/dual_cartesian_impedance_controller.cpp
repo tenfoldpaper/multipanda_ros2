@@ -10,7 +10,7 @@ using Vector6d = Eigen::Matrix<double, 6, 1>;
 using Vector7d = Eigen::Matrix<double, 7, 1>;
 using Pose = DualCartesianImpedanceControllerPose;
 using Parameters = DualCartesianImpedanceControllerParams;
-using GoalMsg = multi_mode_control_msgs::msg::CartesianImpedanceGoal;
+using GoalMsg = multi_mode_control_msgs::msg::DualCartesianImpedanceGoal;
 using ConfigRequest = multi_mode_control_msgs::srv::SetCartesianImpedance::Request;
 using ConfigResponse = multi_mode_control_msgs::srv::SetCartesianImpedance::Response;
 using Controller = DualCartesianImpedanceController;
@@ -23,10 +23,10 @@ static auto registration = ControllerFactory::registerClass<Controller>(
 bool Controller::desiredPoseCallbackImpl(Pose& p_d, 
                                          const Pose& p,
                                          const GoalMsg& msg) {
-  for (int i=0; i<2; i++){
-    p_d.poses[i].position = Vector3d(msg.pose.position.x, msg.pose.position.y,
-                                     msg.pose.position.z);
-  }
+  p_d.poses[0].position = Vector3d(msg.l_pose.position.x, msg.l_pose.position.y,
+                                    msg.l_pose.position.z);
+  p_d.poses[1].position = Vector3d(msg.r_pose.position.x, msg.r_pose.position.y,
+                                    msg.r_pose.position.z);
   // p_d.poses[0].position = Vector3d(msg.l_pose.position.x, msg.l_pose.position.y,
   //                         msg.l_pose.position.z);
   // p_d.poses[1].position = Vector3d(msg.r_pose.position.x, msg.r_pose.position.y,
@@ -43,10 +43,10 @@ bool Controller::desiredPoseCallbackImpl(Pose& p_d,
         (p_d.poses[1].position+PandaControllerBase<Parameters, Pose>::getOffset().poses[1].position-p.poses[1].position).norm());
     return false;
   }
-  for (int i=0; i<2; i++){
-    p_d.poses[i].orientation = Quaterniond(msg.pose.orientation.w, msg.pose.orientation.x,
-                                           msg.pose.orientation.y, msg.pose.orientation.z);
-  }
+  p_d.poses[0].orientation = Quaterniond(msg.l_pose.orientation.w, msg.l_pose.orientation.x,
+                                          msg.l_pose.orientation.y, msg.l_pose.orientation.z);
+  p_d.poses[1].orientation = Quaterniond(msg.r_pose.orientation.w, msg.r_pose.orientation.x,
+                                           msg.r_pose.orientation.y, msg.r_pose.orientation.z);
   // p_d.poses[0].orientation = Quaterniond(msg.l_pose.orientation.w, msg.l_pose.orientation.x,
   //                               msg.l_pose.orientation.y, msg.l_pose.orientation.z);
   // p_d.poses[1].orientation = Quaterniond(msg.r_pose.orientation.w, msg.r_pose.orientation.x,
@@ -63,8 +63,8 @@ bool Controller::desiredPoseCallbackImpl(Pose& p_d,
         p.poses[1].orientation.angularDistance(p_d.poses[1].orientation));
     return false;
   }
-  p_d.poses[0].q_n = Eigen::Map<const Vector7d>(msg.q_n.data());
-  p_d.poses[1].q_n = Eigen::Map<const Vector7d>(msg.q_n.data());
+  p_d.poses[0].q_n = Eigen::Map<const Vector7d>(msg.l_q_n.data());
+  p_d.poses[1].q_n = Eigen::Map<const Vector7d>(msg.r_q_n.data());
   return true;
 }
 

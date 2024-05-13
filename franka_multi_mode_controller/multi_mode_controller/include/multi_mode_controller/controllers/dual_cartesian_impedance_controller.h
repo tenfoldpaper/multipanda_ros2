@@ -5,10 +5,10 @@
 #include <multi_mode_controller/base/panda_controller_ros_interface.h>
 #include <multi_mode_controller/controllers/comless_dual_cartesian_impedance_controller.h>
 #include <multi_mode_control_msgs/srv/set_cartesian_impedance.hpp>
-#include <multi_mode_control_msgs/msg/cartesian_impedance_goal.hpp>
+#include <multi_mode_control_msgs/msg/dual_cartesian_impedance_goal.hpp>
 
 namespace panda_controllers {
-    using GoalMsg = multi_mode_control_msgs::msg::CartesianImpedanceGoal;
+    using GoalMsg = multi_mode_control_msgs::msg::DualCartesianImpedanceGoal;
     using ServiceParameter = multi_mode_control_msgs::srv::SetCartesianImpedance;
     using Pose = DualCartesianImpedanceControllerPose;
     using Parameters = DualCartesianImpedanceControllerParams;

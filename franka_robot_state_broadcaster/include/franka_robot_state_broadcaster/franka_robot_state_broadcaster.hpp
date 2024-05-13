@@ -51,7 +51,8 @@ class FrankaRobotStateBroadcaster : public controller_interface::ControllerInter
         realtime_franka_state_publisher;   
     std::unique_ptr<franka_semantic_components::FrankaRobotState> franka_robot_state;
     size_t arm_count;
-    int frequency;
+    rclcpp::Time last_pub_;
+    double frequency;
 };
 
 } // namespace franka_robot_state_broadcaster

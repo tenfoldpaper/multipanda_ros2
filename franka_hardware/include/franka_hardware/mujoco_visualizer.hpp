@@ -110,11 +110,12 @@ public:
             glfwGetFramebufferSize(window, &viewport.width, &viewport.height);
 
             // update scene and render
-            mjtNum simstart = d_->time;
-            while( d_->time - simstart < 1.0/30.0 )
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
+            // mjtNum simstart = d_->time;
+            // while( d_->time - simstart < 1.0/30.0 )
+            // {
+            //     boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+            // }
+            // std::cout << d_->time - simstart << std::endl;
 
             {
                 mjv_updateScene(m_, d_, &opt_, NULL, &cam_, mjCAT_ALL, &scn_);
@@ -128,7 +129,7 @@ public:
             // process pending GUI events, call GLFW callbacks
             glfwPollEvents();
             
-            boost::this_thread::sleep_for(boost::chrono::milliseconds(17)); // 30 fps
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(33)); // 30 fps
 
         }
         // free visualization storage

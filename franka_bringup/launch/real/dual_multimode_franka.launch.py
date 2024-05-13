@@ -62,7 +62,7 @@ def generate_launch_description():
          ' fake_sensor_commands:=', fake_sensor_commands])
 
     rviz_file = os.path.join(get_package_share_directory('franka_description'), 'rviz',
-                             'visualize_franka.rviz')
+                             'visualize_dual_franka.rviz')
 
     franka_controllers = PathJoinSubstitution(
         [
@@ -81,9 +81,11 @@ def generate_launch_description():
             description='Hostname or IP address of robot 2.'),
         DeclareLaunchArgument(
             arm_id_1_parameter_name,
+            default_value="rl_left",
             description='Unique arm ID of robot 1.'),
         DeclareLaunchArgument(
             arm_id_2_parameter_name,
+            default_value="rl_right",
             description='Unique arm ID of robot 2.'),
         DeclareLaunchArgument(
             use_rviz_parameter_name,
@@ -144,9 +146,51 @@ def generate_launch_description():
         Node(
             package='controller_manager',
             executable='spawner',
-            arguments=['single_multi_mode_controller'],
+            arguments=['real_multi_mode_controller'],
             output='screen',
             condition=UnlessCondition(use_fake_hardware),
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['rl_left_state_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['rl_right_state_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['rl_left_model_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['rl_right_model_broadcaster'],
+            output='screen',
+        ),
+        Node(
+            package="panda_motion_generators",
+            executable="panda_poly_c2_joint_motion_generator_node",
+            arguments=["rl_left_joint_via_motion",
+                       "/rl_left/get_robot_states",
+                       "real_multi_mode_controller",
+                       "panda_joint_impedance_controller",
+                       "/rl_left/panda_joint_impedance_controller/desired_pose"]
+        ),
+        Node(
+            package="panda_motion_generators",
+            executable="panda_poly_c2_joint_motion_generator_node",
+            arguments=["rl_right_joint_via_motion",
+                       "/rl_right/get_robot_states",
+                       "real_multi_mode_controller",
+                       "panda_joint_impedance_controller",
+                       "/rl_right/panda_joint_impedance_controller/desired_pose"]
         ),
         # IncludeLaunchDescription(
         #     PythonLaunchDescriptionSource([PathJoinSubstitution(

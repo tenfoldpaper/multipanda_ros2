@@ -46,9 +46,9 @@ std::vector<StateInterface> FrankaHardwareInterface::export_state_interfaces() {
 
   for (auto i = 0; i < 16; i++){
     state_interfaces.emplace_back(StateInterface(
-        "ee_cartesian_position", cartesian_matrix_names[i], &hw_cartesian_positions_[i]));
+        "ee_cartesian_position", cartesian_matrix_names_[i], &hw_cartesian_positions_[i]));
     state_interfaces.emplace_back(StateInterface(
-        "ee_cartesian_velocity", cartesian_matrix_names[i], &hw_cartesian_velocities_[i]));
+        "ee_cartesian_velocity", cartesian_matrix_names_[i], &hw_cartesian_velocities_[i]));
   }
 
   state_interfaces.emplace_back(StateInterface(
@@ -71,19 +71,19 @@ std::vector<CommandInterface> FrankaHardwareInterface::export_command_interfaces
   for (auto i = 0U; i < info_.joints.size(); i++) {
     //RCLCPP_INFO(getLogger(), "%s", info_.joints[i].name.c_str());
     command_interfaces.emplace_back(CommandInterface( // JOINT EFFORT
-        info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_joint_effort.at(i)));
+        info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_joint_effort_.at(i)));
     command_interfaces.emplace_back(CommandInterface( // JOINT POSITION
-        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_joint_position.at(i)));
+        info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_joint_position_.at(i)));
     command_interfaces.emplace_back(CommandInterface( // JOINT VELOCITY
-        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_commands_joint_velocity.at(i)));
+        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_commands_joint_velocity_.at(i)));
   }
   for (auto i = 0; i < 16; i++){
     command_interfaces.emplace_back(CommandInterface(
-        "ee_cartesian_position", cartesian_matrix_names[i], &hw_commands_cartesian_position[i]));
+        "ee_cartesian_position", cartesian_matrix_names_[i], &hw_commands_cartesian_position_[i]));
   }
   for (auto i = 0; i < 6; i++){
     command_interfaces.emplace_back(CommandInterface(
-        "ee_cartesian_velocity", cartesian_velocity_command_names[i], &hw_commands_cartesian_velocity[i]));
+        "ee_cartesian_velocity", cartesian_velocity_command_names_[i], &hw_commands_cartesian_velocity_[i]));
   }
   // Franka ros provides:
   // joint torque, position, velocity
@@ -96,7 +96,7 @@ std::vector<CommandInterface> FrankaHardwareInterface::export_command_interfaces
 CallbackReturn FrankaHardwareInterface::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   robot_->initializeContinuousReading();
-  hw_commands_joint_effort.fill(0);
+  hw_commands_joint_effort_.fill(0);
   read(rclcpp::Time(0),
        rclcpp::Duration(0, 0));  // makes sure that the robot state is properly initialized.
   RCLCPP_INFO(getLogger(), "Started");
@@ -129,23 +129,23 @@ hardware_interface::return_type FrankaHardwareInterface::read(const rclcpp::Time
 
 hardware_interface::return_type FrankaHardwareInterface::write(const rclcpp::Time& /*time*/,
                                                                const rclcpp::Duration& /*period*/) {
-  if (std::any_of(hw_commands_joint_effort.begin(), hw_commands_joint_effort.end(),
+  if (std::any_of(hw_commands_joint_effort_.begin(), hw_commands_joint_effort_.end(),
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
-  if (std::any_of(hw_commands_joint_position.begin(), hw_commands_joint_position.end(),
+  if (std::any_of(hw_commands_joint_position_.begin(), hw_commands_joint_position_.end(),
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
-  if (std::any_of(hw_commands_joint_velocity.begin(), hw_commands_joint_velocity.end(),
+  if (std::any_of(hw_commands_joint_velocity_.begin(), hw_commands_joint_velocity_.end(),
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
-  if (std::any_of(hw_commands_cartesian_position.begin(), hw_commands_cartesian_position.end(),
+  if (std::any_of(hw_commands_cartesian_position_.begin(), hw_commands_cartesian_position_.end(),
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
-  if (std::any_of(hw_commands_cartesian_velocity.begin(), hw_commands_cartesian_velocity.end(),
+  if (std::any_of(hw_commands_cartesian_velocity_.begin(), hw_commands_cartesian_velocity_.end(),
                   [](double c) { return !std::isfinite(c); })) {
     return hardware_interface::return_type::ERROR;
   }
@@ -158,11 +158,11 @@ hardware_interface::return_type FrankaHardwareInterface::write(const rclcpp::Tim
     //return hardware_interface::return_type::ERROR; 
     return hardware_interface::return_type::OK;
   }
-  robot_->write(hw_commands_joint_effort, 
-                hw_commands_joint_position, 
-                hw_commands_joint_velocity, 
-                hw_commands_cartesian_position, 
-                hw_commands_cartesian_velocity);
+  robot_->write(hw_commands_joint_effort_, 
+                hw_commands_joint_position_, 
+                hw_commands_joint_velocity_, 
+                hw_commands_cartesian_position_, 
+                hw_commands_cartesian_velocity_);
   //RCLCPP_INFO(getLogger(), "write end");
   return hardware_interface::return_type::OK;
 }
@@ -249,8 +249,8 @@ CallbackReturn FrankaHardwareInterface::on_init(const hardware_interface::Hardwa
   // Init the cartesian values to 0
   hw_cartesian_positions_.fill({});
   hw_cartesian_velocities_.fill({});
-  hw_commands_cartesian_position.fill({});
-  hw_commands_cartesian_velocity.fill({});
+  hw_commands_cartesian_position_.fill({});
+  hw_commands_cartesian_velocity_.fill({});
   return CallbackReturn::SUCCESS;
 }
 
@@ -353,11 +353,11 @@ hardware_interface::return_type FrankaHardwareInterface::prepare_command_mode_sw
       
       for(size_t i = 0 ; i < kNumberOfJoints; i++){
         if(is_effort){
-          hw_commands_joint_effort[i] = 0;
+          hw_commands_joint_effort_[i] = 0;
         }
         // position command is not reset, since that can be dangerous
         else if(is_velocity){
-          hw_commands_joint_velocity[i] = 0;
+          hw_commands_joint_velocity_[i] = 0;
         }
       }
       control_mode_ = ControlMode::None;
@@ -378,7 +378,7 @@ hardware_interface::return_type FrankaHardwareInterface::prepare_command_mode_sw
         }
         // set the commands to zero
         for(int i = 0; i < 6; i++){
-          hw_commands_cartesian_velocity[i] = 0;
+          hw_commands_cartesian_velocity_[i] = 0;
         }
       }
       control_mode_ = ControlMode::None;

@@ -37,7 +37,7 @@ controller_interface::CallbackReturn FrankaRobotStateBroadcaster::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   arm_id = get_node()->get_parameter("arm_id").as_string();
   frequency = get_node()->get_parameter("frequency").as_int();
-
+  last_pub_ = get_node()->now();
   franka_robot_state = std::make_unique<franka_semantic_components::FrankaRobotState>(
       franka_semantic_components::FrankaRobotState(arm_id + "/" + state_interface_name, arm_id));
 
@@ -88,6 +88,9 @@ FrankaRobotStateBroadcaster::state_interface_configuration() const {
 controller_interface::return_type FrankaRobotStateBroadcaster::update(
     const rclcpp::Time& time,
     const rclcpp::Duration& /*period*/) {
+  if(time.nanoseconds() - last_pub_.nanoseconds() < 1'000'000'000 / frequency){
+    return controller_interface::return_type::OK;
+  }
   if (realtime_franka_state_publisher && realtime_franka_state_publisher->trylock()) {
     realtime_franka_state_publisher->msg_.header.stamp = time;
 
@@ -98,6 +101,7 @@ controller_interface::return_type FrankaRobotStateBroadcaster::update(
       return controller_interface::return_type::ERROR;
     }
     realtime_franka_state_publisher->unlockAndPublish();
+    last_pub_ = get_node()->now();
     return controller_interface::return_type::OK;
 
   } else {

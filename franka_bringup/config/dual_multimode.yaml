@@ -5,40 +5,60 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    # franka_robot_state_broadcaster:
-    #   type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
+    rl_left_state_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
     
-    # franka_robot_model_broadcaster:
-    #   type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
+    rl_left_model_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
+    
+    rl_right_state_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
+    
+    rl_right_model_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
 
-    single_multi_mode_controller:
+    real_multi_mode_controller:
       type: multi_mode_controller/SingleMultiModeController
 
-# franka_robot_state_broadcaster:
-#   ros__parameters:
-#     arm_id: panda
+rl_left_state_broadcaster:
+  ros__parameters:
+    arm_id: rl_left
+    frequency: 100
 
-# franka_robot_model_broadcaster:
-#   ros__parameters:
-#     arm_id: panda
+rl_left_model_broadcaster:
+  ros__parameters:
+    arm_id: rl_left
+    frequency: 100
+
+rl_right_state_broadcaster:
+  ros__parameters:
+    arm_id: rl_right
+    frequency: 100
+
+rl_right_model_broadcaster:
+  ros__parameters:
+    arm_id: rl_right
+    frequency: 100
     
-single_multi_mode_controller:
+real_multi_mode_controller:
   ros__parameters:
     arm_count: 2
     arm_1:
-      arm_id: left
+      arm_id: rl_left
     arm_2:
-      arm_id: right
+      arm_id: rl_right
     controllers: ["panda_joint_impedance_controller", 
+                  "panda_joint_velocity_controller",
                   "comless_coupled_dual_cartesian_impedance_controller", 
                   "dual_cartesian_impedance_controller",
                   "des_coupled_dual_cartesian_impedance_controller"]
     resources:
-        comless_coupled_dual_cartesian_impedance_controller: ["left&right"]
-        dual_cartesian_impedance_controller: ["left&right"]
-        des_coupled_dual_cartesian_impedance_controller: ["left&right"]
-        panda_joint_impedance_controller: ["left","right"]
+        comless_coupled_dual_cartesian_impedance_controller: ["rl_left&rl_right"]
+        dual_cartesian_impedance_controller: ["rl_left&rl_right"]
+        des_coupled_dual_cartesian_impedance_controller: ["rl_left&rl_right"]
+        panda_joint_impedance_controller: ["rl_left","rl_right"]
+        panda_joint_velocity_controller: ["rl_left","rl_right"]
     start_controllers:
         names: ["dual_cartesian_impedance_controller"]
         resources:
-            dual_cartesian_impedance_controller: ["left&right"]
+            dual_cartesian_impedance_controller: ["rl_left&rl_right"]

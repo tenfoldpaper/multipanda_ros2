@@ -24,13 +24,4 @@
     <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
     <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
   </worldbody>
-
-  <keyframe>
-    <!-- the qpos is the franka "communication_test" pose -->
-    <key name="home" qpos="0.0011514965467923919 -0.7849355413286309 0.0005351744148981226 -2.3558839733056853 -0.00042921391383617395 1.571927056475186 0.7850445419811712  0.04 0.04"
-        ctrl="0 0 0 0 0 0 0
-              0 0 0 0 0 0 0
-              127"/> 
-        <!-- ctrl needs to meet the dimensions of the actuators -->
-  </keyframe>
 </mujoco>

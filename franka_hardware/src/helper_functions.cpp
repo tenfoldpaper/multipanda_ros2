@@ -29,4 +29,42 @@ int check_command_mode_type(std::vector<std::string> interfaces){
   }
   return -1;
 }
+std::string get_ns(std::string const& s)
+{
+    std::string::size_type pos = s.find_last_of('_');
+    if (pos != std::string::npos)
+    {
+        return s.substr(0, pos);
+    }
+    else
+    {
+        return s;
+    }
+}
+
+// Function for extracting joint number
+int get_joint_no(std::string const& s){
+  int no = s.back() - '0' - 1;
+  return no;
+}
+void set_torque_control(const mjModel* m,int actuator_no,int flag)
+{
+  if (flag==0)
+    m->actuator_gainprm[10*actuator_no+0]=0;
+  else
+    m->actuator_gainprm[10*actuator_no+0]=1;
+}
+void set_position_servo(const mjModel* m,int actuator_no,double kp)
+  {
+    m->actuator_gainprm[10*actuator_no+0]=kp;
+    m->actuator_biasprm[10*actuator_no+1]=-kp;
+  }
+  /******************************/
+
+  /******************************/
+  void set_velocity_servo(const mjModel* m,int actuator_no,double kv)
+  {
+    m->actuator_gainprm[10*actuator_no+0]=kv;
+    m->actuator_biasprm[10*actuator_no+2]=-kv;
+  }
 }

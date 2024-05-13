@@ -61,7 +61,7 @@ class GripperSimActionServer : public rclcpp::Node {
 
   /// creates an instance of a GripperActionServer
   /// @param options options for node initialization
-  explicit GripperSimActionServer(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+  explicit GripperSimActionServer(const rclcpp::NodeOptions& options = rclcpp::NodeOptions(), std::string robot_name="panda");
   // GripperSimActionServer(const rclcpp::NodeOptions& options, double &gripper_cmd, std::array<double, 2> &gripper_states);
   void initGripperPtrs(std::shared_ptr<std::array<double, 3>> states_ptr);
  private:

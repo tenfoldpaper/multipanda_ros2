@@ -38,15 +38,15 @@ find_package(Boost COMPONENTS thread chrono REQUIRED)
 
 # Mujoco dependencies
 set(OpenGL_GL_PREFERENCE GLVND)
-set(Mujoco_DIR ~/Libraries/mujoco_build/lib/cmake)
+set(Mujoco_DIR ~/Libraries/mujoco_build/lib/cmake) # Change this to your value
 find_package(glfw3 3.3 REQUIRED)     # GLFW3 here,
 find_package(mujoco REQUIRED PATHS ${Mujoco_DIR} NO_DEFAULT_PATH)
+find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 add_library(franka_hardware
         SHARED
-        src/franka_hardware_interface.cpp
         src/franka_multi_hardware_interface.cpp
-        src/franka_mujoco_hardware_interface.cpp
+        src/franka_mujoco_multi_hardware_interface.cpp
         src/robot.cpp
         src/robot_sim.cpp
         src/franka_param_service_server.cpp
@@ -62,6 +62,7 @@ target_include_directories(
         PRIVATE
         include
         ${EIGEN3_INCLUDE_DIRS}
+        ${YAML_CPP_INCLUDE_DIRS}
 )
 
 ament_target_dependencies(
@@ -82,7 +83,7 @@ target_link_libraries(
         glfw
         Boost::thread
         Boost::chrono
-
+        ${YAML_CPP_LIBRARIES}
 )
 
 pluginlib_export_plugin_description_file(hardware_interface franka_hardware.xml)

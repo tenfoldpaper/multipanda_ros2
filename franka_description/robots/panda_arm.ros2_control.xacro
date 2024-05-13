@@ -2,17 +2,19 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:macro name="panda_arm_ros2_control" params="ns robot_ip use_fake_hardware:=^|false fake_sensor_commands:=^|false">
-    <ros2_control name="FrankaHardwareInterface" type="system">
+    <ros2_control name="FrankaMultiHardwareInterface" type="system">
       <hardware>
+        <param name="robot_count">1</param>
         <xacro:if value="${use_fake_hardware}">
           <plugin>fake_components/GenericSystem</plugin>
           <param name="fake_sensor_commands">${fake_sensor_commands}</param>
           <param name="state_following_offset">0.0</param>
         </xacro:if>
         <xacro:unless value="${use_fake_hardware}">
-          <plugin>franka_hardware/FrankaHardwareInterface</plugin>
-          <param name="robot_ip">${robot_ip}</param>
+          <plugin>franka_hardware/FrankaMultiHardwareInterface</plugin>
+          <param name="robot_ip_1">${robot_ip}</param>
         </xacro:unless>
+        <param name="ns_1">${ns}</param>
       </hardware>
 
       <xacro:macro name="configure_joint" params="joint_name initial_position">

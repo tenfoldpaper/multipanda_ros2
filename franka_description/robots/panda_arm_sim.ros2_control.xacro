@@ -1,19 +1,22 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:macro name="panda_arm_sim_ros2_control" params="ns hand scene_xml">
+  <xacro:macro name="panda_arm_sim_ros2_control" params="ns hand scene_xml mj_yaml">
     <ros2_control name="FrankaMujocoHardwareInterface" type="system">
       <hardware>
-        <plugin>franka_hardware/FrankaMujocoHardwareInterface</plugin>
-        <param name="ns">${ns}</param>
-        <param name="hand">${hand}</param>
+        <param name="robot_count">1</param>
+        <plugin>franka_hardware/FrankaMujocoMultiHardwareInterface</plugin>
+        <param name="ns_1">${ns}</param>
+        <param name="hand_1">${hand}</param>
         <param name="scene_xml">${scene_xml}</param>
+        <param name="mj_yaml">${mj_yaml}</param>
       </hardware>
 
       <xacro:macro name="configure_joint" params="joint_name initial_position">
         <joint name="${joint_name}">
           <param name="initial_position">${initial_position}</param>
           <command_interface name="effort"/>
+          <command_interface name="position"/>
           <command_interface name="velocity"/>
           <state_interface name="effort"/>
           <state_interface name="position"/>

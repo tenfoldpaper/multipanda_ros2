@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Controller.msg"
   "msg/JointArray.msg"
   "msg/JointGoal.msg"
+  "msg/VelocityGoal.msg"
   "msg/Wrench.msg"
   "srv/GetControllers.srv"
   "srv/GetRobotStates.srv"

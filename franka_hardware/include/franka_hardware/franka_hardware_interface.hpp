@@ -66,13 +66,13 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
 
   // Commands
 
-  std::array<std::string, 16> cartesian_matrix_names{"00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15"};
-  std::array<std::string, 6> cartesian_velocity_command_names{"tx","ty","tz","omega_x","omega_y","omega_z"};
-  std::array<double, kNumberOfJoints> hw_commands_joint_effort{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, kNumberOfJoints> hw_commands_joint_position{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, kNumberOfJoints> hw_commands_joint_velocity{0, 0, 0, 0, 0, 0, 0};
-  std::array<double, 16> hw_commands_cartesian_position;
-  std::array<double, 6> hw_commands_cartesian_velocity;
+  std::array<std::string, 16> cartesian_matrix_names_{"00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15"};
+  std::array<std::string, 6> cartesian_velocity_command_names_{"tx","ty","tz","omega_x","omega_y","omega_z"};
+  std::array<double, kNumberOfJoints> hw_commands_joint_effort_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, kNumberOfJoints> hw_commands_joint_position_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, kNumberOfJoints> hw_commands_joint_velocity_{0, 0, 0, 0, 0, 0, 0};
+  std::array<double, 16> hw_commands_cartesian_position_;
+  std::array<double, 6> hw_commands_cartesian_velocity_;
  
   ControlMode control_mode_ = ControlMode::None;
   // States
@@ -86,9 +86,6 @@ class FrankaHardwareInterface : public hardware_interface::SystemInterface {
   franka::RobotState* hw_franka_robot_state_addr_ = &hw_franka_robot_state_;
   ModelBase* hw_franka_model_ptr_ = nullptr;
   
-  bool effort_interface_claimed_ = false;
-  bool effort_interface_running_ = false;
-
   static rclcpp::Logger getLogger();
 
   const std::string k_robot_name{"panda"};

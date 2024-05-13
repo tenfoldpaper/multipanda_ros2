@@ -33,7 +33,7 @@ namespace franka_robot_state_broadcaster {
 
 controller_interface::CallbackReturn FrankaRobotModelBroadcaster::on_init() {
   try {
-    // auto_declare<std::string>("arm_id", "panda"); // need to figure out how to get this param thing managed properly
+    auto_declare<std::string>("arm_id", "panda");
     auto_declare<int>("frequency", 30);
 
   } catch (const std::exception& e) {
@@ -49,7 +49,7 @@ controller_interface::CallbackReturn FrankaRobotModelBroadcaster::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   arm_id = get_node()->get_parameter("arm_id").as_string();
   frequency = get_node()->get_parameter("frequency").as_int();
-  RCLCPP_INFO(this->get_node()->get_logger(), "Arm name: %s", arm_id.c_str());
+  last_pub_ = get_node()->now();
   franka_robot_model = std::make_unique<franka_semantic_components::FrankaRobotModel>(
       franka_semantic_components::FrankaRobotModel(arm_id + "/" + model_interface_name, 
                                                    arm_id));
@@ -106,7 +106,10 @@ FrankaRobotModelBroadcaster::state_interface_configuration() const {
 controller_interface::return_type FrankaRobotModelBroadcaster::update(
     const rclcpp::Time& time,
     const rclcpp::Duration& /*period*/) {
-
+  
+  if(time.nanoseconds() - last_pub_.nanoseconds() < 1'000'000'000 / frequency){
+    return controller_interface::return_type::OK;
+  }
   if (realtime_franka_model_publisher && realtime_franka_model_publisher->trylock()) {
     realtime_franka_model_publisher->msg_.header.stamp = time;
 
@@ -117,8 +120,8 @@ controller_interface::return_type FrankaRobotModelBroadcaster::update(
       return controller_interface::return_type::ERROR;
     }
     realtime_franka_model_publisher->unlockAndPublish();
+    last_pub_ = get_node()->now();
     return controller_interface::return_type::OK;
-
   } 
   
   else {

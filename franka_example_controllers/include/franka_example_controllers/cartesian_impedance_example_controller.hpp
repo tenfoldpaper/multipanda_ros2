@@ -58,6 +58,7 @@ class CartesianImpedanceExampleController : public controller_interface::Control
   rclcpp::Time start_time_;
   Quaterniond desired_orientation;
   Vector3d desired_position;
+  Vector7d desired_qn;
   Matrix4d desired;
   Matrix6d stiffness;
   Matrix6d damping;
