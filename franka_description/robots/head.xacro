@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+  <xacro:macro name="head" params="connected_to xyz:='0 0 0' rpy:='0 0 0'">
+
+    <link name="garmi_head_link0"/>
+    <link name="garmi_head_link1">
+      <!-- TODO export inertias from SolidWorks for now only placeholder -->
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="1.0" />
+        <inertia ixx="0.1" ixy="0.0" ixz="0.0"
+                           iyy="0.1" iyz="0.0"
+                                     izz="0.1" />
+      </inertial>
+    </link>
+
+    <link name="garmi_head_link2">
+      <!-- TODO export inertias from SolidWorks for now only placeholder -->
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="1.0" />
+        <inertia ixx="0.1" ixy="0.0" ixz="0.0"
+                           iyy="0.1" iyz="0.0"
+                                     izz="0.1" />
+      </inertial>
+    </link>
+
+    <link name="garmi_head">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://franka_description/meshes/visual/head.dae" scale="1 1 1"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.2" />
+        </geometry>
+      </collision>
+
+      <!-- TODO export inertias from SolidWorks for now only placeholder -->
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="5.0" />
+        <inertia ixx="0.3" ixy="0.0" ixz="0.0"
+                           iyy="0.3" iyz="0.0"
+                                     izz="0.3" />
+      </inertial>
+    </link>
+
+    <xacro:unless value="${not connected_to}">
+      <joint name="garmi_head_joint0" type="fixed">
+        <origin xyz="${xyz}" rpy="${rpy}" />
+        <parent link="${connected_to}" />
+        <child link="garmi_head_link0" />
+      </joint>
+    </xacro:unless>
+
+    <!-- PAN -->
+    <joint name="garmi_head_joint1" type="revolute">
+      <origin xyz="0 0 0" rpy="0 0 ${-90 * pi/180}" />
+      <parent link="garmi_head_link0" />
+      <child  link="garmi_head_link1" />
+      <axis   xyz="0 0 1" />
+      <limit  effort="0.5" lower="${-60 * pi/180}" upper="${+60 * pi/180}" velocity="2.6" />
+    </joint>
+
+    <!-- TILT -->
+    <joint name="garmi_head_joint2" type="revolute">
+      <origin xyz="0 0 208e-3" rpy="0 ${-pi/2} 0" />
+      <parent link="garmi_head_link1" />
+      <child  link="garmi_head_link2" />
+      <axis xyz="0 0 1"/>
+      <limit  effort="0.5" lower="${-20 * pi/180}" upper="${+20 * pi/180}" velocity="2.6" />
+    </joint>
+
+    <joint name="garmi_head_joint3" type="fixed">
+      <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}" />
+      <parent link="garmi_head_link2" />
+      <child  link="garmi_head" />
+    </joint>
+
+  </xacro:macro>
+
+</robot>

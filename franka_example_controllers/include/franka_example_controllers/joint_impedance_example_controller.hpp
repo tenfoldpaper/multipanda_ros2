@@ -18,6 +18,7 @@
 
 #include <Eigen/Eigen>
 #include <controller_interface/controller_interface.hpp>
+#include "franka_semantic_components/franka_robot_model.hpp"
 #include <rclcpp/rclcpp.hpp>
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -41,6 +42,7 @@ class JointImpedanceExampleController : public controller_interface::ControllerI
  private:
   std::string arm_id_;
   const int num_joints = 7;
+  std::unique_ptr<franka_semantic_components::FrankaRobotModel> franka_robot_model_;
   Vector7d q_;
   Vector7d initial_q_;
   Vector7d dq_;

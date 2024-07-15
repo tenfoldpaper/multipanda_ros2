@@ -1,0 +1,309 @@
+<garmi>
+  <include file="include/panda_assets.xml" />
+  <asset>
+    <!-- GARMI Textures -->
+    <texture name="garmi_eyes" type="cube" file="eyes.png" />
+    <texture name="torso" type="2d" file="garmi/torso.png" />
+    <texture name="head" type="2d" file="garmi/head.png" />
+
+    <!-- GARMI Materials-->
+    <material name="torso" shininess=".4" specular=".4" texture="torso" />
+    <material name="head" shininess=".4" specular=".4" texture="head" />
+    <material name="garmi_white" rgba="1 1 1 1" shininess="0.1" specular="0.2" />
+    <material name="garmi_black" rgba=".2 .2 .2 1" shininess="0.5" specular="0.5" />
+    <material name="garmi_tire" rgba=".393 .318 .272 1" shininess="0.1" specular="0.1" />
+    <material name="garmi_metal" rgba=".8 .8 .8 1" reflectance="1" shininess="1" specular="1" />
+    <material name="garmi_eyes" texture="garmi_eyes" emission="1" />
+    <material name="garmi_visor" rgba="1 1 1 .1" reflectance=".2" shininess="1" specular="1" />
+    <material name="d435_metal" rgba="1 1 1 1" reflectance="1" shininess="1" specular="1" />
+    <material name="d435_glass" rgba=".1 .1 .1 1" reflectance=".2" shininess="1" specular="1" />
+
+    <!-- GARMI Meshes -->
+    <mesh name="torso" file="garmi/torso.obj" />
+    <mesh name="head" file="garmi/head.obj" />
+    <mesh name="d435" file="cameras/d435.obj" />
+    <mesh name="d435_glass" file="cameras/d435_glass.obj" />
+    <mesh name="garmi_base" file="garmi/base.obj" />
+    <mesh name="garmi_caster_wheel" file="garmi/caster_wheel.obj" />
+    <mesh name="garmi_wheel" file="garmi/wheel.obj" />
+    <mesh name="garmi_tire" file="garmi/tire.obj" />
+    <mesh name="garmi_visor" file="garmi/visor.obj" />
+  </asset>
+  <actuator>
+
+    <motor name="left_act_trq1" joint="left_joint1" ctrlrange="-87 87" ctrllimited="true"/>
+    <motor name="left_act_trq2" joint="left_joint2" ctrlrange="-87 87" ctrllimited="true"/>
+    <motor name="left_act_trq3" joint="left_joint3" ctrlrange="-87 87" ctrllimited="true"/>
+    <motor name="left_act_trq4" joint="left_joint4" ctrlrange="-87 87" ctrllimited="true"/>
+    <motor name="left_act_trq5" joint="left_joint5" ctrlrange="-12 12" ctrllimited="true"/>
+    <motor name="left_act_trq6" joint="left_joint6" ctrlrange="-12 12" ctrllimited="true"/>
+    <motor name="left_act_trq7" joint="left_joint7" ctrlrange="-12 12" ctrllimited="true"/>
+
+    <position name="left_act_pos1" joint="left_joint1" kp="10" kv="1"/>
+    <position name="left_act_pos2" joint="left_joint2" kp="10" kv="1"/>
+    <position name="left_act_pos3" joint="left_joint3" kp="10" kv="1"/>
+    <position name="left_act_pos4" joint="left_joint4" kp="10" kv="1"/>
+    <position name="left_act_pos5" joint="left_joint5" kp="10" kv="1"/>
+    <position name="left_act_pos6" joint="left_joint6" kp="10" kv="1"/>
+    <position name="left_act_pos7" joint="left_joint7" kp="10" kv="1"/>
+
+    <velocity name="left_act_vel1" joint="left_joint1" kv="1"/>
+    <velocity name="left_act_vel2" joint="left_joint2" kv="1"/>
+    <velocity name="left_act_vel3" joint="left_joint3" kv="1"/>
+    <velocity name="left_act_vel4" joint="left_joint4" kv="1"/>
+    <velocity name="left_act_vel5" joint="left_joint5" kv="1"/>
+    <velocity name="left_act_vel6" joint="left_joint6" kv="1"/>
+    <velocity name="left_act_vel7" joint="left_joint7" kv="1"/>
+
+    <motor name="right_act_trq1" joint="right_joint1" ctrlrange="-87 87" ctrllimited="true"/>
+    <motor name="right_act_trq2" joint="right_joint2" ctrlrange="-87 87" ctrllimited="true"/>
+    <motor name="right_act_trq3" joint="right_joint3" ctrlrange="-87 87" ctrllimited="true"/>
+    <motor name="right_act_trq4" joint="right_joint4" ctrlrange="-87 87" ctrllimited="true"/>
+    <motor name="right_act_trq5" joint="right_joint5" ctrlrange="-12 12" ctrllimited="true"/>
+    <motor name="right_act_trq6" joint="right_joint6" ctrlrange="-12 12" ctrllimited="true"/>
+    <motor name="right_act_trq7" joint="right_joint7" ctrlrange="-12 12" ctrllimited="true"/>
+
+    <position name="right_act_pos1" joint="right_joint1" kp="10" kv="1"/>
+    <position name="right_act_pos2" joint="right_joint2" kp="10" kv="1"/>
+    <position name="right_act_pos3" joint="right_joint3" kp="10" kv="1"/>
+    <position name="right_act_pos4" joint="right_joint4" kp="10" kv="1"/>
+    <position name="right_act_pos5" joint="right_joint5" kp="10" kv="1"/>
+    <position name="right_act_pos6" joint="right_joint6" kp="10" kv="1"/>
+    <position name="right_act_pos7" joint="right_joint7" kp="10" kv="1"/>
+
+    <velocity name="right_act_vel1" joint="right_joint1" kv="1"/>
+    <velocity name="right_act_vel2" joint="right_joint2" kv="1"/>
+    <velocity name="right_act_vel3" joint="right_joint3" kv="1"/>
+    <velocity name="right_act_vel4" joint="right_joint4" kv="1"/>
+    <velocity name="right_act_vel5" joint="right_joint5" kv="1"/>
+    <velocity name="right_act_vel6" joint="right_joint6" kv="1"/>
+    <velocity name="right_act_vel7" joint="right_joint7" kv="1"/>
+
+    <velocity name="left_wheel_act_vel" kv="5" joint="left_wheel" ctrllimited="true" ctrlrange="-30 30" />
+    <velocity name="right_wheel_act_vel" kv="5" joint="right_wheel" ctrllimited="true" ctrlrange="-30 30" />
+    <motor name="head_pan_act_trq" joint="head_pan" ctrllimited="true" ctrlrange="-12 12" />
+    <motor name="head_tilt_act_trq" joint="head_tilt" ctrllimited="true" ctrlrange="-12 12" />
+
+    <!-- Remap original ctrlrange (0, 0.04) to (0, 1): 0.04 * 100 / 1 = 4 -->
+    <general biastype="affine" name="right_act_gripper" tendon="right_fingers" forcelimited="true" forcerange="-100 100" ctrllimited="true" ctrlrange="0 1" gainprm="4 0 0" biasprm="0 -100 0"/>
+    <general biastype="affine" name="left_act_gripper" tendon="left_fingers" forcelimited="true" forcerange="-100 100" ctrllimited="true" ctrlrange="0 1" gainprm="4 0 0" biasprm="0 -100 0"/>
+
+  </actuator>
+
+  <contact>
+    <exclude body1="torso" body2="left_link1" />
+    <exclude body1="torso" body2="right_link1" />
+    <exclude body1="torso" body2="left_link2" />
+    <exclude body1="torso" body2="right_link2" />
+    <exclude body1="base" body2="front_wheel" />
+    <exclude body1="base" body2="back_wheel" />
+  </contact>
+
+  <tendon>
+    <fixed name="right_fingers">
+      <joint joint="right_finger_joint1" coef="0.5"/>
+      <joint joint="right_finger_joint2" coef="0.5"/>
+    </fixed>
+    <fixed name="left_fingers">
+      <joint joint="left_finger_joint1" coef="0.5"/>
+      <joint joint="left_finger_joint2" coef="0.5"/>
+    </fixed>
+  </tendon>
+
+  <equality>
+    <joint name="couple_left_fingers" joint1="left_finger_joint1" joint2="left_finger_joint2" solimp="0.95 0.99 0.001" solref="0.005 1"/>
+    <joint name="couple_right_fingers" joint1="right_finger_joint1" joint2="right_finger_joint2" solimp="0.95 0.99 0.001" solref="0.005 1"/>
+  </equality>
+
+
+  <worldbody>
+    <body name="garmi">
+      <site name="garmi_base" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+      <joint type="free" name="garmi" />
+      <body name="base">
+        <site name="mobile_base" pos="0 0 0.08" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+        <geom type="mesh" mass="20" group="1" mesh="garmi_base" material="garmi_white" />
+        <body name="left_wheel" pos="0 .375 .08" euler="1.57 0 0">
+          <joint name="left_wheel" axis="0 0 -1" />
+          <geom type="cylinder" size=".08 .025" rgba="0 0 0 0" />
+          <geom type="mesh" contype="0" conaffinity="0" group="1" pos="0 0 0" euler="-1.57 0 3.14" mesh="garmi_wheel" material="garmi_metal" />
+          <geom type="mesh" contype="0" conaffinity="0" group="1" pos="0 0 0" euler="-1.57 0 3.14" mesh="garmi_tire" material="garmi_tire" />
+        </body>
+        <body name="right_wheel" pos="0 -.375 .08" euler="1.57 0 0">
+          <joint name="right_wheel" axis="0 0 -1" />
+          <geom type="cylinder" size=".08 .025" rgba="0 0 0 0" />
+          <geom type="mesh" contype="0" conaffinity="0" group="1" pos="0 0 0" euler="-1.57 0 0" mesh="garmi_wheel" material="garmi_metal" />
+          <geom type="mesh" contype="0" conaffinity="0" group="1" pos="0 0 0" euler="-1.57 0 0" mesh="garmi_tire" material="garmi_tire" />
+        </body>
+        <body pos=".45 0 .06" euler="1.57 0 0">
+          <joint name="front_suspension" type="slide" axis="-1 1 0" stiffness="30000" />
+          <joint name="front_wheel_turn" axis="0 1 0" pos=".04 0 0" damping="0.001" />
+          <geom type="mesh" contype="0" conaffinity="0" group="1" pos="0 0 0" euler="-1.57 0 3.14" mesh="garmi_caster_wheel" material="garmi_black" />
+          <body name="front_wheel">
+            <joint name="front_wheel_spin" />
+            <geom type="cylinder" size=".065 .018" rgba="0 0 0 0" />
+          </body>
+        </body>
+        <body pos="-.45 0 .06" euler="1.57 0 0">
+          <joint name="back_suspension" type="slide" axis="1 1 0" stiffness="30000" />
+          <joint name="back_wheel_turn" axis="0 1 0" pos="-.04 0 0" />
+          <geom type="mesh" contype="0" conaffinity="0" group="1" pos="0 0 0" euler="-1.57 0 0" mesh="garmi_caster_wheel" material="garmi_black" />
+          <body name="back_wheel">
+            <joint name="back_wheel_spin" />
+            <geom type="cylinder" size=".065 .018" rgba="0 0 0 0" />
+          </body>
+        </body>
+        <body name="torso" pos="0 0 0.20489">
+          <geom type="mesh" mesh="torso" material="torso" />
+          <body name="torso_d435" pos="0.13 0 .896" euler="3.13889799 1.27079594 -1.56901835">
+            <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="d435" material="d435_metal" />
+            <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="d435_glass" material="d435_glass" />
+          </body>
+          <body name="head" pos=".00859 .00621 1.25">
+            <joint name="head_pan" axis="0 0 1" limited="true" range="-0.8 0.8" damping="10" />
+            <joint name="head_tilt" axis="0 1 0" limited="true" range="-0.2 0.2" damping="10" />
+            <geom type="mesh" mass="10" mesh="head" material="head" />
+            <geom type="mesh" mass="0" contype="0" conaffinity="0" group="1" mesh="garmi_visor" material="garmi_visor" />
+            <geom type="box" mass="0" pos=".12 0 0" size=".01 .09 .1" euler="1.57 0 0" contype="0" conaffinity="0" group="1" material="garmi_eyes" />
+            <body name="head_d435" pos="0.16 0 .11" euler="1.57 1.57 0">
+              <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="d435" material="d435_metal" />
+              <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="d435_glass" material="d435_glass" />
+            </body>
+          </body>
+          <body name="left_link0" pos="-143.26e-3 +200e-3 924.51e-3" euler="1.57 1.57 3.14">
+            <site name="left_base" />
+            <inertial pos="-0.0410181918537986 -0.000143266349590146 0.0499742749991159" quat="5.85289887e-03 -6.61988565e-05  6.68631899e-03  7.07078862e-01" mass="0.629769273993887" diaginertia="0.00430578 0.00388144 0.0031326" />
+            <body gravcomp="1" name="left_link1" pos="0 0 0.333">
+              <site name="left_joint1_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+              <inertial pos="0.003875 0.002081 -0.04762" quat="0.711549 0.00634377 -0.0131124 0.702485" mass="4.97068" diaginertia="0.707137 0.703435 0.00852456" />
+              <joint name="left_joint1" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0665" frictionloss="0.2450" />
+              <geom type="mesh" material="panda_white" mesh="link1" />
+              <body gravcomp="1" name="left_link2" pos="0 0 0" quat="0.707107 -0.707107 0 0">
+                <site name="left_joint2_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                <inertial pos="-0.003141 -0.02872 0.003495" quat="-0.168175 0.828366 -0.122878 0.520027" mass="0.646926" diaginertia="0.0310326 0.0283001 0.00273425" />
+                <joint name="left_joint2" pos="0 0 0" axis="0 0 1" limited="true" range="-1.7628 1.7628" damping="0.1987" frictionloss="0.1523" />
+                <geom type="mesh" material="panda_white" mesh="link2" />
+                <body gravcomp="1" name="left_link3" pos="0 -0.316 0" quat="0.707107 0.707107 0 0">
+                  <site name="left_joint3_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                  <inertial pos="0.027518 0.039252 -0.066502" quat="0.662769 -0.00678331 0.252053 0.705096" mass="3.2286" diaginertia="0.0415014 0.0414793 0.00124635" />
+                  <joint name="left_joint3" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0399" frictionloss="0.1827" />
+                  <geom type="mesh" material="panda" mesh="link3" />
+                  <body gravcomp="1" name="left_link4" pos="0.0825 0 0" quat="0.707107 0.707107 0 0">
+                    <site name="left_joint4_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                    <inertial pos="-0.05317 0.104419 0.027454" quat="0.65058 0.529822 -0.0962034 0.535518" mass="3.5879" diaginertia="0.0349596 0.0281483 0.0106201" />
+                    <joint name="left_joint4" pos="0 0 0" axis="0 0 1" limited="true" range="-3.0718 -0.0698" damping="0.2257" frictionloss="0.3591" />
+                    <geom type="mesh" material="panda" mesh="link4" />
+                    <body gravcomp="1" name="left_link5" pos="-0.0825 0.384 0" quat="0.707107 -0.707107 0 0">
+                      <site name="left_joint5_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                      <inertial pos="-0.011953 0.041065 -0.038437" quat="0.987313 -0.0121954 0.0719187 -0.141037" mass="1.22595" diaginertia="0.0367625 0.0288531 0.00803437" />
+                      <joint name="left_joint5" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.1023" frictionloss="0.2669" />
+                      <geom type="mesh" material="panda" mesh="link5" />
+                      <body gravcomp="1" name="left_link6" pos="0 0 0" quat="0.707107 0.707107 0 0">
+                        <site name="left_joint6_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                        <inertial pos="0.060149 -0.014117 -0.010517" quat="0.101075 0.59332 0.0287227 0.798079" mass="1.66656" diaginertia="0.00584276 0.00431037 0.00159787" />
+                        <joint name="left_joint6" pos="0 0 0" axis="0 0 1" limited="true" range="-0.0175 3.7525" damping="-0.0132" frictionloss="0.1658" />
+                        <geom type="mesh" material="panda" mesh="link6" />
+                        <body gravcomp="1" name="left_link7" pos="0.088 0 0" quat="0.707107 0.707107 0 0">
+                          <site name="left_joint7_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                          <inertial pos="1.0517e-02 -4.252e-03 6.1597e-02" mass="7.35522e-01" fullinertia="1.2516e-02 1.0027e-02 4.8150e-03 -4.2800e-04 -1.1960e-03 -7.4100e-04" />
+                          <joint name="left_joint7" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0638" frictionloss="1.2109" />
+                          <geom type="mesh" material="panda" mesh="link7" />
+                          <body gravcomp="1" name="left_link8" pos="0 0 0.107">
+                            <site name="left_flange_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                            <body gravcomp="1" name="left_hand" euler="0 0 -0.785398163397">
+                              <site name="left_ee_site" pos="0 0 .1034" />
+                              <inertial pos="-1e-02 0 3e-02" mass="7.3e-01" diaginertia="1e-03 2.5e-03 1.7e-03" />
+                              <geom type="mesh" material="panda" mesh="hand" />
+                              <body gravcomp="1" name="left_leftfinger" pos="0 0 0.0584" euler="0 0 3.1415">
+                                <inertial pos="0 0 0" mass="1.5e-02" diaginertia="2.3749e-06 2.3749e-06 7.5e-07"/>
+                                <joint name="left_finger_joint1" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="0 0.04" armature="0.1" damping="11" solreflimit="-30000 -200" />
+                                <geom type="mesh" material="panda" mesh="finger" contype="0" conaffinity="0" />
+                                <geom type="box" pos="0 0.015 0.032" size="0.012 0.015 0.022" rgba="1 1 1 .3" group="5"/>
+                              </body>
+                              <body gravcomp="1" name="left_rightfinger" pos="0 0 0.0584" euler="0 0 0">
+                                <inertial pos="0 0 0" mass="1.5e-02" diaginertia="2.3749e-06 2.3749e-06 7.5e-07"/>
+                                <joint name="left_finger_joint2" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="0 0.04" armature="0.1" damping="11" solreflimit="-30000 -200" />
+                                <geom type="mesh" material="panda" mesh="finger" contype="0" conaffinity="0" />
+                                <geom type="box" pos="0 0.015 0.032" size="0.012 0.015 0.022" rgba="1 1 1 .3" group="5"/>
+                              </body>
+                            </body>
+                          </body>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+          <body name="right_link0" pos="-143.26e-3 -200e-3 924.51e-3" euler="1.57 1.57 0">
+            <site name="right_base" />
+            <inertial pos="-0.0410181918537986 -0.000143266349590146 0.0499742749991159" quat="5.85289887e-03 -6.61988565e-05  6.68631899e-03  7.07078862e-01" mass="0.629769273993887" diaginertia="0.00430578 0.00388144 0.0031326" />
+            <body gravcomp="1" name="right_link1" pos="0 0 0.333">
+              <site name="right_joint1_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+              <inertial pos="0.003875 0.002081 -0.04762" quat="0.711549 0.00634377 -0.0131124 0.702485" mass="4.97068" diaginertia="0.707137 0.703435 0.00852456" />
+              <joint name="right_joint1" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0665" frictionloss="0.2450" />
+              <geom type="mesh" material="panda_white" mesh="link1" />
+              <body gravcomp="1" name="right_link2" pos="0 0 0" quat="0.707107 -0.707107 0 0">
+                <site name="right_joint2_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                <inertial pos="-0.003141 -0.02872 0.003495" quat="-0.168175 0.828366 -0.122878 0.520027" mass="0.646926" diaginertia="0.0310326 0.0283001 0.00273425" />
+                <joint name="right_joint2" pos="0 0 0" axis="0 0 1" limited="true" range="-1.7628 1.7628" damping="0.1987" frictionloss="0.1523" />
+                <geom type="mesh" material="panda_white" mesh="link2" />
+                <body gravcomp="1" name="right_link3" pos="0 -0.316 0" quat="0.707107 0.707107 0 0">
+                  <site name="right_joint3_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                  <inertial pos="0.027518 0.039252 -0.066502" quat="0.662769 -0.00678331 0.252053 0.705096" mass="3.2286" diaginertia="0.0415014 0.0414793 0.00124635" />
+                  <joint name="right_joint3" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0399" frictionloss="0.1827" />
+                  <geom type="mesh" material="panda" mesh="link3" />
+                  <body gravcomp="1" name="right_link4" pos="0.0825 0 0" quat="0.707107 0.707107 0 0">
+                    <site name="right_joint4_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                    <inertial pos="-0.05317 0.104419 0.027454" quat="0.65058 0.529822 -0.0962034 0.535518" mass="3.5879" diaginertia="0.0349596 0.0281483 0.0106201" />
+                    <joint name="right_joint4" pos="0 0 0" axis="0 0 1" limited="true" range="-3.0718 -0.0698" damping="0.2257" frictionloss="0.3591" />
+                    <geom type="mesh" material="panda" mesh="link4" />
+                    <body gravcomp="1" name="right_link5" pos="-0.0825 0.384 0" quat="0.707107 -0.707107 0 0">
+                      <site name="right_joint5_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                      <inertial pos="-0.011953 0.041065 -0.038437" quat="0.987313 -0.0121954 0.0719187 -0.141037" mass="1.22595" diaginertia="0.0367625 0.0288531 0.00803437" />
+                      <joint name="right_joint5" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.1023" frictionloss="0.2669" />
+                      <geom type="mesh" material="panda" mesh="link5" />
+                      <body gravcomp="1" name="right_link6" pos="0 0 0" quat="0.707107 0.707107 0 0">
+                        <site name="right_joint6_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                        <inertial pos="0.060149 -0.014117 -0.010517" quat="0.101075 0.59332 0.0287227 0.798079" mass="1.66656" diaginertia="0.00584276 0.00431037 0.00159787" />
+                        <joint name="right_joint6" pos="0 0 0" axis="0 0 1" limited="true" range="-0.0175 3.7525" damping="-0.0132" frictionloss="0.1658" />
+                        <geom type="mesh" material="panda" mesh="link6" />
+                        <body gravcomp="1" name="right_link7" pos="0.088 0 0" quat="0.707107 0.707107 0 0">
+                          <site name="right_joint7_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                          <inertial pos="1.0517e-02 -4.252e-03 6.1597e-02" mass="7.35522e-01" fullinertia="1.2516e-02 1.0027e-02 4.8150e-03 -4.2800e-04 -1.1960e-03 -7.4100e-04" />
+                          <joint name="right_joint7" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8973 2.8973" damping="0.0638" frictionloss="1.2109" />
+                          <geom type="mesh" material="panda" mesh="link7" />
+                          <body gravcomp="1" name="right_link8" pos="0 0 0.107">
+                            <site name="right_flange_site" pos="0 0.0 0.0" size=".01 .01 .01" type="ellipsoid" rgba=".8 .2 .1 0"/>
+                            <body gravcomp="1" name="right_hand" euler="0 0 -0.785398163397">
+                              <site name="right_ee_site" pos="0 0 .1034" />
+                              <inertial pos="-1e-02 0 3e-02" mass="7.3e-01" diaginertia="1e-03 2.5e-03 1.7e-03" />
+                              <geom type="mesh" material="panda" mesh="hand" />
+                              <body gravcomp="1" name="right_leftfinger" pos="0 0 0.0584" euler="0 0 3.1415">
+                                <inertial pos="0 0 0" mass="1.5e-02" diaginertia="2.3749e-06 2.3749e-06 7.5e-07"/>
+                                <joint name="right_finger_joint1" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="0 0.04" armature="0.1" damping="11" solreflimit="-30000 -200" />
+                                <geom type="mesh" material="panda" mesh="finger" contype="0" conaffinity="0" />
+                                <geom type="box" pos="0 0.015 0.032" size="0.012 0.015 0.022" rgba="1 1 1 .3" group="5"/>
+                              </body>
+                              <body gravcomp="1" name="right_rightfinger" pos="0 0 0.0584" euler="0 0 0">
+                                <inertial pos="0 0 0" mass="1.5e-02" diaginertia="2.3749e-06 2.3749e-06 7.5e-07"/>
+                                <joint name="right_finger_joint2" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="0 0.04" armature="0.1" damping="11" solreflimit="-30000 -200" />
+                                <geom type="mesh" material="panda" mesh="finger" contype="0" conaffinity="0" />
+                                <geom type="box" pos="0 0.015 0.032" size="0.012 0.015 0.022" rgba="1 1 1 .3" group="5"/>
+                              </body>
+                            </body>
+                          </body>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+</garmi>

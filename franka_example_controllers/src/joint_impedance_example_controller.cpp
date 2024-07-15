@@ -27,7 +27,6 @@ controller_interface::InterfaceConfiguration
 JointImpedanceExampleController::command_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
-
   for (int i = 1; i <= num_joints; ++i) {
     config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/effort");
   }
@@ -42,6 +41,9 @@ JointImpedanceExampleController::state_interface_configuration() const {
     config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/position");
     config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/velocity");
   }
+  for (const auto& franka_robot_model_name : franka_robot_model_->get_state_interface_names()) {
+    config.names.push_back(franka_robot_model_name);
+  }
   return config;
 }
 
@@ -54,11 +56,12 @@ controller_interface::return_type JointImpedanceExampleController::update(
   double delta_angle = M_PI / 8.0 * (1 - std::cos(M_PI / 2.5 * time.seconds()));
   q_goal(3) += delta_angle;
   q_goal(4) += delta_angle;
-
+  
   const double kAlpha = 0.99;
   dq_filtered_ = (1 - kAlpha) * dq_filtered_ + kAlpha * dq_;
+  Eigen::Map<const Vector7d> coriolis(franka_robot_model_->getCoriolisForceVector().data());
   Vector7d tau_d_calculated =
-      k_gains_.cwiseProduct(q_goal - q_) + d_gains_.cwiseProduct(-dq_filtered_);
+      k_gains_.cwiseProduct(q_goal - q_) + d_gains_.cwiseProduct(-dq_filtered_) + coriolis;
   for (int i = 0; i < num_joints; ++i) {
     command_interfaces_[i].set_value(tau_d_calculated(i));
   }
@@ -80,6 +83,9 @@ CallbackReturn JointImpedanceExampleController::on_init() {
 CallbackReturn JointImpedanceExampleController::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   arm_id_ = get_node()->get_parameter("arm_id").as_string();
+  franka_robot_model_ = std::make_unique<franka_semantic_components::FrankaRobotModel>(
+      franka_semantic_components::FrankaRobotModel(arm_id_ + "/robot_model",
+                                                   arm_id_));
   auto k_gains = get_node()->get_parameter("k_gains").as_double_array();
   auto d_gains = get_node()->get_parameter("d_gains").as_double_array();
   if (k_gains.empty()) {
@@ -111,6 +117,7 @@ CallbackReturn JointImpedanceExampleController::on_configure(
 CallbackReturn JointImpedanceExampleController::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   updateJointStates();
+  franka_robot_model_->assign_loaned_state_interfaces(state_interfaces_);
   initial_q_ = q_;
   start_time_ = this->get_node()->now();
   return CallbackReturn::SUCCESS;

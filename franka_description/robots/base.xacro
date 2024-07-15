@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+  <!-- ========================================= -->
+  <!-- ||              BASE                   || -->
+  <!-- ========================================= -->
+  <xacro:macro name="base" params="connected_to">
+    <link name="base">
+
+      <!-- TODO export inertias from SolidWorks for now only placeholder -->
+      <inertial>
+        <origin xyz="0 0 0.5" rpy="0 0 0" />
+        <mass value="50.0" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                           iyy="1.0" iyz="0.0"
+                                     izz="1.0" />
+      </inertial>
+
+      <visual>
+        <geometry>
+          <mesh filename="package://franka_description/meshes/visual/torso.dae" scale="1 1 1"/>
+        </geometry>
+      </visual>
+
+      <!-- Big box at base -->
+      <collision>
+        <origin xyz="0 0 0.20" rpy="0 0 0" />
+        <geometry>
+          <box size="0.60 0.60 0.50"/>
+        </geometry>
+      </collision>
+      <!-- Small box at torso -->
+      <collision>
+        <origin xyz="0 0 0.75" rpy="0 0 0" />
+        <geometry>
+          <box size="0.30 0.30 0.6"/>
+        </geometry>
+      </collision>
+      <!-- Thin box at backpack -->
+      <collision>
+        <origin xyz="-0.15 0 0.75" rpy="0 0 0" />
+        <geometry>
+          <box size="0.30 0.60 0.6"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="base_joint" type="fixed">
+      <parent link="${connected_to}" />
+      <child link="base" />
+      <axis xyz="0 0 0" />
+    </joint>
+
+  </xacro:macro>
+
+</robot>

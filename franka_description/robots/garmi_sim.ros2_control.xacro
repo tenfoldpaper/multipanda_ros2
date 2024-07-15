@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="garmi_sim_ros2_control" params="ns_1 ns_2 hand_1 hand_2 scene_xml mj_yaml">
+    <ros2_control name="GarmiMujocoHardwareInterface" type="system">
+      <hardware>
+        <param name="robot_count">2</param>
+        <plugin>franka_hardware/GarmiMujocoHardwareInterface</plugin>
+        <param name="ns_1">${ns_1}</param>
+        <param name="ns_2">${ns_2}</param>
+        <param name="hand_1">${hand_1}</param>
+        <param name="hand_2">${hand_2}</param>
+        <param name="scene_xml">${scene_xml}</param>
+        <param name="mj_yaml">${mj_yaml}</param>
+      </hardware>
+
+      <xacro:macro name="configure_joint" params="joint_name initial_position">
+        <joint name="${joint_name}">
+          <param name="initial_position">${initial_position}</param>
+          <command_interface name="effort"/>
+          <command_interface name="position"/>
+          <command_interface name="velocity"/>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+      </xacro:macro>
+
+      <xacro:macro name="configure_wheel" params="joint_name">
+        <joint name="${joint_name}">
+          <param name="initial_position">0.0</param>
+          <command_interface name="velocity"/>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+        </joint>
+      </xacro:macro>
+
+      <xacro:macro name="configure_head" params="joint_name">
+        <joint name="${joint_name}">
+          <param name="initial_position">0.0</param>
+          <command_interface name="effort"/>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+      </xacro:macro>
+
+      <xacro:configure_joint joint_name="${ns_1}_joint1" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_1}_joint2" initial_position="${-pi/4}"/>
+      <xacro:configure_joint joint_name="${ns_1}_joint3" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_1}_joint4" initial_position="${-3*pi/4}"/>
+      <xacro:configure_joint joint_name="${ns_1}_joint5" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_1}_joint6" initial_position="${pi/2}"/>
+      <xacro:configure_joint joint_name="${ns_1}_joint7" initial_position="${pi/4}"/>
+
+      <xacro:configure_joint joint_name="${ns_2}_joint1" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint2" initial_position="${-pi/4}"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint3" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint4" initial_position="${-3*pi/4}"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint5" initial_position="0.0"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint6" initial_position="${pi/2}"/>
+      <xacro:configure_joint joint_name="${ns_2}_joint7" initial_position="${pi/4}"/>
+
+      <xacro:configure_wheel joint_name="garmi_base_joint_left"/>
+      <xacro:configure_wheel joint_name="garmi_base_joint_right"/>
+
+      <xacro:configure_head joint_name="garmi_head_joint1"/>
+      <xacro:configure_head joint_name="garmi_head_joint2"/>
+      
+    </ros2_control>
+  </xacro:macro>
+</robot>

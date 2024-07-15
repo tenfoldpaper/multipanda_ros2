@@ -31,4 +31,13 @@
             Hardware interface for mujoco sim of multiple Franka Emika research robots
         </description>
     </class>
+
+    <class name="franka_hardware/GarmiMujocoHardwareInterface"
+           type="franka_hardware::GarmiMujocoHardwareInterface"
+           base_class_type="hardware_interface::SystemInterface">
+
+        <description>
+            Hardware interface for mujoco sim of Garmi
+        </description>
+    </class>
 </library>

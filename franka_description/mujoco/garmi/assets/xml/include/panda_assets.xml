@@ -1,0 +1,19 @@
+<panda_assets>
+    <asset>
+        <mesh name="link0" file="panda/link0.obj" />
+        <mesh name="link1" file="panda/link1.obj" />
+        <mesh name="link2" file="panda/link2.obj" />
+        <mesh name="link3" file="panda/link3.obj" />
+        <mesh name="link4" file="panda/link4.obj" />
+        <mesh name="link5" file="panda/link5.obj" />
+        <mesh name="link6" file="panda/link6.obj" />
+        <mesh name="link7" file="panda/link7.obj" />
+        <mesh name="hand" file="panda/hand.obj" />
+        <mesh name="finger" file="panda/finger.obj" />
+
+        <texture name="panda" file="panda/panda.png" type="2d" />
+
+        <material name="panda" texture="panda" shininess=".4" specular=".4" />
+        <material name="panda_white" rgba="1 1 1 1" shininess="0.4" specular="0.4" />
+    </asset>
+</panda_assets>

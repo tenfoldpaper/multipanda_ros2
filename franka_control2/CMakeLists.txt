@@ -5,6 +5,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+find_package(Franka REQUIRED) # Franka_DIR will provide the path to the libfranka installation
+
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   ament_index_cpp
   controller_interface

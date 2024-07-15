@@ -1,0 +1,33 @@
+<mujoco model="default_scene">
+  <compiler angle="radian" meshdir="./../meshes" texturedir="./../textures" />
+
+  <visual>
+    <quality shadowsize="4000" offsamples="4" numslices="64" numstacks="64" />
+    <headlight active="1" />
+    <rgba haze="0.15 0.25 0.35 1" />
+  </visual>
+
+  <size njmax="500" nconmax="100" />
+
+  <!-- <option timestep="0.002" integrator="Euler" iterations="50" noslip_iterations="50" impratio="5" solver="Newton" tolerance="1e-8" cone="pyramidal"> -->
+  <option timestep="0.002">
+    <flag actuation="enable" gravity="enable" warmstart="enable" />
+  </option>
+
+  <include file="include/garmi.xml" />
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512" />
+    <texture name="plane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512" height="512" mark="cross" markrgb=".8 .8 .8" />
+    <material name="plane" reflectance="0" texture="plane" texrepeat="1 1" texuniform="true" />
+  </asset>
+
+  <worldbody>
+
+    <light directional="true" diffuse=".2 .2 .2" specular="0 0 0" pos="0 1 5" dir="0 -1 -1" castshadow="false"/>
+    <light directional="false" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 -1 4" dir="0 0 -1" />
+    <light directional="true" diffuse="0 0 0" specular=".7 .7 .7" pos="0 3 3" dir="0 -3 -3" />
+    <geom name="floor" pos="0 0 0" group="1" size="0 0 .1" type="plane" material="plane" condim="3" />
+
+  </worldbody>
+</mujoco>

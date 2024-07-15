@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:macro name="panda_arm_sim_ros2_control" params="ns hand scene_xml mj_yaml">
-    <ros2_control name="FrankaMujocoHardwareInterface" type="system">
+    <ros2_control name="FrankaMujocoMultiHardwareInterface" type="system">
       <hardware>
         <param name="robot_count">1</param>
         <plugin>franka_hardware/FrankaMujocoMultiHardwareInterface</plugin>

@@ -1,0 +1,8 @@
+<library path="garmi_controllers">
+    <class name="garmi_controllers/MobileBaseController"
+           type="garmi_controllers::MobileBaseController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            A basic velocity-based controller for the mobile base.
+        </description>
+    </class>
+</library>

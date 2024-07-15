@@ -11,6 +11,7 @@
 namespace franka_hardware{
   class FrankaMujocoHardwareInterface; // for friending
   class FrankaMujocoMultiHardwareInterface; // for friending
+  class GarmiMujocoHardwareInterface; // for friending
 
 class RobotSim{
 public:
@@ -57,6 +58,7 @@ private:
 
     friend class FrankaMujocoHardwareInterface;
     friend class FrankaMujocoMultiHardwareInterface;
+    friend class GarmiMujocoHardwareInterface;
     
 };
 } // namespace franka_hardware

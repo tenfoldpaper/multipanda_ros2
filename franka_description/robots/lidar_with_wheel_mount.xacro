@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+  <xacro:include filename="$(find franka_description)/sensors/rplidarA2.xacro" />
+
+  <xacro:macro name="lidar" params="connected_to ns:='lidar' xyz:='0 0 0' rpy:='0 0 0' ">
+
+    <link name="${ns}_mount" >
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.1" />
+        <inertia ixx="0.0001" ixy="0.0"    ixz="0.0"
+                              iyy="0.0001" iyz="0.0"
+                                           izz="0.0001" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+           <box size="0.1 0.1 0.1" />
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+           <box size="0.1 0.1 0.1" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${ns}_mount_joint" type="fixed">
+      <origin xyz="${xyz}" rpy="${rpy}" />
+      <parent link="${connected_to}" />
+      <child  link="${ns}_mount" />
+    </joint>
+
+    <xacro:sensor_rplidar connected_to="${ns}_mount" xyz="0 0 0.009" rpy="0 0 0" frame_id="${ns}" />
+
+  </xacro:macro>
+
+</robot>

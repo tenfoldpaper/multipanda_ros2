@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<robot name="rplidar" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="gazebo_lidar_sim" params="topic:='scan' beams:=1000 fov:=6.283 range:=8.0">
+    <gazebo reference="lidar_link">
+      <sensor type="ray" name="rplidar_sensor">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <update_rate>10</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>${beams}</samples>
+              <resolution>1</resolution>
+              <min_angle>${-fov*0.5}</min_angle>
+              <max_angle>${+fov*0.5}</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>${range}</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.01</stddev>
+          </noise>
+        </ray>
+        <plugin name="gazebo_ros_rplidar_controller" filename="libgazebo_ros_laser.so">
+          <topicName>${topic}</topicName>
+          <frameName>/lidar_link</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="sensor_rplidar" params="connected_to:='' xyz:='0 0 0.3' rpy:='0 0 0' topic:='scan' beams:=1000 fov:=6.283 range:=5.0 frame_id='lidar_link' "  >
+    <link name="${frame_id}" >
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.1 0.1 0.1"/></geometry>
+      </collision>
+      <visual>
+        <geometry>
+          <mesh filename="package://garmi_robot_description/meshes/visual/rplidarA2.dae" />
+        </geometry>
+      </visual>
+
+      <inertial>
+        <mass value="1e-5" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+    </link>
+
+    <joint name="${frame_id}_joint" type="fixed">
+      <axis xyz="0 0 1" />
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${connected_to}"/>
+      <child link="${frame_id}"/>
+    </joint>
+    <xacro:gazebo_lidar_sim topic="${topic}" beams="${beams}" fov="${fov}" range="${range}" />
+
+  </xacro:macro>
+</robot>

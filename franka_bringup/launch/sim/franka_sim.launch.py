@@ -29,20 +29,24 @@ def generate_launch_description():
     load_gripper_parameter_name = 'load_gripper'
     use_rviz_parameter_name = 'use_rviz'
     scene_xml_parameter_name = 'scene_xml'
+    mj_yaml_parameter_name = 'mj_yaml'
 
     load_gripper = LaunchConfiguration(load_gripper_parameter_name)
     use_rviz = LaunchConfiguration(use_rviz_parameter_name)
     scene_xml = LaunchConfiguration(scene_xml_parameter_name)
+    mj_yaml = LaunchConfiguration(mj_yaml_parameter_name)
 
     franka_xacro_file = os.path.join(get_package_share_directory('franka_description'), 'robots',
                                      'panda_arm_sim.urdf.xacro')
     default_scene_xml_file = os.path.join(get_package_share_directory('franka_description'), 'mujoco', 'franka', 'scene.xml')
+    default_mj_yaml_file = os.path.join(get_package_share_directory('franka_bringup'), 'config', 'mujoco', 'mj_objects.yaml')
 
     robot_description = Command(
         [FindExecutable(name='xacro'), ' ', franka_xacro_file, 
             ' arm_id:=panda', 
             ' hand:=', load_gripper,
-            ' scene_xml:=', scene_xml])
+            ' scene_xml:=', scene_xml,
+            ' mj_yaml:=', mj_yaml])
 
     rviz_file = os.path.join(get_package_share_directory('franka_description'), 'rviz',
                              'visualize_franka.rviz')
@@ -69,6 +73,11 @@ def generate_launch_description():
             scene_xml_parameter_name,
             default_value=default_scene_xml_file,
             description='The path to the mujoco xml file that you want to load.'
+        ),
+        DeclareLaunchArgument(
+            mj_yaml_parameter_name,
+            default_value=default_mj_yaml_file,
+            description='The path to the mujoco object yaml file that you want to load.'
         ),
         Node( # RVIZ dependency
             package='robot_state_publisher',

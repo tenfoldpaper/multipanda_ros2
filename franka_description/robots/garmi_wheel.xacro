@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="garmi_wheel">
+  <xacro:macro name="garmi_wheel" params="connected_to:='' wheel_id:='' rpy:='0 0 0' xyz:='0 0 0'">
+    <xacro:unless value="${connected_to == ''}">
+      <joint name="garmi_base_fixed_joint_${wheel_id}" type="fixed">
+        <parent link="${connected_to}"/>
+        <child link="garmi_wheel_link0_${wheel_id}"/>
+        <origin rpy="${rpy}" xyz="${xyz}"/>
+      </joint>
+    </xacro:unless>
+    <joint name="garmi_base_joint_${wheel_id}" type="continuous">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="garmi_wheel_link0_${wheel_id}" />
+      <child  link="garmi_wheel_link1_${wheel_id}" />
+      <axis xyz="0 0 1"/>
+    </joint>
+    <link name="garmi_wheel_link0_${wheel_id}" />
+    <link name="garmi_wheel_link1_${wheel_id}">
+      <collision>
+        <geometry>
+          <cylinder radius="0.08" length="0.05"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>
+  </xacro:macro>
+</robot>

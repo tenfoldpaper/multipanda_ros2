@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="garmi">
+  <xacro:arg name="arm_id_1" default="left" />
+  <xacro:arg name="arm_id_2" default="right" />
+  <xacro:arg name="hand_1" default="false"/> <!-- Should a franka_gripper be mounted at the flange?" -->
+  <xacro:arg name="hand_2" default="false"/> <!-- Should a franka_gripper be mounted at the flange?" -->
+  <xacro:arg name="scene_xml" default="scene.xml"/> <!-- Path to the scene_xml --> 
+  <xacro:arg name="mj_yaml" default=""/> <!-- Path to the scene_xml --> 
+
+  <xacro:include filename="$(find franka_description)/robots/panda_arm.xacro"/>
+  <xacro:include filename="$(find franka_description)/robots/hand.xacro"/>
+  <xacro:include filename="$(find franka_description)/robots/base.xacro" />
+  <xacro:include filename="$(find franka_description)/robots/head.xacro" />
+  <xacro:include filename="$(find franka_description)/robots/garmi_wheel.xacro" />
+  <xacro:include filename="$(find franka_description)/robots/mobile_platform.xacro" />
+  <!-- <xacro:include filename="$(find franka_description)/robots/lidar_with_wheel_mount.xacro" /> -->
+
+  <link name="base_link" />
+   
+  <!-- left arm with gripper -->
+  <xacro:panda_arm arm_id="left" connected_to="base_link" rpy="${-90 * pi/180} 0 ${-90 * pi/180}"  xyz="-143.26e-3 +200e-3 924.51e-3" safety_distance="0.03"/>
+  
+  <!-- right arm with gripper -->
+  <xacro:panda_arm arm_id="right" connected_to="base_link" rpy="${+90 * pi/180} 0 ${+90 * pi/180}"  xyz="-143.26e-3 -200e-3 924.51e-3" safety_distance="0.03"/>
+  
+  <xacro:if value="$(arg hand_1)">
+    <xacro:include filename="$(find franka_description)/robots/hand.xacro"/>
+    <xacro:hand ns="$(arg arm_id_1)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id_1)_link8" safety_distance="0.03"/>
+  </xacro:if>
+  <xacro:if value="$(arg hand_2)">
+    <xacro:include filename="$(find franka_description)/robots/hand.xacro"/>
+    <xacro:hand ns="$(arg arm_id_2)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id_2)_link8" safety_distance="0.03"/>
+  </xacro:if>
+  
+  <xacro:mobile_platform connected_to="base_link" />
+  <xacro:base connected_to="base_link" />
+  <xacro:head connected_to="base_link" xyz="8.59e-3 6.21e-3 1042e-3" />
+
+  <xacro:garmi_wheel wheel_id="left" connected_to="base_link" rpy="${-90 * pi/180} 0 0" xyz="0 0.375 -0.125" />
+  <xacro:garmi_wheel wheel_id="right" connected_to="base_link" rpy="${90 * pi/180} 0 0" xyz="0 -0.375 -0.125" />
+
+  <!-- <xacro:lidar connected_to="base_link" xyz="0.42 0 0" rpy="0 0 ${pi}" ns="lidar_front" />
+  <xacro:lidar connected_to="base_link" xyz="-0.42 0 0" rpy="0 0 0.05" ns="lidar_rear" /> -->
+
+  <xacro:include filename="$(find franka_description)/robots/garmi_sim.ros2_control.xacro"/>
+  <xacro:garmi_sim_ros2_control ns_1="$(arg arm_id_1)" ns_2="$(arg arm_id_2)" hand_1="$(arg hand_1)" hand_2="$(arg hand_2)" scene_xml="$(arg scene_xml)" mj_yaml="$(arg mj_yaml)"/>
+
+</robot>

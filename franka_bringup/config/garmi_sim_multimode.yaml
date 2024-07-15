@@ -1,0 +1,73 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    sim_multi_mode_controller:
+      type: multi_mode_controller/SingleMultiModeController
+    
+    left_state_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
+    
+    left_model_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
+    
+    right_state_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
+    
+    right_model_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
+    
+    base_controller:
+      type: garmi_controllers/MobileBaseController
+
+left_state_broadcaster:
+  ros__parameters:
+    arm_id: left
+    frequency: 100
+
+left_model_broadcaster:
+  ros__parameters:
+    arm_id: left
+    frequency: 100
+
+right_state_broadcaster:
+  ros__parameters:
+    arm_id: right
+    frequency: 100
+
+right_model_broadcaster:
+  ros__parameters:
+    arm_id: right
+    frequency: 100
+
+base_controller:
+  ros__parameters:
+    robot_id: garmi_base
+    frequency: 1000
+    sim: true
+
+sim_multi_mode_controller:
+  ros__parameters:
+    arm_count: 2
+    arm_1:
+      arm_id: left
+    arm_2:
+      arm_id: right
+    controllers: ["panda_joint_impedance_controller", 
+                  "panda_joint_velocity_controller",
+                  "comless_coupled_dual_cartesian_impedance_controller", 
+                  "dual_cartesian_impedance_controller",
+                  "des_coupled_dual_cartesian_impedance_controller"]
+    resources:
+        comless_coupled_dual_cartesian_impedance_controller: ["left&right"]
+        dual_cartesian_impedance_controller: ["left&right"]
+        des_coupled_dual_cartesian_impedance_controller: ["left&right"]
+        panda_joint_impedance_controller: ["left","right"]
+        panda_joint_velocity_controller: ["left","right"]
+    start_controllers:
+        names: ["dual_cartesian_impedance_controller"]
+        resources:
+            dual_cartesian_impedance_controller: ["left&right"]

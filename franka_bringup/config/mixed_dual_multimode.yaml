@@ -1,0 +1,49 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    real_multi_mode_controller:
+      type: multi_mode_controller/SingleMultiModeController
+    sim_multi_mode_controller:
+      type: multi_mode_controller/SingleMultiModeController
+
+    sim_cartesian_impedance_controller:
+      type: franka_example_controllers/CartesianImpedanceExampleController
+    real_cartesian_impedance_controller:
+      type: franka_example_controllers/CartesianImpedanceExampleController
+
+real_cartesian_impedance_controller:
+  ros__parameters:
+    arm_id: left
+sim_cartesian_impedance_controller:
+  ros__parameters:
+    arm_id: mj_right
+
+real_multi_mode_controller:
+  ros__parameters:
+    arm_count: 1
+    arm_1:
+      arm_id: left
+    controllers: ["panda_joint_impedance_controller", "panda_cartesian_impedance_controller"]
+    resources:
+        panda_joint_impedance_controller: ["left"]
+        panda_cartesian_impedance_controller: ["left"]
+    start_controllers:
+        names: ["panda_cartesian_impedance_controller"]
+        resources:
+            panda_cartesian_impedance_controller: ["left"]
+sim_multi_mode_controller:
+  ros__parameters:
+    arm_count: 1
+    arm_1:
+      arm_id: mj_right
+    controllers: ["panda_joint_impedance_controller", "panda_cartesian_impedance_controller"]
+    resources:
+        panda_joint_impedance_controller: ["mj_right"]
+        panda_cartesian_impedance_controller: ["mj_right"]
+    start_controllers:
+        names: ["panda_cartesian_impedance_controller"]
+        resources:
+            panda_cartesian_impedance_controller: ["mj_right"]
