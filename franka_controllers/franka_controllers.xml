@@ -1,0 +1,20 @@
+<library path="franka_controllers">
+    <class name="franka_controllers/JointImpedanceController"
+           type="franka_controllers::JointImpedanceController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            The joint impedance controller subscribes to desired joint position.
+        </description>
+    </class>
+    <class name="franka_controllers/CartesianImpedanceController"
+           type="franka_controllers::CartesianImpedanceController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            The cartesian impedance controller subscribes to desired pose of EE.
+        </description>
+    </class>
+    <class name="franka_controllers/CustomController"
+           type="franka_controllers::CustomController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            Custom description.
+        </description>
+    </class>
+</library>
