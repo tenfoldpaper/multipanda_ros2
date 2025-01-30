@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda">
+  <xacro:arg name="arm_id" default="panda"/> <!-- Name of this panda -->
+  <xacro:arg name="hand" default="true"/> <!-- Should a franka_gripper be mounted at the flange?" -->
+  <xacro:arg name="scene_xml" default="scene.xml"/> <!-- Path to the scene_xml --> 
+  <!-- <xacro:arg name="mj_yaml" default=""/> Path to the scene_xml  -->
+
+  <xacro:include filename="$(find franka_description)/robots/panda_arm.xacro"/>
+  <xacro:panda_arm arm_id="$(arg arm_id)" safety_distance="0.03"/>
+
+  <xacro:if value="$(arg hand)">
+    <xacro:include filename="$(find franka_description)/robots/hand.xacro"/>
+    <xacro:hand ns="$(arg arm_id)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id)_link8" safety_distance="0.03"/>
+  </xacro:if>
+  <xacro:include filename="$(find franka_description)/robots/panda_arm_sim.ros2_control.xacro"/>
+  <xacro:panda_arm_sim_ros2_control ns="$(arg arm_id)" hand="$(arg hand)" scene_xml="$(arg scene_xml)"/>
+</robot>

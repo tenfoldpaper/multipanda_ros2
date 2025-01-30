@@ -1,0 +1,11 @@
+<library path="franka_mj_hardware">
+    <class name="franka_hardware/FrankaMjHardwareSystem"
+           type="franka_hardware::FrankaMjHardwareSystem"
+           base_class_type="mujoco_ros2_control::MujocoRos2SystemInterface">
+
+        <description>
+            Hardware interface for mujoco sim of multiple Franka Emika research robots
+        </description>
+        
+    </class>
+</library>
