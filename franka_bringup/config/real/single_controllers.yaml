@@ -2,30 +2,6 @@ controller_manager:
   ros__parameters:
     update_rate: 1000  # Hz
 
-    gravity_compensation_example_controller:
-      type: franka_example_controllers/GravityCompensationExampleController
-
-    joint_impedance_example_controller:
-      type: franka_example_controllers/JointImpedanceExampleController
-    
-    cartesian_impedance_example_controller:
-      type: franka_example_controllers/CartesianImpedanceExampleController
-
-    joint_position_example_controller:
-      type: franka_example_controllers/JointPositionExampleController
-
-    joint_velocity_example_controller:
-      type: franka_example_controllers/JointVelocityExampleController
-    
-    cartesian_velocity_example_controller:
-      type: franka_example_controllers/CartesianVelocityExampleController
-
-    move_to_start_example_controller:
-      type: franka_example_controllers/MoveToStartExampleController
-
-    joint_trajectory_controller:
-      type: joint_effort_trajectory_controller/JointTrajectoryController
-
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
@@ -35,6 +11,11 @@ controller_manager:
     model_example_controller:
       type: franka_example_controllers/ModelExampleController
     
+    joint_impedance_example_controller:
+      type: franka_example_controllers/JointImpedanceExampleController
+    
+    cartesian_impedance_example_controller:
+      type: franka_example_controllers/CartesianImpedanceExampleController
 
 franka_robot_state_broadcaster:
   ros__parameters:
@@ -43,30 +24,6 @@ franka_robot_state_broadcaster:
 model_example_controller:
   ros__parameters:
     arm_id: panda
-    
-joint_trajectory_controller:
-  ros__parameters:
-    joints:
-      - panda_joint1
-      - panda_joint2
-      - panda_joint3
-      - panda_joint4
-      - panda_joint5
-      - panda_joint6
-      - panda_joint7
-    command_interfaces:
-      - effort
-    state_interfaces:
-      - position
-      - velocity
-    gains:
-      panda_joint1: { p: 600., d: 30., i: 0., i_clamp: 1. }
-      panda_joint2: { p: 600., d: 30., i: 0., i_clamp: 1. }
-      panda_joint3: { p: 600., d: 30., i: 0., i_clamp: 1. }
-      panda_joint4: { p: 600., d: 30., i: 0., i_clamp: 1. }
-      panda_joint5: { p: 250., d: 10., i: 0., i_clamp: 1. }
-      panda_joint6: { p: 150., d: 10., i: 0., i_clamp: 1. }
-      panda_joint7: { p: 50., d: 5., i: 0., i_clamp: 1. }
 
 cartesian_impedance_example_controller:
   ros__parameters:
@@ -91,33 +48,3 @@ joint_impedance_example_controller:
       - 1.0
       - 1.0
       - 0.5
-move_to_start_example_controller:
-  ros__parameters:
-    arm_id: panda
-    k_gains:
-      - 600.0
-      - 600.0
-      - 600.0
-      - 600.0
-      - 250.0
-      - 150.0
-      - 50.0
-    d_gains:
-      - 30.0
-      - 30.0
-      - 30.0
-      - 30.0
-      - 10.0
-      - 10.0
-      - 5.
-joint_position_example_controller:
-  ros__parameters:
-    arm_id: panda
-
-joint_velocity_example_controller:
-  ros__parameters:
-    arm_id: panda
-
-cartesian_velocity_example_controller:
-  ros__parameters:
-    arm_id: panda

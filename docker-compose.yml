@@ -21,3 +21,5 @@ services:
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
+      - ./franka_bringup:/home/user/humble_ws/src/bimanual_architecture/franka_bringup
+      - ./franka_example_controllers:/home/user/humble_ws/src/bimanual_architecture/franka_example_controllers

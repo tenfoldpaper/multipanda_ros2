@@ -7,7 +7,7 @@ Please make sure you are able to build the bimanual_archetecture before starting
 Also, please make sure you have installed the `rqt_controller_manager` with `sudo apt-get install ros-humble-rqt-controller-manager`.
 
 ## Create your own controller Step by Step
-1. Implement the header file in `/include/franka_controllers` as `<name_your_controller>.hpp` and source file in `/src` as `<name_your_controller>.cpp`. Templates of both header file and cpp file are created, please refer to the templates for more detailed notice on implementation. (The custom controller is only registered in `/franka_bringup/config/sim_controller.yaml` for bring up.)
+1. Implement the header file in `/include/franka_example_controllers` as `<name_your_controller>.hpp` and source file in `/src` as `<name_your_controller>.cpp`. Templates of both header file and cpp file are created, please refer to the templates for more detailed notice on implementation. (The custom controller is only registered in `/franka_bringup/config/sim_controller.yaml` for bring up.)
 
 2. Edit `CMakeLists.txt`. Add your controller in `add_library`:
 ```
@@ -18,16 +18,16 @@ add_library(
         src/<name_your_controller>.cpp
 )
 ```
-Edit `franka_controller.xml`. Add your controller under `<library path="franka_controllers">...</library>`:
+Edit `franka_example_controller.xml`. Add your controller under `<library path="franka_example_controllers">...</library>`:
 ```
-<class name="franka_controllers/<NameYourController>"
-           type="franka_controllers::<NameYourController>" base_class_type="controller_interface::ControllerInterface">
+<class name="franka_example_controllers/<NameYourController>"
+           type="franka_example_controllers::<NameYourController>" base_class_type="controller_interface::ControllerInterface">
 	<description>
 	    Description of your controller...
 	</description>
 </class>
 ```
-Try to build the `franka_controllers` pkg with `colcon build --packages-select franka_controllers` after you finish the implementation. If there is no problem, let's move on to the last step :)
+Try to build the `franka_example_controllers` pkg with `colcon build --packages-select franka_example_controllers` after you finish the implementation. If there is no problem, let's move on to the last step :)
 
 3. Load necessary parameters and register your controller at `rqt_controller_manager`. Go to `franka_bringup` pkg. Under `/config`, add your controller into `controllers.yaml`/`sim_controller.yaml`/`dual_controllers.yaml`/`dual_sim_controllers.yaml`. Choose the yaml file you need according to the launch file your are using (can be found in `launch` under `franka_bringup`). 
 
@@ -38,10 +38,10 @@ controller_manager:
     update_rate: 1000  # Hz
     
     joint_impedance_controller:
-      type: franka_controllers/JointImpedanceController
+      type: franka_example_controllers/JointImpedanceController
       
     <name_your_controller>:
-      type: franka_controllers/<NameYourController>
+      type: franka_example_controllers/<NameYourController>
 ```
 
 Then edit necessary parameters to be loaded under like:
@@ -66,7 +66,7 @@ msg = Float64MultiArray()
 msg.data = [0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0]
 ```
 This controller is registered in `controllers.yaml` and `sim_controllers.yaml`.
-### Joint Impedance Controller
+### Cartesian Impedance Controller
 The controller subsribes to the desired cartesian position under the topic `/cartesian_impedance/pose_desired`. The msg type is `std_msgs::msg::Float64MultiArray`. To use it, you need to publish a 1d array containing the 3-Dof position array and 9-Dof orientation matrix under this topic. The position array is in the first three entries while the last nie entries contain the orientation matrix. The way to reformat the orientation matrix is shown in the following example. Example of the msg:
 ```
 from std_msgs.msg import Float64MultiArray

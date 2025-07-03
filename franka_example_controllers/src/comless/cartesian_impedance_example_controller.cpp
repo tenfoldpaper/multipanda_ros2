@@ -136,8 +136,8 @@ CallbackReturn CartesianImpedanceExampleController::on_activate(
   desired_orientation = Quaterniond(desired.block<3,3>(0,0));
   desired_qn = Vector7d(franka_robot_model_->getRobotState()->q.data());
 
-  double pos_stiff = 400.0;
-  double rot_stiff = 20.0;
+  double pos_stiff = 200.0;
+  double rot_stiff = 10.0;
   stiffness.setIdentity();
   stiffness.topLeftCorner(3, 3) << pos_stiff * Matrix3d::Identity();
   stiffness.bottomRightCorner(3, 3) << rot_stiff * Matrix3d::Identity();

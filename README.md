@@ -1,5 +1,5 @@
 # multipanda_ros2
-## A sim- and real Panda robot integration based on the `ros2_control` framework
+## A sim and real Panda robot integration based on the `ros2_control` framework
 <img src="docs/images/single_sim.png" alt="" height="250">
 <img src="docs/images/dual_sim.png" alt=""   height="250">
 <img src="docs/images/garmi_sim.png" alt=""  height="250">
@@ -147,6 +147,7 @@ On a computer running Ubuntu 22.04 and real-time kernel (if you wish to use it w
     - For RT kernel and robot connection, run
         - `~/Libraries/libfranka/bin/communication_test <robot-ip>`
 
+*NOTE*: Utility `docker compose` scripts are available to build the image (`docker_build.sh`), start (`docker_start.sh`), and access (`docker_access.sh`) the container.
             
 ## Credits
 The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].

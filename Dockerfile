@@ -1,13 +1,10 @@
 FROM ros:humble
 
-
 ARG DEBIAN_FRONTEND=noninteractive
 
 ARG USER_UID=1001
 ARG USER_GID=1001
 ARG USERNAME=user
-
-# WORKDIR /tmp
 
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
@@ -23,18 +20,18 @@ RUN apt-get update -y && apt-get install -y --allow-unauthenticated \
     curl
 
 RUN mkdir /home/user/Libraries
-RUN mkdir ~/source_code 
-RUN cd ~/source_code \
+RUN mkdir /home/user/source_code 
+RUN cd /home/user/source_code \
     && curl https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz --output eigen.tar.gz \
     && tar -xvzf eigen.tar.gz
 
-RUN cd ~/source_code/eigen-3.3.9 \
+RUN cd /home/user/source_code/eigen-3.3.9 \
     && mkdir build \ 
     && cd build \
     && cmake .. \
     && make \
     && make install \
-    && cd ~/
+    && cd /home/user/
 
 # Install the package dependencies
 RUN apt-get update -y && apt-get install -y --allow-unauthenticated \
@@ -64,6 +61,7 @@ RUN apt-get update -y && apt-get install -y --allow-unauthenticated \
     ros-humble-controller-manager \
     ros-humble-moveit \
     ros-humble-nav-msgs \
+    ros-humble-rqt-controller-manager \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -82,7 +80,7 @@ RUN python3 -m pip install -U \
     pytest
 
 # Build libfranka
-RUN cd ~/source_code && git clone https://github.com/frankaemika/libfranka.git \
+RUN cd /home/user/source_code && git clone https://github.com/frankaemika/libfranka.git \
     && mkdir /home/user/Libraries/libfranka \
     && cd libfranka \
     && git checkout 0.9.2 \
@@ -109,41 +107,49 @@ RUN apt-get update -y && apt-get install -y \
 # Install dqrobotics
 RUN add-apt-repository ppa:dqrobotics-dev/release && apt-get update && apt-get install libdqrobotics
 
-# Install MuJoCo from scratch
-RUN cd ~/source_code && git clone https://github.com/google-deepmind/mujoco.git \
-    && mkdir ~/source_code/mujoco/build \
+# Install MuJoCo 3.2.0 from scratch
+RUN cd /home/user/source_code && git clone https://github.com/google-deepmind/mujoco.git
+RUN cd /home/user/source_code/mujoco && git checkout tags/3.2.0
+RUN cd /home/user/source_code \
+    && mkdir /home/user/source_code/mujoco/build \
     && mkdir /home/user/Libraries/mujoco \
-    && cd ~/source_code/mujoco/build \
+    && cd /home/user/source_code/mujoco/build \
     && cmake .. -DCMAKE_INSTALL_PREFIX=/home/user/Libraries/mujoco \
     && cmake --build . \
     && cmake --install .
 
-
 # Now copy the contents of the repository into a new workspace
-RUN mkdir -p ~/humble_ws/src/bimanual_architecture && cd ~/humble_ws
+RUN mkdir -p /home/user/humble_ws/src/bimanual_architecture && cd /home/user/humble_ws
 COPY . /home/user/humble_ws/src/bimanual_architecture/
 
 # Set up the environment variables
 RUN echo 'source /opt/ros/humble/setup.bash' >> /home/user/.bashrc
 RUN echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/user/Libraries/libfranka/lib:/home/user/Libraries/mujoco/lib' >> /home/user/.bashrc 
-RUN echo 'export CMAKE_PREFIX_PATH=~/Libraries/libfranka/lib/cmake:~/Libraries/mujoco/lib/cmake' >> /home/user/.bashrc
+RUN echo 'export CMAKE_PREFIX_PATH=/home/user/Libraries/libfranka/lib/cmake:/home/user/Libraries/mujoco/lib/cmake' >> /home/user/.bashrc
+
+# Clone mujoco_ros_pkgs
+RUN cd /home/user/humble_ws/src && git clone https://github.com/tenfoldpaper/mujoco_ros_pkgs.git
+# Checkout the specific branch for ROS 2 Humble
+RUN cd /home/user/humble_ws/src/mujoco_ros_pkgs && git checkout wip_ros_control_humble
 
 RUN chown -R user:user /home/user/
 # Do rosdep install and then build the packages
 USER user
-WORKDIR ~/
+WORKDIR /home/user/
 SHELL ["/bin/bash", "-c"]
-RUN source ~/.bashrc \
+RUN source /home/user/.bashrc \
     && . /opt/ros/humble/setup.sh \
-    && cd ~/humble_ws && rosdep update \
-    && cd ~/humble_ws && rosdep install -i --from-path src --rosdistro humble -y
+    && cd /home/user/humble_ws && rosdep update \
+    && cd /home/user/humble_ws && rosdep install -i --from-path src --rosdistro humble -y
 # Suppresss the XDG errors when running GUI apps like RVIZ
 RUN mkdir /tmp/${UID}
 RUN chown -R user:user /tmp/${UID}
 
 ENV XDG_RUNTIME_DIR=/tmp/${UID}
-ENV CMAKE_PREFIX_PATH=~/Libraries/libfranka/lib/cmake:~/Libraries/mujoco/lib/cmake
-RUN cd ~/humble_ws \
-    && source ~/.bashrc \
+ENV CMAKE_PREFIX_PATH=/home/user/Libraries/libfranka/lib/cmake:/home/user/Libraries/mujoco/lib/cmake
+RUN cd /home/user/humble_ws \
+    && source /home/user/.bashrc \
     && . /opt/ros/humble/setup.sh \
     && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+RUN echo 'source /home/user/humble_ws/install/setup.bash' >> /home/user/.bashrc
