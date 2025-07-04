@@ -146,6 +146,13 @@ On a computer running Ubuntu 22.04 and real-time kernel (if you wish to use it w
         - `~/Libraries/mujoco/bin/simulate`
     - For RT kernel and robot connection, run
         - `~/Libraries/libfranka/bin/communication_test <robot-ip>`
+5. Run single arm interactive cartesian impedance controller:
+    - `ros2 launch franka_bringup franka_cartesian_impedance.launch.py robot_ip:=<fci-ip>`.
+    - Through the interactive marker in *Rviz2* is it possible to control the equilibrium pose of the cartesian impedance controller.
+    - Right-clicking the marker opens a menu through which is it possible to:
+        - *Reset Marker*
+        - *Close Gripper*
+        - *Open Gripper*
 
 *NOTE*: Utility `docker compose` scripts are available to build the image (`docker_build.sh`), start (`docker_start.sh`), and access (`docker_access.sh`) the container.
             

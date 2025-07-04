@@ -62,6 +62,7 @@ RUN apt-get update -y && apt-get install -y --allow-unauthenticated \
     ros-humble-moveit \
     ros-humble-nav-msgs \
     ros-humble-rqt-controller-manager \
+    ros-humble-tf-transformations \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -153,3 +154,5 @@ RUN cd /home/user/humble_ws \
     && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 RUN echo 'source /home/user/humble_ws/install/setup.bash' >> /home/user/.bashrc
+
+WORKDIR /home/user/humble_ws

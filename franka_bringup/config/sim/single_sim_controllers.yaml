@@ -18,16 +18,25 @@ controller_manager:
       update_rate: 1000
       joint_state_broadcaster:
         type: joint_state_broadcaster/JointStateBroadcaster
+
       franka_robot_state_broadcaster:
         type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
+
       franka_robot_model_broadcaster:
         type: franka_robot_state_broadcaster/FrankaRobotModelBroadcaster
+
       joint_impedance_example_controller:
         type: franka_example_controllers/JointImpedanceExampleController
+
       cartesian_impedance_example_controller:
         type: franka_example_controllers/CartesianImpedanceExampleController
+
       multi_mode_controller:
         type: multi_mode_controller/MultiModeController
+        
+      custom_cartesian_impedance_controller:
+        type: franka_example_controllers/CustomCartesianImpedanceController
+
 franka_robot_state_broadcaster:
   ros__parameters:
     arm_id: panda
@@ -75,3 +84,7 @@ multi_mode_controller:
         names: ["panda_joint_impedance_controller"]
         resources:
             panda_joint_impedance_controller: ["panda"]
+
+custom_cartesian_impedance_controller:
+  ros__parameters:
+    arm_id: panda

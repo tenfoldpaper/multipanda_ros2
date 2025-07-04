@@ -23,3 +23,5 @@ services:
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
       - ./franka_bringup:/home/user/humble_ws/src/bimanual_architecture/franka_bringup
       - ./franka_example_controllers:/home/user/humble_ws/src/bimanual_architecture/franka_example_controllers
+      - ./franka_simple_publishers:/home/user/humble_ws/src/bimanual_architecture/franka_simple_publishers
+      - ./franka_description:/home/user/humble_ws/src/bimanual_architecture/franka_description

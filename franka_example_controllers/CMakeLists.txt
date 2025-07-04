@@ -22,6 +22,7 @@ find_package(hardware_interface REQUIRED)
 find_package(franka_semantic_components REQUIRED)
 find_package(generate_parameter_library)
 find_package(franka_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(multi_mode_control_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -42,6 +43,7 @@ add_library(
         
         src/subscriber/cartesian_impedance_controller.cpp
         src/subscriber/joint_impedance_controller.cpp
+        src/subscriber/custom_cartesian_impedance_controller.cpp
         )
         
 

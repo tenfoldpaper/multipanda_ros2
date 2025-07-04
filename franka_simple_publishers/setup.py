@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'interactive_marker_pose_publisher = franka_simple_publishers.interactive_marker_pose_publisher:main',
         ],
     },
 )

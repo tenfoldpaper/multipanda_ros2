@@ -16,6 +16,9 @@ controller_manager:
     
     cartesian_impedance_example_controller:
       type: franka_example_controllers/CartesianImpedanceExampleController
+      
+    custom_cartesian_impedance_controller:
+      type: franka_example_controllers/CustomCartesianImpedanceController
 
 franka_robot_state_broadcaster:
   ros__parameters:
@@ -48,3 +51,7 @@ joint_impedance_example_controller:
       - 1.0
       - 1.0
       - 0.5
+
+custom_cartesian_impedance_controller:
+  ros__parameters:
+    arm_id: panda
