@@ -125,13 +125,13 @@ controller_interface::return_type CustomCartesianImpedanceController::update(
 CallbackReturn CustomCartesianImpedanceController::on_init() {
   try {
     auto_declare<std::string>("arm_id", "panda");
-    auto_declare<double>("pos_stiff", 1000);
+    auto_declare<double>("pos_stiff", 1500);
     auto_declare<double>("rot_stiff", 100);
-    auto_declare<double>("ns_stiff_q1_to_4", 10);
+    auto_declare<double>("ns_stiff_q1_to_4", 2);
     auto_declare<double>("ns_stiff_q5_to_7", 0.001);
     auto_declare<double>("translational_clip", 0.05);
     auto_declare<double>("rotational_clip", 0.8);
-    auto_declare<double>("translational_Ki", 1);
+    auto_declare<double>("translational_Ki", 15);
     auto_declare<double>("rotational_Ki", 1);
     sub_eq_pose_ = get_node()->create_subscription<geometry_msgs::msg::PoseStamped>(
       "/cartesian_impedance/equilibrium_pose", 1,
