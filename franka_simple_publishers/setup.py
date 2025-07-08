@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'interactive_marker_pose_publisher = franka_simple_publishers.interactive_marker_pose_publisher:main',
+            'collision_behavior_setter = franka_simple_publishers.collision_behavior_setter:main',
         ],
     },
 )
