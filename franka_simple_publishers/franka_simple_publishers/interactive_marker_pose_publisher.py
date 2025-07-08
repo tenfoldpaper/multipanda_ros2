@@ -11,7 +11,10 @@ from interactive_markers.interactive_marker_server import InteractiveMarkerServe
 from interactive_markers.menu_handler import MenuHandler
 from geometry_msgs.msg import PoseStamped
 
-from control_msgs.action import GripperCommand
+# from control_msgs.action import GripperCommand
+
+from franka_msgs.action import Grasp
+from franka_msgs.msg import GraspEpsilon
 
 from tf2_ros import TransformListener, Buffer, LookupException, TimeoutException
 
@@ -40,15 +43,34 @@ class EndEffectorMarkerNode(Node):
             PoseStamped, self.topic_name, 10, callback_group=self.callback_group
         )
 
-        # Action client
-        self.gripper_client = ActionClient(self, GripperCommand, '/panda_gripper/gripper_action')
+        # # Action client (control_msgs.action.GripperCommand)
+        # self.gripper_client = ActionClient(self, GripperCommand, '/panda_gripper/gripper_action')
         
-        self.gripper_goal_close = GripperCommand.Goal()
-        self.gripper_goal_close.command.position = 0.0
-        self.gripper_goal_close.command.max_effort = 0.01
-        self.gripper_goal_open = GripperCommand.Goal()
-        self.gripper_goal_open.command.position = 0.038
-        self.gripper_goal_open.command.max_effort = 0.01
+        # self.gripper_goal_close = GripperCommand.Goal()
+        # self.gripper_goal_close.command.position = 0.01 # 0.01 x tape and key, 0.015 x aluminum bar
+        # self.gripper_goal_close.command.max_effort = 100.0
+        # self.gripper_goal_open = GripperCommand.Goal()
+        # self.gripper_goal_open.command.position = 0.038
+        # self.gripper_goal_open.command.max_effort = 0.01
+
+        # Action client (franka_msgs.action.Grasp)
+        self.gripper_client = ActionClient(self, Grasp, '/panda_gripper/grasp')
+
+        self.gripper_goal_close = Grasp.Goal()
+        self.gripper_goal_close.width = 0.010
+        self.gripper_goal_close.speed = 1.0
+        self.gripper_goal_close.force = 100.0
+        self.gripper_goal_close.epsilon = GraspEpsilon()
+        self.gripper_goal_close.epsilon.inner = 0.025
+        self.gripper_goal_close.epsilon.outer = 0.025
+
+        self.gripper_goal_open = Grasp.Goal()
+        self.gripper_goal_open.width = 0.038
+        self.gripper_goal_open.speed = 1.0
+        self.gripper_goal_open.force = 0.0
+        self.gripper_goal_open.epsilon = GraspEpsilon()
+        self.gripper_goal_open.epsilon.inner = 0.025
+        self.gripper_goal_open.epsilon.outer = 0.025
 
         self.gripper_available = self.gripper_client.wait_for_server(timeout_sec=5.0)
         if not self.gripper_available:

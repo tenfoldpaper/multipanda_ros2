@@ -9,6 +9,7 @@ services:
     environment:
       - DISPLAY=:0
       - QT_X11_NO_MITSHM=1
+      - ROS_DOMAIN_ID=42
     cap_add:
       - SYS_NICE
     ulimits:
