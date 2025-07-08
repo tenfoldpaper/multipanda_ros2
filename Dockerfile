@@ -78,7 +78,8 @@ RUN python3 -m pip install -U \
     flake8-quotes \
     pytest-repeat \
     pytest-rerunfailures \
-    pytest
+    pytest \
+    scipy
 
 # Build libfranka
 RUN cd /home/user/source_code && git clone https://github.com/frankaemika/libfranka.git \

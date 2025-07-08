@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
@@ -11,7 +9,7 @@ from interactive_markers.interactive_marker_server import InteractiveMarkerServe
 from interactive_markers.menu_handler import MenuHandler
 from geometry_msgs.msg import PoseStamped
 
-# from control_msgs.action import GripperCommand
+from control_msgs.action import GripperCommand
 
 from franka_msgs.action import Grasp
 from franka_msgs.msg import GraspEpsilon
@@ -43,38 +41,24 @@ class EndEffectorMarkerNode(Node):
             PoseStamped, self.topic_name, 10, callback_group=self.callback_group
         )
 
-        # # Action client (control_msgs.action.GripperCommand)
-        # self.gripper_client = ActionClient(self, GripperCommand, '/panda_gripper/gripper_action')
-        
-        # self.gripper_goal_close = GripperCommand.Goal()
-        # self.gripper_goal_close.command.position = 0.01 # 0.01 x tape and key, 0.015 x aluminum bar
-        # self.gripper_goal_close.command.max_effort = 100.0
-        # self.gripper_goal_open = GripperCommand.Goal()
-        # self.gripper_goal_open.command.position = 0.038
-        # self.gripper_goal_open.command.max_effort = 0.01
+        # Gripper action clients
+        self.grasp_cli = ActionClient(self, Grasp, '/panda_gripper/grasp', callback_group=self.callback_group)
+        while not self.grasp_cli.wait_for_server(timeout_sec=5.0):
+            self.get_logger().warn(f"{self.grasp_cli._action_name} not available, waiting again...")
+        self.grasp_msg = Grasp.Goal()
+        self.grasp_msg.width = 0.010
+        self.grasp_msg.speed = 1.0
+        self.grasp_msg.force = 100.0
+        self.grasp_msg.epsilon = GraspEpsilon()
+        self.grasp_msg.epsilon.inner = 0.025
+        self.grasp_msg.epsilon.outer = 0.025
 
-        # Action client (franka_msgs.action.Grasp)
-        self.gripper_client = ActionClient(self, Grasp, '/panda_gripper/grasp')
-
-        self.gripper_goal_close = Grasp.Goal()
-        self.gripper_goal_close.width = 0.010
-        self.gripper_goal_close.speed = 1.0
-        self.gripper_goal_close.force = 100.0
-        self.gripper_goal_close.epsilon = GraspEpsilon()
-        self.gripper_goal_close.epsilon.inner = 0.025
-        self.gripper_goal_close.epsilon.outer = 0.025
-
-        self.gripper_goal_open = Grasp.Goal()
-        self.gripper_goal_open.width = 0.038
-        self.gripper_goal_open.speed = 1.0
-        self.gripper_goal_open.force = 0.0
-        self.gripper_goal_open.epsilon = GraspEpsilon()
-        self.gripper_goal_open.epsilon.inner = 0.025
-        self.gripper_goal_open.epsilon.outer = 0.025
-
-        self.gripper_available = self.gripper_client.wait_for_server(timeout_sec=5.0)
-        if not self.gripper_available:
-            self.get_logger().warn(f"Grasp action {self.gripper_client._action_name} not available!")
+        self.gripper_cli = ActionClient(self, GripperCommand, '/panda_gripper/gripper_action', callback_group=self.callback_group)
+        while not self.gripper_cli.wait_for_server(timeout_sec=5.0):
+            self.get_logger().warn(f"{self.gripper_cli._action_name} not available, waiting again...")
+        self.open_grip_msg = GripperCommand.Goal()
+        self.open_grip_msg.command.position = 0.038
+        self.open_grip_msg.command.max_effort = 0.0
 
         # TF buffer and listener
         self.tf_buffer = Buffer()
@@ -84,12 +68,12 @@ class EndEffectorMarkerNode(Node):
         self.server = InteractiveMarkerServer(self, 'ee_marker_server')
 
         self.menu = MenuHandler()
-        self.reinit_entry = self.menu.insert("Reset Marker", callback=self.handle_menu_feedback)
-        self.grasp_entry = self.menu.insert("Close Gripper", callback=self.handle_menu_feedback)
-        self.release_entry = self.menu.insert("Open Gripper", callback=self.handle_menu_feedback)
+        self.reinit_entry = self.menu.insert("Reset", callback=self.handle_menu_feedback)
+        self.grasp_entry = self.menu.insert("Grasp", callback=self.handle_menu_feedback)
+        self.open_entry = self.menu.insert("Open", callback=self.handle_menu_feedback)
 
         self.initialized = False
-        self.create_timer(0.5, self.try_initialize_marker, callback_group=self.callback_group)
+        self.create_timer(1.0, self.try_initialize_marker, callback_group=self.callback_group)
 
     def try_initialize_marker(self):
         if self.initialized:
@@ -173,18 +157,11 @@ class EndEffectorMarkerNode(Node):
             # self.get_logger().info("Reinitializing marker at current EE pose")
             self.try_reinitialize_marker()
         if feedback.menu_entry_id == self.grasp_entry:       
-            if self.gripper_available:
-                # self.get_logger().info("Sending grasp command to the gripper")
-                self.gripper_client.send_goal_async(self.gripper_goal_close)
-            else:
-                self.get_logger().warn(f"Grasp action {self.gripper_client._action_name} not available!")
-        if feedback.menu_entry_id == self.release_entry: 
-            if self.gripper_available:
-                # self.get_logger().info("Sending release command to the gripper")   
-                self.gripper_client.send_goal_async(self.gripper_goal_open)
-            else:
-                self.get_logger().warn(f"Grasp action {self.gripper_client._action_name} not available!")
-
+            # self.get_logger().info("Sending grasp command to the gripper")
+            self.grasp_cli.send_goal_async(self.grasp_msg)
+        if feedback.menu_entry_id == self.open_entry: 
+            # self.get_logger().info("Sending open command to the gripper")   
+            self.gripper_cli.send_goal_async(self.open_grip_msg)
 
 def main(args=None):
     rclpy.init(args=args)

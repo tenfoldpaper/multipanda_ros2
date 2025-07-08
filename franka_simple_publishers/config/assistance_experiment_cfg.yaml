@@ -1,0 +1,91 @@
+interp_dt : 0.1  # [s]
+
+go_to_pre_pick_time : 0.9  # [s]
+
+go_to_grasp_time : 0.3  # [s]
+
+go_to_pre_place_time : 1.5  # [s]
+
+go_to_place_time : 0.3  # [s]
+
+go_to_home_time : 1.8  # [s]
+
+z_offset : 0.03  # [m]
+
+poses:
+  home:
+    position:    
+      x: 0.433
+      y: -0.268
+      z: 0.2425
+    orientation: 
+      x: 0.7071068
+      y: 0.7071068
+      z: 0.0
+      w: 0.0
+
+  bar_grasp:
+    position:    
+      x: 0.311
+      y: -0.262
+      z: 0.0165
+    orientation: 
+      x: 0.7071068
+      y: 0.7071068
+      z: 0.0
+      w: 0.0
+
+  screwdriver_grasp:
+    position:
+      x: 0.408
+      y: -0.246
+      z: 0.0132
+    orientation: 
+      x: 0.7071068
+      y: 0.7071068
+      z: 0.0
+      w: 0.0
+
+  tape_grasp:
+    position:
+      x: 0.522
+      y: -0.248
+      z: 0.0408
+    orientation: 
+      x: 0.7071068
+      y: 0.7071068
+      z: 0.0
+      w: 0.0
+
+  bar_place:
+    position:
+      x: 0.387
+      y: 0.2431
+      z: 0.0165
+    orientation: 
+      x: 0.7071068
+      y: 0.7071068
+      z: 0.0
+      w: 0.0
+
+  screwdriver_place:
+    position:
+      x: 0.387
+      y: 0.2431
+      z: 0.0132
+    orientation: 
+      x: 0.7071068
+      y: 0.7071068
+      z: 0.0
+      w: 0.0
+
+  tape_place:
+    position:
+      x: 0.387
+      y: 0.2431
+      z: 0.0408
+    orientation: 
+      x: 0.7071068
+      y: 0.7071068
+      z: 0.0
+      w: 0.0
