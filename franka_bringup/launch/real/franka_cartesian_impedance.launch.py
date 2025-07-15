@@ -32,7 +32,7 @@ def generate_launch_description():
     fake_sensor_commands_parameter_name = 'fake_sensor_commands'
     use_rviz_parameter_name = 'use_rviz'
     use_interactive_marker_parameter_name = 'use_interactive_marker'
-    lower_collision_thresholds_parameter_name = 'lower_collision_thresholds'
+    raise_collision_thresholds_parameter_name = 'raise_collision_thresholds'
 
     robot_ip = LaunchConfiguration(robot_ip_parameter_name)
     load_gripper = LaunchConfiguration(load_gripper_parameter_name)
@@ -40,7 +40,7 @@ def generate_launch_description():
     fake_sensor_commands = LaunchConfiguration(fake_sensor_commands_parameter_name)
     use_rviz = LaunchConfiguration(use_rviz_parameter_name)
     use_interactive_marker = LaunchConfiguration(use_interactive_marker_parameter_name)
-    lower_collision_thresholds = LaunchConfiguration(lower_collision_thresholds_parameter_name)
+    raise_collision_thresholds = LaunchConfiguration(raise_collision_thresholds_parameter_name)
 
     franka_xacro_file = os.path.join(get_package_share_directory('franka_description'), 'robots', 'real',
                                      'panda_arm.urdf.xacro')
@@ -70,9 +70,9 @@ def generate_launch_description():
             default_value='true',
             description='Visualize the robot in Rviz'),
         DeclareLaunchArgument(
-            lower_collision_thresholds_parameter_name,
+            raise_collision_thresholds_parameter_name,
             default_value='true',
-            description='Set lower collision behavior maximum torques and forces'),
+            description='Raise collision behavior maximum torques and forces'),
         DeclareLaunchArgument(
             use_interactive_marker_parameter_name,
             default_value='true',
@@ -148,7 +148,7 @@ def generate_launch_description():
                 '--F_lb', '60.0',
                 '--F_ub', '60.0',
             ],
-            condition=IfCondition(lower_collision_thresholds),
+            condition=IfCondition(raise_collision_thresholds),
         ),
         Node(
             package='franka_simple_publishers',
@@ -159,7 +159,7 @@ def generate_launch_description():
                 '--base_link', 'panda_link0',
                 '--ee_link', 'panda_hand_tcp',
             ],
-            condition=IfCondition(lower_collision_thresholds),
+            condition=IfCondition(use_interactive_marker),
         ),
         Node(
             package='rviz2',
