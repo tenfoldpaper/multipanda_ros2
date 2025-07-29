@@ -16,10 +16,13 @@ from control_msgs.action import GripperCommand
 from franka_msgs.action import Grasp
 from franka_msgs.msg import GraspEpsilon
 
-from tf2_ros import TransformListener, Buffer, LookupException, TimeoutException
+from tf2_ros import TransformListener, Buffer
 
 import numpy as np
 from scipy.interpolate import CubicSpline, interp1d
+from scipy.spatial.transform import Rotation as R
+
+from franka_msgs.msg import FrankaState
 
 class AssistanceExperimentNode(Node):
     def __init__(self):
@@ -31,6 +34,16 @@ class AssistanceExperimentNode(Node):
 
         # Callback group for concurrent handling
         self.callback_group = ReentrantCallbackGroup()
+
+        # Franka state subscriber
+        self.current_pose = None
+        self.franka_state_sub = self.create_subscription(
+            FrankaState,
+            '/franka_robot_state_broadcaster/robot_state',
+            self.franka_state_cb,
+            1,
+            callback_group=self.callback_group
+        )
 
         # Publisher
         self.pose_pub = self.create_publisher(
@@ -59,6 +72,9 @@ class AssistanceExperimentNode(Node):
         # TF buffer and listener
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self, spin_thread=True)
+
+        time.sleep(2.0)
+        self.current_pose = self.get_curr_ee_pose_from_tf()
 
         # Open config file
         cfg_path = os.path.join(
@@ -116,6 +132,24 @@ class AssistanceExperimentNode(Node):
 
         self.get_logger().info("Assistance Task Node Ready")
 
+    def franka_state_cb(self, msg: FrankaState):
+        # Convert the 16-element o_t_ee array to a 4x4 numpy matrix
+        transform_matrix = np.array(msg.o_t_ee).reshape((4, 4)).T
+
+        # Get translation vector and quaternion
+        translation = transform_matrix[:3, 3]
+        rotation = R.from_matrix(transform_matrix[:3, :3])
+        quaternion = rotation.as_quat()
+
+        pose = Pose()
+        pose.position.x = translation[0]
+        pose.position.y = translation[1]
+        pose.position.z = translation[2]
+        pose.orientation.x = quaternion[0]
+        pose.orientation.y = quaternion[1]
+        pose.orientation.z = quaternion[2]
+        pose.orientation.w = quaternion[3]
+        self.current_pose = pose
 
     def task_trigger_cb(self, msg):
         if self.idle:
@@ -239,7 +273,8 @@ class AssistanceExperimentNode(Node):
 
 
     def execute_trajectory(self, goal: Pose, duration: float, dt:float=0.1, interp: str = "spline"):
-        start = self.get_curr_ee_pose()
+        # get the last current pose received
+        start = self.current_pose
         values = np.array(
             [
                 [start.position.x, start.position.y, start.position.z], 
@@ -269,9 +304,10 @@ class AssistanceExperimentNode(Node):
         msg.pose = goal
         self.pose_pub.publish(msg)
         time.sleep(dt)
+        self.current_pose = goal
 
 
-    def get_curr_ee_pose(self):
+    def get_curr_ee_pose_from_tf(self):
         while True:
             try:
                 tf = self.tf_buffer.lookup_transform(
@@ -287,7 +323,8 @@ class AssistanceExperimentNode(Node):
                 pose.orientation.z = tf.transform.rotation.z
                 pose.orientation.w = tf.transform.rotation.w
                 return pose
-            except (LookupException, TimeoutException):
+            except Exception as e:
+                self.get_logger().warn(e)
                 self.get_logger().warn(f'Waiting for TF from {self.base_link} to {self.ee_link}...')
                 time.sleep(5.0)
 

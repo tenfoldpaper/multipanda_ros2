@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build -t "bimanual:garmi" ./
+docker compose build
