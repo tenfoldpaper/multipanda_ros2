@@ -155,9 +155,10 @@ class AssistanceExperimentNode(Node):
         if self.idle:
             if msg.data in self.available_tasks:
                 self.get_logger().info(f"Executing task: {msg.data}")
-                self.idle = True
+                self.idle = False
                 self.execute(msg.data)
                 self.get_logger().info(f"Task {msg.data} completed")
+                self.idle = True
             else:
                 self.get_logger().warn(f"Requested task {msg.data} not available!")
 
@@ -304,7 +305,6 @@ class AssistanceExperimentNode(Node):
         msg.pose = goal
         self.pose_pub.publish(msg)
         time.sleep(dt)
-        self.current_pose = goal
 
 
     def get_curr_ee_pose_from_tf(self):
