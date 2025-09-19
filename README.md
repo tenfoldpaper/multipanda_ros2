@@ -155,6 +155,66 @@ On a computer running Ubuntu 22.04 and real-time kernel (if you wish to use it w
         - *Open Gripper*
 
 *NOTE*: Utility `docker compose` scripts are available to build the image (`docker_build.sh`), start (`docker_start.sh`), and access (`docker_access.sh`) the container.
+
+## Using with Docker (HUCEBOT)
+
+To build the Docker image use the `docker_build.sh` script.
+
+To start the docker, open one terminal and run:
+
+```bash
+cd ~/multipanda_ros2/
+bash docker_start.sh
+```
+
+To access the Docker container, in another terminal run:
+```bash
+cd ~/multipanda_ros2/
+bash docker_access.sh
+```
+
+The `docker-compose.yaml` is set-up to mount inside the Docker some of the packages. This allows you to directly test your changes without re-building the Docker image.
+
+### Run the `custom_cartesian_impedance_controller`
+
+The `custom_cartesian_impedance_controller` allows to control the EE equilibrium pose by publishing over the topic `/cartesian_impedance/equilibrium_pose` (`geometry_msgs.msg.PoseStamped`). For example, this is what is done by the interactive marker in Rviz.
+
+#### Real Franka
+
+To launch the controller (WITHOUT Rviz and interactive marker)
+```bash
+ros2 launch franka_bringup franka_cartesian_impedance.launch.py robot_ip:=176.16.0.1 use_interactive_marker:=false use_rviz:=false raise_collision_thresholds:=false
+```
+
+Other possibly useful arguments are:
+- `use_rviz` (default: True)
+- `use_interactive_marker` (default: True)
+- `raise_collision_thresholds` (default: True)
+
+#### Simulation
+
+You can run the same cartesian impedance controller in simulation via:
+```bash
+ros2 launch franka_bringup franka_sim_cartesian_impedance.launch.py 
+```
+
+#### Other utilities
+
+To recover the pose of the EE w.r.t. the robot's base link run:
+```bash
+ros2 run tf2_ros tf2_echo panda_link0 panda_hand_tcp
+```
+
+To open the controller_manager view
+```bash
+ros2 run rqt_controller_manager rqt_controller_manager
+```
+
+To re-compile only a desired package
+```bash
+colcon build --packages-select <desired-package-name>
+```
+
             
 ## Credits
 The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].
