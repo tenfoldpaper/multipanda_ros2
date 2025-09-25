@@ -1,25 +1,25 @@
 #include <franka_example_controllers/subscriber/custom_cartesian_impedance_controller.hpp>
 
+#include <franka/model.h>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <exception>
 #include <string>
-#include <franka/model.h>
 
 inline void pseudoInverse(const Eigen::MatrixXd& M_, Eigen::MatrixXd& M_pinv_, bool damped = true) {
-    double lambda_ = damped ? 0.2 : 0.0;
+  double lambda_ = damped ? 0.2 : 0.0;
 
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(M_, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType sing_vals_ = svd.singularValues();
-    Eigen::MatrixXd S_ = M_;  // copying the dimensions of M_, its content is not needed.
-    S_.setZero();
+  Eigen::JacobiSVD<Eigen::MatrixXd> svd(M_, Eigen::ComputeFullU | Eigen::ComputeFullV);
+  Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType sing_vals_ = svd.singularValues();
+  Eigen::MatrixXd S_ = M_;  // copying the dimensions of M_, its content is not needed.
+  S_.setZero();
 
-    for (int i = 0; i < sing_vals_.size(); i++)
-        S_(i, i) = (sing_vals_(i)) / (sing_vals_(i) * sing_vals_(i) + lambda_ * lambda_);
+  for (int i = 0; i < sing_vals_.size(); i++)
+    S_(i, i) = (sing_vals_(i)) / (sing_vals_(i) * sing_vals_(i) + lambda_ * lambda_);
 
-    M_pinv_ = Eigen::MatrixXd(svd.matrixV() * S_.transpose() * svd.matrixU().transpose());
+  M_pinv_ = Eigen::MatrixXd(svd.matrixV() * S_.transpose() * svd.matrixU().transpose());
 }
-
 
 namespace franka_example_controllers {
 
@@ -48,11 +48,13 @@ CustomCartesianImpedanceController::state_interface_configuration() const {
 controller_interface::return_type CustomCartesianImpedanceController::update(
     const rclcpp::Time& /*time*/,
     const rclcpp::Duration& /*period*/) {
+  std::lock_guard<std::mutex> lock(data_mutex_);
 
   // get state variables
-  Eigen::Map<const Matrix4d> current(franka_robot_model_->getPoseMatrix(franka::Frame::kEndEffector).data());
-  Eigen::Vector3d current_position(current.block<3,1>(0,3));
-  Eigen::Quaterniond current_orientation(current.block<3,3>(0,0));
+  Eigen::Map<const Matrix4d> current(
+      franka_robot_model_->getPoseMatrix(franka::Frame::kEndEffector).data());
+  Eigen::Vector3d current_position(current.block<3, 1>(0, 3));
+  Eigen::Quaterniond current_orientation(current.block<3, 3>(0, 0));
   Eigen::Map<const Matrix7d> inertia(franka_robot_model_->getMassMatrix().data());
   Eigen::Map<const Vector7d> coriolis(franka_robot_model_->getCoriolisForceVector().data());
   Eigen::Matrix<double, 6, 7> jacobian(
@@ -60,14 +62,22 @@ controller_interface::return_type CustomCartesianImpedanceController::update(
   Eigen::Map<const Vector7d> dq(franka_robot_model_->getRobotState()->dq.data());
   Eigen::Map<const Vector7d> q(franka_robot_model_->getRobotState()->q.data());
   Eigen::Map<const Vector7d> tau_J_d(franka_robot_model_->getRobotState()->tau_J_d.data());
-  
+
+  // cache for publisher
+  current_position_ = current_position;
+  current_orientation_ = current_orientation;
+  q_ = q;
+  dq_ = dq;
+  tau_J_d_ = tau_J_d;
+
   // position error
   error_.head(3) << current_position - position_d_;
   // clip translational error
   for (int i = 0; i < 3; i++) {
-    error_(i) = std::min(std::max(error_(i), translational_clip_min_(i)), translational_clip_max_(i));
+    error_(i) =
+        std::min(std::max(error_(i), translational_clip_min_(i)), translational_clip_max_(i));
   }
-  
+
   // rotation error
   if (orientation_d_.coeffs().dot(current_orientation.coeffs()) < 0.0) {
     current_orientation.coeffs() << -current_orientation.coeffs();
@@ -76,16 +86,21 @@ controller_interface::return_type CustomCartesianImpedanceController::update(
   Eigen::Quaterniond error_quaternion(current_orientation.inverse() * orientation_d_);
   error_.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
   // Transform to base frame
-  error_.tail(3) << -current.block<3,3>(0,0) * error_.tail(3);
+  error_.tail(3) << -current.block<3, 3>(0, 0) * error_.tail(3);
 
   // clip rotation error
-    for (int i = 0; i < 3; i++) {
-    error_(i+3) = std::min(std::max(error_(i+3), rotational_clip_min_(i)), rotational_clip_max_(i));
+  for (int i = 0; i < 3; i++) {
+    error_(i + 3) =
+        std::min(std::max(error_(i + 3), rotational_clip_min_(i)), rotational_clip_max_(i));
   }
 
   // integrate error
-  error_i_.head(3) << (error_i_.head(3) + error_.head(3)).cwiseMax(-2 * translational_clip_).cwiseMin(2 * translational_clip_);
-  error_i_.tail(3) << (error_i_.tail(3) + error_.tail(3)).cwiseMax(-2 * rotational_clip_).cwiseMin(2 * rotational_clip_);
+  error_i_.head(3) << (error_i_.head(3) + error_.head(3))
+                          .cwiseMax(-2 * translational_clip_)
+                          .cwiseMin(2 * translational_clip_);
+  error_i_.tail(3) << (error_i_.tail(3) + error_.tail(3))
+                          .cwiseMax(-2 * rotational_clip_)
+                          .cwiseMin(2 * rotational_clip_);
 
   // compute control
   // allocate variables
@@ -93,20 +108,22 @@ controller_interface::return_type CustomCartesianImpedanceController::update(
   tau_task.setZero();
   tau_nullspace.setZero();
   tau_d.setZero();
-  
+
   // task control torques
-  tau_task << jacobian.transpose() * (-stiffness_*error_ - damping_*(jacobian*dq) - Ki_ * error_i_); 
-  
+  tau_task << jacobian.transpose() *
+                  (-stiffness_ * error_ - damping_ * (jacobian * dq) - Ki_ * error_i_);
+
   // nullspace control torques
   Eigen::MatrixXd jacobian_transpose_pinv;
   pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
-  tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_transpose_pinv) *
-                    (
-                      ns_stiff_q1_to_4_ * (q_d_nullspace_.head(4) - q.head(4)) - (2.0 * sqrt(ns_stiff_q1_to_4_)) * dq.head(4) +
-                      ns_stiff_q5_to_7_ * (q_d_nullspace_.tail(3) - q.tail(3)) - (2.0 * sqrt(ns_stiff_q5_to_7_)) * dq.tail(3) 
-                    );
+  tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
+                    jacobian.transpose() * jacobian_transpose_pinv) *
+                       (ns_stiff_q1_to_4_ * (q_d_nullspace_.head(4) - q.head(4)) -
+                        (2.0 * sqrt(ns_stiff_q1_to_4_)) * dq.head(4) +
+                        ns_stiff_q5_to_7_ * (q_d_nullspace_.tail(3) - q.tail(3)) -
+                        (2.0 * sqrt(ns_stiff_q5_to_7_)) * dq.tail(3));
 
-  tau_d <<  tau_task + coriolis + tau_nullspace;
+  tau_d << tau_task + coriolis + tau_nullspace;
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
@@ -133,10 +150,23 @@ CallbackReturn CustomCartesianImpedanceController::on_init() {
     auto_declare<double>("rotational_clip", 0.8);
     auto_declare<double>("translational_Ki", 15);
     auto_declare<double>("rotational_Ki", 1);
+    auto_declare<double>("pub_frequency", 20.0);
+
     sub_eq_pose_ = get_node()->create_subscription<geometry_msgs::msg::PoseStamped>(
-      "/cartesian_impedance/equilibrium_pose", 1,
-      std::bind(&CustomCartesianImpedanceController::equilibriumPoseCallback, this, std::placeholders::_1)
-    );
+        "/cartesian_impedance/equilibrium_pose", 1,
+        std::bind(&CustomCartesianImpedanceController::equilibriumPoseCallback, this,
+                  std::placeholders::_1));
+    cartesian_pos_des_filt_pub_ = get_node()->create_publisher<geometry_msgs::msg::PoseStamped>(
+        "/cartesian_impedance/cartesian_pos_des_filt", 10);
+    cartesian_pos_curr_pub_ = get_node()->create_publisher<geometry_msgs::msg::PoseStamped>(
+        "/cartesian_impedance/cartesian_pos_curr", 10);
+    joint_pos_pub_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
+        "/cartesian_impedance/joint_pos", 10);
+    joint_vel_pub_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
+        "/cartesian_impedance/joint_vel", 10);
+    joint_torques_pub_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
+        "/cartesian_impedance/joint_torques", 10);
+
   } catch (const std::exception& e) {
     fprintf(stderr, "Exception thrown during init stage with message: %s \n", e.what());
     return CallbackReturn::ERROR;
@@ -155,10 +185,11 @@ CallbackReturn CustomCartesianImpedanceController::on_configure(
   rotational_clip_ = get_node()->get_parameter("rotational_clip").as_double();
   translational_Ki_ = get_node()->get_parameter("translational_Ki").as_double();
   rotational_Ki_ = get_node()->get_parameter("rotational_Ki").as_double();
+  pub_frequency_ = get_node()->get_parameter("pub_frequency").as_double();
+
   franka_robot_model_ = std::make_unique<franka_semantic_components::FrankaRobotModel>(
-      franka_semantic_components::FrankaRobotModel(arm_id_ + "/robot_model",
-                                                   arm_id_));
-        
+      franka_semantic_components::FrankaRobotModel(arm_id_ + "/robot_model", arm_id_));
+
   return CallbackReturn::SUCCESS;
 }
 
@@ -166,10 +197,11 @@ CallbackReturn CustomCartesianImpedanceController::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   franka_robot_model_->assign_loaned_state_interfaces(state_interfaces_);
   start_time_ = this->get_node()->now();
-  init_pose_matrix_ = Matrix4d(franka_robot_model_->getPoseMatrix(franka::Frame::kEndEffector).data());
-  position_d_ = Vector3d(init_pose_matrix_.block<3,1>(0,3));
+  init_pose_matrix_ =
+      Matrix4d(franka_robot_model_->getPoseMatrix(franka::Frame::kEndEffector).data());
+  position_d_ = Vector3d(init_pose_matrix_.block<3, 1>(0, 3));
   position_d_target_ = position_d_;
-  orientation_d_ = Quaterniond(init_pose_matrix_.block<3,3>(0,0));
+  orientation_d_ = Quaterniond(init_pose_matrix_.block<3, 3>(0, 0));
   orientation_d_target_ = orientation_d_;
   q_d_nullspace_ = Vector7d(franka_robot_model_->getRobotState()->q.data());
 
@@ -178,31 +210,43 @@ CallbackReturn CustomCartesianImpedanceController::on_activate(
   stiffness_.bottomRightCorner(3, 3) << rot_stiff_ * Matrix3d::Identity();
   // Simple critical damping
   damping_.setIdentity();
-  damping_.topLeftCorner(3,3) << 2 * sqrt(pos_stiff_) * Matrix3d::Identity();
+  damping_.topLeftCorner(3, 3) << 2 * sqrt(pos_stiff_) * Matrix3d::Identity();
   damping_.bottomRightCorner(3, 3) << 0.4 * 2 * sqrt(rot_stiff_) * Matrix3d::Identity();
 
   translational_clip_min_ << -translational_clip_, -translational_clip_, -translational_clip_;
   translational_clip_max_ << translational_clip_, translational_clip_, translational_clip_;
   rotational_clip_min_ << -rotational_clip_, -rotational_clip_, -rotational_clip_;
   rotational_clip_max_ << rotational_clip_, rotational_clip_, rotational_clip_;
-  
+
   Ki_.setIdentity();
-  Ki_.topLeftCorner(3, 3)
-      << translational_Ki_ * Eigen::Matrix3d::Identity();
-  Ki_.bottomRightCorner(3, 3)
-      << rotational_Ki_ * Eigen::Matrix3d::Identity();
+  Ki_.topLeftCorner(3, 3) << translational_Ki_ * Eigen::Matrix3d::Identity();
+  Ki_.bottomRightCorner(3, 3) << rotational_Ki_ * Eigen::Matrix3d::Identity();
+
+  auto node = get_node();
+  auto period = std::chrono::duration<double>(1.0 / pub_frequency_);
+
+  pub_timer_ =
+      node->create_wall_timer(std::chrono::duration_cast<std::chrono::nanoseconds>(period),
+                              std::bind(&CustomCartesianImpedanceController::publishData, this));
 
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn CustomCartesianImpedanceController::on_deactivate(
-    const rclcpp_lifecycle::State& /*previous_state*/){
+    const rclcpp_lifecycle::State& /*previous_state*/) {
   franka_robot_model_->release_interfaces();
+
+  if (pub_timer_) {
+    pub_timer_->cancel();  // stop triggering callbacks
+    pub_timer_.reset();    // release the timer
+  }
+
   return CallbackReturn::SUCCESS;
 }
 
 void CustomCartesianImpedanceController::equilibriumPoseCallback(
-  const geometry_msgs::msg::PoseStamped& msg) {
+    const geometry_msgs::msg::PoseStamped& msg) {
+  std::lock_guard<std::mutex> lock(data_mutex_);
   position_d_target_ << msg.pose.position.x, msg.pose.position.y, msg.pose.position.z;
   error_i_.setZero();
   Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
@@ -213,8 +257,8 @@ void CustomCartesianImpedanceController::equilibriumPoseCallback(
   }
 }
 
-Vector7d CustomCartesianImpedanceController::saturateTorqueRate(
-    const Vector7d& tau_d_calculated, const Vector7d& tau_J_d) {  
+Vector7d CustomCartesianImpedanceController::saturateTorqueRate(const Vector7d& tau_d_calculated,
+                                                                const Vector7d& tau_J_d) {
   Vector7d tau_d_saturated{};
   for (size_t i = 0; i < 7; i++) {
     double difference = tau_d_calculated[i] - tau_J_d[i];
@@ -222,6 +266,65 @@ Vector7d CustomCartesianImpedanceController::saturateTorqueRate(
         tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
   }
   return tau_d_saturated;
+}
+
+void CustomCartesianImpedanceController::publishData() {
+  std::lock_guard<std::mutex> lock(data_mutex_);
+
+  // publish data
+  geometry_msgs::msg::PoseStamped msgCartPosDesFilt;
+  geometry_msgs::msg::PoseStamped msgCartPosCurr;
+  sensor_msgs::msg::JointState msgJointPos;
+  sensor_msgs::msg::JointState msgJointVel;
+  sensor_msgs::msg::JointState msgJointTorques;
+
+  msgCartPosDesFilt.header.stamp = get_node()->now();
+  msgCartPosCurr.header.stamp = get_node()->now();
+  msgJointPos.header.stamp = get_node()->now();
+  msgJointVel.header.stamp = get_node()->now();
+  msgJointTorques.header.stamp = get_node()->now();
+
+  // Cartesian target pose filtered
+  msgCartPosDesFilt.pose.position.x = position_d_(0);
+  msgCartPosDesFilt.pose.position.y = position_d_(1);
+  msgCartPosDesFilt.pose.position.z = position_d_(2);
+  msgCartPosDesFilt.pose.orientation.x = orientation_d_.x();
+  msgCartPosDesFilt.pose.orientation.y = orientation_d_.y();
+  msgCartPosDesFilt.pose.orientation.z = orientation_d_.z();
+  msgCartPosDesFilt.pose.orientation.w = orientation_d_.w();
+
+  // Cartesian current pose  --> NO GLOBAL
+  msgCartPosCurr.pose.position.x = current_position_(0);
+  msgCartPosCurr.pose.position.y = current_position_(1);
+  msgCartPosCurr.pose.position.z = current_position_(2);
+  msgCartPosCurr.pose.orientation.x = current_orientation_.x();
+  msgCartPosCurr.pose.orientation.y = current_orientation_.y();
+  msgCartPosCurr.pose.orientation.z = current_orientation_.z();
+  msgCartPosCurr.pose.orientation.w = current_orientation_.w();
+
+  // positions
+  msgJointPos.position.resize(num_joints_);
+  for (int i = 0; i < num_joints_; ++i) {
+    msgJointPos.position[i] = q_[i];
+  }
+
+  // velocities
+  msgJointVel.velocity.resize(num_joints_);
+  for (int i = 0; i < num_joints_; ++i) {
+    msgJointVel.velocity[i] = dq_[i];
+  }
+
+  // torques
+  msgJointTorques.effort.resize(num_joints_);
+  for (int i = 0; i < num_joints_; ++i) {
+    msgJointTorques.effort[i] = tau_J_d_[i];
+  }
+
+  cartesian_pos_des_filt_pub_->publish(msgCartPosDesFilt);
+  cartesian_pos_curr_pub_->publish(msgCartPosCurr);
+  joint_pos_pub_->publish(msgJointPos);
+  joint_vel_pub_->publish(msgJointVel);
+  joint_torques_pub_->publish(msgJointTorques);
 }
 
 }  // namespace franka_example_controllers

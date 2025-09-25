@@ -34,10 +34,12 @@ def generate_launch_description():
     arm_id_param = 'arm_id'
     initial_positions_param = 'initial_positions'
     use_rviz_param = 'use_rviz'
+    pub_frequency_param = 'pub_frequency'
     
     arm_id = LaunchConfiguration(arm_id_param)
     initial_positions = LaunchConfiguration(initial_positions_param)
     use_rviz = LaunchConfiguration(use_rviz_param)
+    pub_frequency = LaunchConfiguration(pub_frequency_param)
 
     # Fixed variables
     load_gripper = True # We make gripper a fixed variable, mainly because parsing the argument 
@@ -110,6 +112,10 @@ def generate_launch_description():
             default_value='"0.0 -0.785 0.0 -2.356 0.0 1.571 0.785"',
             description='Initial joint positions of the robot. Must be enclosed in quotes, and in pure number.'
                         'Defaults to the "communication_test" pose.'),
+        DeclareLaunchArgument(
+            'pub_frequency',
+            default_value='20.0',
+            description='Publisher frequency (Hz)'),
 
         # Mujoco ros2 server launch
         IncludeLaunchDescription(
@@ -153,3 +159,6 @@ def generate_launch_description():
              condition=IfCondition(use_rviz)
              )
     ])
+
+
+

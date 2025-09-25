@@ -88,3 +88,4 @@ multi_mode_controller:
 custom_cartesian_impedance_controller:
   ros__parameters:
     arm_id: panda
+    pub_frequency: 40.0
