@@ -50,8 +50,8 @@ class EndEffectorMarkerNode(Node):
         self.grasp_msg.speed = 1.0
         self.grasp_msg.force = 100.0
         self.grasp_msg.epsilon = GraspEpsilon()
-        self.grasp_msg.epsilon.inner = 0.025
-        self.grasp_msg.epsilon.outer = 0.025
+        self.grasp_msg.epsilon.inner = 0.1
+        self.grasp_msg.epsilon.outer = 0.1
 
         self.gripper_cli = ActionClient(self, GripperCommand, '/panda_gripper/gripper_action', callback_group=self.callback_group)
         while not self.gripper_cli.wait_for_server(timeout_sec=5.0):

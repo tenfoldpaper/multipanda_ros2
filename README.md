@@ -181,9 +181,9 @@ The `custom_cartesian_impedance_controller` allows to control the EE equilibrium
 
 #### Real Franka
 
-To launch the controller (WITHOUT Rviz and interactive marker)
+To launch the controller
 ```bash
-ros2 launch franka_bringup franka_cartesian_impedance.launch.py robot_ip:=176.16.0.1 use_interactive_marker:=false use_rviz:=false raise_collision_thresholds:=false
+ros2 launch franka_bringup franka_cartesian_impedance.launch.py robot_ip:=176.16.0.1 use_interactive_marker:=true use_rviz:=true raise_collision_thresholds:=false
 ```
 
 Other possibly useful arguments are:

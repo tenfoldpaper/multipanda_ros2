@@ -1,0 +1,207 @@
+#  Copyright (c) 2021 Franka Emika GmbH
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+
+import os
+
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Shutdown
+from launch.conditions import IfCondition, UnlessCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
+
+
+def generate_launch_description():
+    robot_ip_parameter_name = 'robot_ip'
+    load_gripper_parameter_name = 'load_gripper'
+    use_fake_hardware_parameter_name = 'use_fake_hardware'
+    fake_sensor_commands_parameter_name = 'fake_sensor_commands'
+    use_rviz_parameter_name = 'use_rviz'
+    use_interactive_marker_parameter_name = 'use_interactive_marker'
+    raise_collision_thresholds_parameter_name = 'raise_collision_thresholds'
+    default_gripper_speed_name = 'default_gripper_speed'
+    pub_frequency_name = 'pub_frequency'
+    # f_sin_name = 'f_sin'
+
+    robot_ip = LaunchConfiguration(robot_ip_parameter_name)
+    load_gripper = LaunchConfiguration(load_gripper_parameter_name)
+    use_fake_hardware = LaunchConfiguration(use_fake_hardware_parameter_name)
+    fake_sensor_commands = LaunchConfiguration(fake_sensor_commands_parameter_name)
+    use_rviz = LaunchConfiguration(use_rviz_parameter_name)
+    use_interactive_marker = LaunchConfiguration(use_interactive_marker_parameter_name)
+    raise_collision_thresholds = LaunchConfiguration(raise_collision_thresholds_parameter_name)
+    default_gripper_speed = LaunchConfiguration(default_gripper_speed_name)
+    pub_frequency = LaunchConfiguration(pub_frequency_name)
+    # f_sin = LaunchConfiguration(f_sin_name)
+
+    franka_xacro_file = os.path.join(get_package_share_directory('franka_description'), 'robots', 'real',
+                                     'panda_arm.urdf.xacro')
+    robot_description = Command(
+        [FindExecutable(name='xacro'), ' ', franka_xacro_file, ' hand:=', load_gripper,
+         ' robot_ip:=', robot_ip, ' use_fake_hardware:=', use_fake_hardware,
+         ' fake_sensor_commands:=', fake_sensor_commands])
+
+    rviz_file = os.path.join(get_package_share_directory('franka_description'), 'rviz',
+                             'visualize_franka_cartesian_impedance.rviz')
+
+    franka_controllers = PathJoinSubstitution(
+        [
+            FindPackageShare('franka_bringup'),
+            'config',
+            'real',
+            'single_controllers.yaml',
+        ]
+    )
+
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            robot_ip_parameter_name,
+            description='Hostname or IP address of the robot.'),
+        DeclareLaunchArgument(
+            use_rviz_parameter_name,
+            default_value='true',
+            description='Visualize the robot in Rviz'),
+        DeclareLaunchArgument(
+            raise_collision_thresholds_parameter_name,
+            default_value='true',
+            description='Raise collision behavior maximum torques and forces'),
+        DeclareLaunchArgument(
+            use_interactive_marker_parameter_name,
+            default_value='true',
+            description='Spawn the interactive marker to control the EE'),
+        DeclareLaunchArgument(
+            use_fake_hardware_parameter_name,
+            default_value='false',
+            description='Use fake hardware'),
+        DeclareLaunchArgument(
+            fake_sensor_commands_parameter_name,
+            default_value='false',
+            description="Fake sensor commands. Only valid when '{}' is true".format(
+                use_fake_hardware_parameter_name)),
+        DeclareLaunchArgument(
+            load_gripper_parameter_name,
+            default_value='true',
+            description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
+                        'without an end-effector.'),
+        DeclareLaunchArgument(
+            default_gripper_speed_name,
+            default_value="0.1",
+            description="Default speed for gripper motion in m/s."),                     
+        DeclareLaunchArgument(
+            pub_frequency,
+            default_value='50.0',
+            description='Publisher frequency to publish data for collection.'),
+        # DeclareLaunchArgument(
+        #     f_sin_name,
+        #     default_value='1.0',
+        #     description='Sinusoid frequency used to send gripper goals as test.'),
+        Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='robot_state_publisher',
+            output='screen',
+            parameters=[{'robot_description': robot_description}],
+        ),
+        Node(
+            package='joint_state_publisher',
+            executable='joint_state_publisher',
+            name='joint_state_publisher',
+            parameters=[
+                {'source_list': ['franka/joint_states', 'panda_gripper/joint_states'],
+                 'rate': 30}],
+        ),
+        Node(
+            package='franka_control2',
+            executable='franka_control2_node',
+            parameters=[{'robot_description': robot_description}, franka_controllers],
+            remappings=[('joint_states', 'franka/joint_states')],
+            output={
+                'stdout': 'screen',
+                'stderr': 'screen',
+            },
+            on_exit=Shutdown(),
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['joint_state_broadcaster', 'custom_cartesian_impedance_controller'],
+            output='screen',
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['franka_robot_state_broadcaster'],
+            output='screen',
+            condition=UnlessCondition(use_fake_hardware),
+        ),
+        Node(
+            package='franka_simple_publishers',
+            executable='collision_behavior_setter',
+            name='collision_behavior_setter',
+            arguments=[
+                '--T_lb', '60.0',
+                '--T_ub', '60.0',
+                '--F_lb', '60.0',
+                '--F_ub', '60.0',
+            ],
+            condition=IfCondition(raise_collision_thresholds),
+        ),
+        Node(
+            package='franka_simple_publishers',
+            executable='simple_interactive_marker_pose_publisher',
+            name='simple_interactive_marker_pose_publisher',
+            arguments=[
+                '--topic_name', 'cartesian_impedance/equilibrium_pose',
+                '--base_link', 'panda_link0',
+                '--ee_link', 'panda_hand_tcp',
+            ],
+            condition=IfCondition(use_interactive_marker),
+        ),
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            arguments=['--display-config', rviz_file],
+            condition=IfCondition(use_rviz),
+        ),
+        # Node(
+        #     package='franka_simple_publishers',
+        #     executable='gripper_pose_publisher',
+        #     # name='gripper_pose_publisher',
+        #     parameters=[{
+        #         pub_frequency_name: pub_frequency,
+        #         f_sin_name: f_sin,
+        #     }],
+        #     output='screen',
+        # ),
+        # launch file already present in the franka_gripper_custom, use that
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource([
+        #         PathJoinSubstitution([
+        #             FindPackageShare("franka_gripper_custom"),  
+        #             "launch",
+        #             "gripper_control.launch.py"
+        #         ])
+        #     ]),
+        #     launch_arguments={
+        #         robot_ip_parameter_name: robot_ip,
+        #         default_gripper_speed_name: default_gripper_speed,
+        #         pub_frequency_name: pub_frequency,
+        #     }.items()
+        # ),
+
+    ])

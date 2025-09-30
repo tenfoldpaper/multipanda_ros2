@@ -62,7 +62,9 @@ RUN apt-get update -y && apt-get install -y --allow-unauthenticated \
     ros-humble-moveit \
     ros-humble-nav-msgs \
     ros-humble-rqt-controller-manager \
+    ros-humble-sensor-msgs \
     ros-humble-tf-transformations \
+    ros-humble-plotjuggler-ros \
     && rm -rf /var/lib/apt/lists/*
 
 
