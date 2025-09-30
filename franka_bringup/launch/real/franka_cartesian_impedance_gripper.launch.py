@@ -24,7 +24,6 @@ from launch.substitutions import Command, FindExecutable, LaunchConfiguration, P
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
-
 def generate_launch_description():
     robot_ip_parameter_name = 'robot_ip'
     load_gripper_parameter_name = 'load_gripper'
@@ -33,9 +32,12 @@ def generate_launch_description():
     use_rviz_parameter_name = 'use_rviz'
     use_interactive_marker_parameter_name = 'use_interactive_marker'
     raise_collision_thresholds_parameter_name = 'raise_collision_thresholds'
+    default_gripper_width_name = 'default_gripper_width'
     default_gripper_speed_name = 'default_gripper_speed'
+    gripper_max_effort_name = 'gripper_max_effort'
+    default_epsilon_inner_name = 'default_epsilon_inner'
+    default_epsilon_outer_name = 'default_epsilon_outer'
     pub_frequency_name = 'pub_frequency'
-    # f_sin_name = 'f_sin'
 
     robot_ip = LaunchConfiguration(robot_ip_parameter_name)
     load_gripper = LaunchConfiguration(load_gripper_parameter_name)
@@ -44,9 +46,12 @@ def generate_launch_description():
     use_rviz = LaunchConfiguration(use_rviz_parameter_name)
     use_interactive_marker = LaunchConfiguration(use_interactive_marker_parameter_name)
     raise_collision_thresholds = LaunchConfiguration(raise_collision_thresholds_parameter_name)
+    default_gripper_width = LaunchConfiguration(default_gripper_width_name)
     default_gripper_speed = LaunchConfiguration(default_gripper_speed_name)
+    gripper_max_effort = LaunchConfiguration(gripper_max_effort_name)
+    default_epsilon_inner = LaunchConfiguration(default_epsilon_inner_name)
+    default_epsilon_outer = LaunchConfiguration(default_epsilon_outer_name)
     pub_frequency = LaunchConfiguration(pub_frequency_name)
-    # f_sin = LaunchConfiguration(f_sin_name)
 
     franka_xacro_file = os.path.join(get_package_share_directory('franka_description'), 'robots', 'real',
                                      'panda_arm.urdf.xacro')
@@ -98,17 +103,35 @@ def generate_launch_description():
             description='Use Franka Gripper as an end-effector, otherwise, the robot is loaded '
                         'without an end-effector.'),
         DeclareLaunchArgument(
-            default_gripper_speed_name,
-            default_value="0.1",
-            description="Default speed for gripper motion in m/s."),                     
+            default_gripper_width_name,
+            default_value="0.01",
+            description="Default gripper width opening in meters."
+        ),
         DeclareLaunchArgument(
-            pub_frequency,
-            default_value='50.0',
-            description='Publisher frequency to publish data for collection.'),
-        # DeclareLaunchArgument(
-        #     f_sin_name,
-        #     default_value='1.0',
-        #     description='Sinusoid frequency used to send gripper goals as test.'),
+            default_gripper_speed_name,
+            default_value="1.0",
+            description="Default speed for gripper motion in m/s."
+        ),
+        DeclareLaunchArgument(
+            gripper_max_effort_name,
+            default_value="100.0",
+            description='Max tolerated effort for grasping before throwing an error.'
+        ),
+        DeclareLaunchArgument(
+            default_epsilon_inner_name,
+            default_value="0.1",
+            description='Inner tolerance for grasping in meters.'
+        ),
+        DeclareLaunchArgument(
+            default_epsilon_outer_name,
+            default_value="0.1",
+            description='Outer tolerance for grasping in meters.'
+        ),
+        DeclareLaunchArgument(
+            pub_frequency_name,
+            default_value="50",
+            description='Publisher frequency to publish data for collection.'
+        ),
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
@@ -178,16 +201,6 @@ def generate_launch_description():
             arguments=['--display-config', rviz_file],
             condition=IfCondition(use_rviz),
         ),
-        # Node(
-        #     package='franka_simple_publishers',
-        #     executable='gripper_pose_publisher',
-        #     # name='gripper_pose_publisher',
-        #     parameters=[{
-        #         pub_frequency_name: pub_frequency,
-        #         f_sin_name: f_sin,
-        #     }],
-        #     output='screen',
-        # ),
         # launch file already present in the franka_gripper_custom, use that
         # IncludeLaunchDescription(
         #     PythonLaunchDescriptionSource([
@@ -199,7 +212,11 @@ def generate_launch_description():
         #     ]),
         #     launch_arguments={
         #         robot_ip_parameter_name: robot_ip,
+        #         default_gripper_width_name: default_gripper_width,
         #         default_gripper_speed_name: default_gripper_speed,
+        #         gripper_max_effort_name: gripper_max_effort,
+        #         default_epsilon_inner_name: default_epsilon_inner,
+        #         default_epsilon_outer_name: default_epsilon_outer,
         #         pub_frequency_name: pub_frequency,
         #     }.items()
         # ),
