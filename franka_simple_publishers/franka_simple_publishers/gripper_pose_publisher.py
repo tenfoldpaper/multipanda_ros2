@@ -18,7 +18,7 @@ class GripperPosePublisher(Node):
         self.f_sin = self.get_parameter("f_sin").value
 
         # Publisher
-        self.publisher_ = self.create_publisher(Float64, "/gripper/command", 10)
+        self.publisher_ = self.create_publisher(Float64, "panda_gripper/gripper_command", 10)
 
         # Timer for publishing
         timer_period = 1.0 / publish_frequency

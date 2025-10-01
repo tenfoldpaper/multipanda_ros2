@@ -4,7 +4,7 @@
 #include <string>
 
 #include <franka/exception.h>
-#include <franka/gripper.h>  // Franka C++ API
+#include <franka/gripper.h>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float64.hpp>  // message type for gripper width command

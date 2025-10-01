@@ -13,6 +13,7 @@ GripperSubscriber::GripperSubscriber() : Node("panda_gripper") {
   this->declare_parameter("default_epsilon_outer", 0.1);  // [m]
   this->declare_parameter("pub_frequency", 50);           // actually limited to 15 Hz
 
+  // Get parameters
   robot_ip_ = this->get_parameter("robot_ip").as_string();
   joint_names_ = this->get_parameter("joint_names").as_string_array();
   default_width_ = this->get_parameter("default_gripper_width").as_double();
@@ -33,7 +34,7 @@ GripperSubscriber::GripperSubscriber() : Node("panda_gripper") {
 
   // Subscriber
   command_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-      "/gripper/command", 1,
+      "~/gripper_command", 1,
       std::bind(&GripperSubscriber::commandCallback, this, std::placeholders::_1));
 
   // Publishers
@@ -55,8 +56,6 @@ void GripperSubscriber::commandCallback(const std_msgs::msg::Float64::SharedPtr 
   // get data
   double command_data = msg->data;
   bool command_data_bool = (command_data >= 0.5);
-
-  // RCLCPP_INFO(this->get_logger(), "Received gripper command: width = %.3f m", target_width);
 
   // decide whether to open or close
   if (command_data_bool != command_data_bool_prev) {
@@ -103,7 +102,7 @@ void GripperSubscriber::publishGripperState() {
   joint_states.effort.push_back(0.0);
   joint_state_pub_->publish(joint_states);
 
-  // Publish width as Float64
+  // Publish width
   std_msgs::msg::Float64 width_msg;
   width_msg.data = current_gripper_state_.width;
   width_pub_->publish(width_msg);

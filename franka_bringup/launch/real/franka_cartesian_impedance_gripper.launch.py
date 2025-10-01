@@ -202,23 +202,22 @@ def generate_launch_description():
             condition=IfCondition(use_rviz),
         ),
         # launch file already present in the franka_gripper_custom, use that
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource([
-        #         PathJoinSubstitution([
-        #             FindPackageShare("franka_gripper_custom"),  
-        #             "launch",
-        #             "gripper_control.launch.py"
-        #         ])
-        #     ]),
-        #     launch_arguments={
-        #         robot_ip_parameter_name: robot_ip,
-        #         default_gripper_width_name: default_gripper_width,
-        #         default_gripper_speed_name: default_gripper_speed,
-        #         gripper_max_effort_name: gripper_max_effort,
-        #         default_epsilon_inner_name: default_epsilon_inner,
-        #         default_epsilon_outer_name: default_epsilon_outer,
-        #         pub_frequency_name: pub_frequency,
-        #     }.items()
-        # ),
-
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                PathJoinSubstitution([
+                    FindPackageShare("franka_gripper_custom"),  
+                    "launch",
+                    "gripper_control.launch.py"
+                ])
+            ]),
+            launch_arguments={
+                robot_ip_parameter_name: robot_ip,
+                default_gripper_width_name: default_gripper_width,
+                default_gripper_speed_name: default_gripper_speed,
+                gripper_max_effort_name: gripper_max_effort,
+                default_epsilon_inner_name: default_epsilon_inner,
+                default_epsilon_outer_name: default_epsilon_outer,
+                pub_frequency_name: pub_frequency,
+            }.items()
+        ),
     ])

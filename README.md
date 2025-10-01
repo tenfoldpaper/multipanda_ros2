@@ -214,7 +214,6 @@ To re-compile only a desired package
 ```bash
 colcon build --packages-select <desired-package-name>
 ```
-
             
 ## Credits
 The original version is forked from mcbed's port of franka_ros2 for [humble][mcbed-humble].
