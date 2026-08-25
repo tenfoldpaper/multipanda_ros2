@@ -139,34 +139,70 @@ franka::RobotState RobotSim::populateFrankaState(){
     current_state_.dq[i] = d->qvel[joint_qvel_indices_[i]];
     // the actual franka publishes non-zero values when in gravcomp mode, so add the qfrc_gravcomp to match that
     current_state_.tau_J[i] = d->actuator_force[act_trq_indices_[i]] + d->qfrc_gravcomp[joint_qvel_indices_[i]]; 
-    tau_ext_hat_filtered[i] = d->qfrc_applied[joint_qvel_indices_[i]];
+    // qfrc_applied only covers forces we explicitly inject (e.g. xfrc_applied);
+    // real contacts (gripping, bumping into the environment) are solved as
+    // constraints in MuJoCo and only show up in qfrc_constraint, so both must
+    // be summed to get the true external joint torque.
+    // Note: qfrc_constraint also includes non-contact constraints (joint
+    // limits, equality constraints, friction loss), so hitting a joint limit
+    // will also register as "external" torque here, even without contact.
+    tau_ext_hat_filtered[i] =
+      d->qfrc_applied[joint_qvel_indices_[i]] +
+      d->qfrc_constraint[joint_qvel_indices_[i]];
     current_state_.tau_ext_hat_filtered[i] = tau_ext_hat_filtered[i];
   }
 
-  // calculate end effector jacobian, and then compose the EE force transform
-  double basePos[3] = {0};
-  double basePos_I[3] = {0};
-  double baseQuat[4] = {0};
-  double baseQuat_I[4] = {0};
-  franka_hardware_model_->getXPosQuatbyLink(basePos, baseQuat, link_indices_[8]);
-  mju_negPose(basePos_I, baseQuat_I, basePos, baseQuat);
-  double forceTMat[36] = {0};
-  franka_hardware_model_->composeForceTransform(forceTMat, basePos_I, baseQuat_I);
-  // compose the 6*7
-  double Jac[42] = {0};
-  franka_hardware_model_->get6x7Jacobian(Jac, joint_site_indices_[8]);
+  // Recover the external end-effector wrench F from the external joint
+  // torques tau via damped least squares, i.e. the textbook DLS solution
+  // to the (overdetermined, for a 7-DoF arm) system J^T * F = tau:
+  //
+  //   F = (J * J^T + lambda^2 * I)^-1 * J * tau
+  //   JJt_damped * F = J * tau
+  //
+  // lambda regularizes the solve near kinematic singularities, where
+  // J * J^T alone becomes ill-conditioned.
+  //
+  // This assumes tau is caused entirely by a single wrench applied at the
+  // TCP/EE site (matching how the real Franka defines O_F_ext_hat_K); a
+  // contact elsewhere on the arm will still yield a nonzero but physically
+  // misleading result here.
+  using Matrix6x7 = Eigen::Matrix<double, 6, 7, Eigen::RowMajor>;
+  using Matrix3RowMajor = Eigen::Matrix<double, 3, 3, Eigen::RowMajor>;
+  using Matrix6d = Eigen::Matrix<double, 6, 6>;
+  using Vector6d = Eigen::Matrix<double, 6, 1>;
+  using Vector7d = Eigen::Matrix<double, 7, 1>;
 
-  // multiply the jac
-  double rJac[42] = {0};
-  mju_mulMatMat(rJac, forceTMat, Jac, 6, 6, 7);
-  // finally, get the force
-  double eeForce[6] = {0};
-  mju_mulMatVec(eeForce, rJac, tau_ext_hat_filtered, 6, 7);
-  // forceTMat * Jac * torques
+  double jacobian_data[42] = {0};
+  franka_hardware_model_->get6x7Jacobian(
+    jacobian_data, joint_site_indices_[8]);
+  const Eigen::Map<const Matrix6x7> J(jacobian_data);
+  const Eigen::Map<const Vector7d> tau(tau_ext_hat_filtered);
+
+  constexpr double lambda = 1.0e-4;
+  const Matrix6d JJt_damped =
+    J * J.transpose() + (lambda * lambda) * Matrix6d::Identity();
+  const Vector6d wrench_world = JJt_damped.ldlt().solve(J * tau);
+
+  // mj_jacSite returns a world-frame Jacobian. O_F_ext_hat_K is the wrench
+  // at the end-effector, expressed in the robot base frame, so only rotate
+  // its force and moment components; do not shift the wrench origin.
+  double base_position[3] = {0};
+  double base_quaternion[4] = {0};
+  double rotation_data[9] = {0};
+  franka_hardware_model_->getXPosQuatbyLink(
+    base_position, base_quaternion, link_indices_[0]);
+  mju_quat2Mat(rotation_data, base_quaternion);
+  const Eigen::Map<const Matrix3RowMajor> rotation_world_from_base(
+    rotation_data);
+
+  Vector6d wrench_base;
+  wrench_base.head<3>() =
+    rotation_world_from_base.transpose() * wrench_world.head<3>();
+  wrench_base.tail<3>() =
+    rotation_world_from_base.transpose() * wrench_world.tail<3>();
+
   for(int i=0; i<6; i++){
-    // we want the end-effector external forces, so 8th body in the link indices.
-    // This needs to be transformed into the base frame.
-    current_state_.O_F_ext_hat_K[i] = eeForce[i];
+    current_state_.O_F_ext_hat_K[i] = wrench_base(i);
   }
 
   // xpos is in W;
