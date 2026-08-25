@@ -139,7 +139,16 @@ franka::RobotState RobotSim::populateFrankaState(){
     current_state_.dq[i] = d->qvel[joint_qvel_indices_[i]];
     // the actual franka publishes non-zero values when in gravcomp mode, so add the qfrc_gravcomp to match that
     current_state_.tau_J[i] = d->actuator_force[act_trq_indices_[i]] + d->qfrc_gravcomp[joint_qvel_indices_[i]]; 
-    tau_ext_hat_filtered[i] = d->qfrc_applied[joint_qvel_indices_[i]];
+    // qfrc_applied only covers forces we explicitly inject (e.g. xfrc_applied);
+    // real contacts (gripping, bumping into the environment) are solved as
+    // constraints in MuJoCo and only show up in qfrc_constraint, so both must
+    // be summed to get the true external joint torque.
+    // Note: qfrc_constraint also includes non-contact constraints (joint
+    // limits, equality constraints, friction loss), so hitting a joint limit
+    // will also register as "external" torque here, even without contact.
+    tau_ext_hat_filtered[i] =
+      d->qfrc_applied[joint_qvel_indices_[i]] +
+      d->qfrc_constraint[joint_qvel_indices_[i]];
     current_state_.tau_ext_hat_filtered[i] = tau_ext_hat_filtered[i];
   }
 
