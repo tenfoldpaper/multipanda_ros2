@@ -54,6 +54,8 @@ class CartesianImpedanceController : public controller_interface::ControllerInte
   double n_stiffness;
 
   void desiredCartesianCallback(const std_msgs::msg::Float64MultiArray& msg);
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
+  rcl_interfaces::msg::SetParametersResult parameter_callback(const std::vector<rclcpp::Parameter>& parameters);
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sub_desired_cartesian_; 
 };
 

@@ -1,4 +1,4 @@
-import math
+import sys
 
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
 
@@ -11,22 +11,30 @@ from tf2_ros.transform_listener import TransformListener
 
 
 
-class FrameListener(Node):
+class FrankaPublisher(Node):
 
     def __init__(self):
         super().__init__('tf_translator')
 
-        self.get_logger().info("Initializing TF to Pose Translator...")
-
-        # Declare and acquire `target_frame` parameter
+        # Get frames to translate position to/from
         self.target_frame = self.declare_parameter(
-          'target_frame', 'panda_hand').get_parameter_value().string_value
+            'target_frame', 'panda_link7').get_parameter_value().string_value
+
+        self.base_frame = self.declare_parameter(
+            'base_frame', 'panda_link0').get_parameter_value().string_value
+
+        # Set the output topic
+        self.pub_topic = self.declare_parameter(
+            'topic', 'tf/pose').get_parameter_value().string_value
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         # Create turtle2 velocity publisher
-        self.publisher = self.create_publisher(PoseStamped, 'test/pose', 1)
+        self.publisher = self.create_publisher(PoseStamped, self.pub_topic, 1)
+
+        # Log this creation
+        self.get_logger().info(f'Publishing from {self.target_frame} to {self.base_frame} on topic {self.pub_topic}')
 
         # Call on_timer function every second
         self.timer = self.create_timer(1.0, self.on_timer)
@@ -35,7 +43,7 @@ class FrameListener(Node):
         # Store frame names in variables that will be used to
         # compute transformations
         from_frame_rel = self.target_frame
-        to_frame_rel = 'panda_link0'
+        to_frame_rel =  self.base_frame
 
         # Look up for the transformation between target_frame and turtle2 frames
         # and send velocity commands for turtle2 to reach target_frame
@@ -65,12 +73,10 @@ class FrameListener(Node):
 
         self.publisher.publish(msg)
 
-        self.get_logger().info('published data to /test/pose')
-
 
 def main():
     rclpy.init()
-    node = FrameListener()
+    node = FrankaPublisher()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
