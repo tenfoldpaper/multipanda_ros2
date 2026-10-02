@@ -162,17 +162,17 @@ On a computer running Ubuntu 22.04 and real-time kernel (if you wish to use it w
 ## Citation 
 If multipanda_ros2 framework helps your research, please cite our paper:
 
-**[Bridging the Sim-to-Real Gap with multipanda_ros2: A Real-Time ROS2 Framework for Multimanual Systems](https://arxiv.org/abs/2602.02269)** 
+**[Bridging the Sim-to-Real Gap with multipanda_ros2: A Real-Time ROS2 Framework for Multimanual Systems](https://ieeexplore.ieee.org/document/11696149)** 
 
 ```bibtex
-@misc{škerlj2026multipanda_ros2,
+@INPROCEEDINGS{škerlj2026multipanda_ros2,
       title={Bridging the Sim-to-Real Gap with multipanda_ros2: A Real-Time ROS2 Framework for Multimanual Systems}, 
-      author={Jon Škerlj and Seongjin Bien and Abdeldjallil Naceri and Sami Haddadin},
+      author={Škerlj, Jon and Bien, Seongjin and Naceri, Abdeldjallil and Haddadin, Sami},
+      booktitle={2026 IEEE International Conference on Robotics and Automation (ICRA)},
       year={2026},
-      eprint={2602.02269},
-      archivePrefix={arXiv},
-      primaryClass={cs.RO},
-      url={[https://arxiv.org/abs/2602.02269](https://arxiv.org/abs/2602.02269)}, 
+      pages={9679-9686},
+      doi={10.1109/ICRA57385.2026.11696149},
+      url={https://ieeexplore.ieee.org/document/11696149}
 }
 ```
 
