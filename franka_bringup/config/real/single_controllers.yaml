@@ -24,10 +24,10 @@ controller_manager:
       type: franka_example_controllers/MoveToStartExampleController
 
     joint_impedance_controller:
-      type: franka_example_controllers/JointImpedanceController 
+      type: franka_controllers/JointImpedanceController 
 
     cartesian_impedance_controller:
-      type: franka_example_controllers/CartesianImpedanceController
+      type: franka_controllers/CartesianImpedanceController
 
     joint_trajectory_controller:
       type: joint_effort_trajectory_controller/JointTrajectoryController
