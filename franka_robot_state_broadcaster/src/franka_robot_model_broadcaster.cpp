@@ -106,8 +106,7 @@ FrankaRobotModelBroadcaster::state_interface_configuration() const {
 controller_interface::return_type FrankaRobotModelBroadcaster::update(
     const rclcpp::Time& time,
     const rclcpp::Duration& /*period*/) {
-  
-  if(time.nanoseconds() - last_pub_.nanoseconds() < 1'000'000'000 / frequency){
+  if (time.nanoseconds() - last_pub_.nanoseconds() < 1'000'000'000 / frequency) {
     return controller_interface::return_type::OK;
   }
   if (realtime_franka_model_publisher && realtime_franka_model_publisher->trylock()) {
@@ -120,15 +119,15 @@ controller_interface::return_type FrankaRobotModelBroadcaster::update(
       return controller_interface::return_type::ERROR;
     }
     realtime_franka_model_publisher->unlockAndPublish();
-    last_pub_ = get_node()->now();
-    return controller_interface::return_type::OK;
-  } 
-  
-  else {
-    return controller_interface::return_type::ERROR;
+    // Use the simulation/hardware update time for consistent timebase comparison
+    last_pub_ = time;
   }
+  // Note: If trylock() fails because the background publishing thread is currently
+  // serializing or sending a message, skip this 1ms cycle and return OK.
+  // Lock contention is normal in non-blocking realtime publishing and not a fatal controller error.
 
-  }
+  return controller_interface::return_type::OK;
+}
 } // namespace franka_model_broadcaster
 
 #include "pluginlib/class_list_macros.hpp"
