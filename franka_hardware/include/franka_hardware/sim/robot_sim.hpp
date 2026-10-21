@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <array>
+#include <vector>
 #include <franka/robot_state.h>
 #include "franka_hardware/sim/model_sim.hpp"
 #include "franka_hardware/common/control_mode.h"
@@ -49,6 +50,7 @@ private:
     std::array<double, 7> qfrc_bias_; // coriolis + gravity
     std::array<double, 42> zeroJacobian_;
     std::array<double, 42> bodyJacobian_;
+    std::vector<mjtNum> xfrc_joint_torque_; // J^T * xfrc_applied (nv x 1), e.g. GUI perturbations
     std::unique_ptr<ModelSim> franka_hardware_model_; // 
     const int kNumberOfJoints = 7;
     ControlMode control_mode_;

@@ -131,23 +131,38 @@ franka::RobotState RobotSim::populateFrankaState(){
     
     franka::RobotState current_state_; // <- pack all of them into franka::RobotState
   */
-  // mjModel* m = franka_hardware_model_->getMjModel();
+  const mjModel* m = franka_hardware_model_->getMjModel();
   mjData* d = franka_hardware_model_->getMjData();
   double tau_ext_hat_filtered[7] = {0};
+
+  // Cartesian forces in xfrc_applied (e.g. the perturbation dragged in the MuJoCo GUI with
+  // Ctrl + right mouse button, or forces set by plugins) act on the body CoM and are never mapped
+  // into qfrc_applied; MuJoCo adds J^T * xfrc internally. Map them here so that they appear in
+  // the external joint torque like a real contact force would.
+  xfrc_joint_torque_.assign(m->nv, 0.0);
+  for(int b = 1; b < m->nbody; b++){
+    const mjtNum* xfrc = d->xfrc_applied + 6 * b;
+    if(xfrc[0] == 0.0 && xfrc[1] == 0.0 && xfrc[2] == 0.0 &&
+       xfrc[3] == 0.0 && xfrc[4] == 0.0 && xfrc[5] == 0.0){
+      continue;
+    }
+    mj_applyFT(m, d, xfrc, xfrc + 3, d->xipos + 3 * b, b, xfrc_joint_torque_.data());
+  }
   for(int i=0; i<kNumberOfJoints; i++){
     current_state_.q[i] = d->qpos[joint_qpos_indices_[i]];
     current_state_.dq[i] = d->qvel[joint_qvel_indices_[i]];
     // the actual franka publishes non-zero values when in gravcomp mode, so add the qfrc_gravcomp to match that
     current_state_.tau_J[i] = d->actuator_force[act_trq_indices_[i]] + d->qfrc_gravcomp[joint_qvel_indices_[i]]; 
-    // qfrc_applied only covers forces we explicitly inject (e.g. xfrc_applied);
-    // real contacts (gripping, bumping into the environment) are solved as
-    // constraints in MuJoCo and only show up in qfrc_constraint, so both must
-    // be summed to get the true external joint torque.
+    // External joint torque = forces injected in joint space (qfrc_applied)
+    // + Cartesian forces injected on bodies (xfrc_applied, e.g. GUI perturbation)
+    // + contacts (gripping, bumping into the environment), which MuJoCo solves
+    // as constraints and only shows in qfrc_constraint.
     // Note: qfrc_constraint also includes non-contact constraints (joint
     // limits, equality constraints, friction loss), so hitting a joint limit
     // will also register as "external" torque here, even without contact.
     tau_ext_hat_filtered[i] =
       d->qfrc_applied[joint_qvel_indices_[i]] +
+      xfrc_joint_torque_[joint_qvel_indices_[i]] +
       d->qfrc_constraint[joint_qvel_indices_[i]];
     current_state_.tau_ext_hat_filtered[i] = tau_ext_hat_filtered[i];
   }
