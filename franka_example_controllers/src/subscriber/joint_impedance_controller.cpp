@@ -129,7 +129,8 @@ void JointImpedanceController::updateJointStates() {
 
 void JointImpedanceController::desiredJointCallback(
   const std_msgs::msg::Float64MultiArray& msg) {
-  if (msg.data[0]){
+  // Accept commands with the same number of joints as the robot
+  if (msg.data.size() >= static_cast<std::size_t>(num_joints)) {
     for (auto i = 0; i < num_joints; ++i) {
       q_d_(i) = msg.data[i];
     }
