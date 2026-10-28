@@ -16,6 +16,7 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <iostream>
 #include <fstream> // measurement include
 #include <time.h> // measurement include
@@ -96,6 +97,21 @@ class Robot {
 
   /// stops the control or reading loop of the robot.
   void stopRobot();
+
+  /**
+   * Asks a running joint position/velocity or Cartesian pose/velocity control loop to brake to
+   * standstill and finish the motion on its own. Does not block and has no effect on other
+   * control modes.
+   */
+  void requestBrake();
+
+  /**
+   * Waits until a joint position/velocity or Cartesian pose/velocity control loop has finished its
+   * motion, e.g. after requestBrake().
+   * @param[in] timeout maximum time to wait.
+   * @return true if no such control loop is running anymore.
+   */
+  bool waitForBrake(std::chrono::milliseconds timeout);
   /**
    * Return pointer to the franka robot model object .
    * @return pointer to the current robot model.
@@ -126,12 +142,15 @@ class Robot {
    * Sends new desired torque commands to the control loop in a thread-safe way.
    * The robot will use these torques until a different set of torques are commanded.
    * @param[in] efforts torque command for each joint.
+   * @param[in] period time since the previous write in seconds, used to derive the feed-forward
+   * velocity of the joint position command.
    */
-  void write( const std::array<double, 7>& efforts, 
-              const std::array<double, 7>& joint_positions, 
+  void write( const std::array<double, 7>& efforts,
+              const std::array<double, 7>& joint_positions,
               const std::array<double, 7>& joint_velocities,
               const std::array<double, 16>& cartesian_positions,
-              const std::array<double, 6>& cartesian_velocities);
+              const std::array<double, 6>& cartesian_velocities,
+              double period);
 
   /// @return true if there is no control or reading loop running.
   bool isStopped() const;
@@ -315,6 +334,8 @@ class Robot {
   std::mutex write_mutex_;
   std::mutex robot_mutex_;
   std::atomic_bool finish_{false};
+  std::atomic_bool brake_requested_{false};
+  std::atomic_bool brakeable_loop_running_{false};  // joint position/velocity or Cartesian pose/velocity
   bool stopped_ = true;
   std::mutex error_mutex_;
   bool has_error_ = false;
@@ -323,6 +344,15 @@ class Robot {
   ControlMode control_mode_;
   std::array<double, 7> tau_command_;
   std::array<double, 7> joint_position_command_ = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};
+  // Finite difference of successive joint position commands, drives the joint position loop
+  std::array<double, 7> joint_position_velocity_{};
+  bool joint_position_velocity_valid_ = false;
+  uint64_t joint_position_count_ = 0;  // lets the joint position loop detect a stalled command stream
+  // Twist [vx, vy, vz, wx, wy, wz] from successive Cartesian pose commands, drives the Cartesian pose loop
+  std::array<double, 6> cartesian_pose_velocity_{};
+  bool cartesian_pose_velocity_valid_ = false;
+  bool cartesian_pose_active_ = false;
+  uint64_t cartesian_pose_count_ = 0;
   std::array<double, 7> joint_velocity_command_;
   std::array<double, 16> cartesian_position_command_;
   std::array<double, 6> cartesian_velocity_command_;

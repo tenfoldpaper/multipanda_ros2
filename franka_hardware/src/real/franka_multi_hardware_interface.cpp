@@ -154,7 +154,7 @@ std::vector<StateInterface> FrankaMultiHardwareInterface::export_state_interface
       info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &arms_[get_ns(info_.joints[i].name)].hw_efforts_.at(get_joint_no(info_.joints[i].name))));
   }
 
-  for(auto arm_container_pair : arms_){
+  for(auto& arm_container_pair : arms_){  // by reference: the interfaces point into arms_
     auto &arm = arm_container_pair.second;
 
     std::string cartesian_position_prefix = arm.robot_name_ + "_ee_cartesian_position";
@@ -196,7 +196,7 @@ std::vector<CommandInterface> FrankaMultiHardwareInterface::export_command_inter
         info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &arms_[get_ns(info_.joints[i].name)].hw_commands_joint_velocity_.at(get_joint_no(info_.joints[i].name))));
   }
 
-  for(auto arm_container_pair : arms_){
+  for(auto& arm_container_pair : arms_){  // by reference: the interfaces point into arms_
     auto &arm = arm_container_pair.second;
     std::string cartesian_position_prefix = arm.robot_name_ + "_ee_cartesian_position";
     std::string cartesian_velocity_prefix = arm.robot_name_ + "_ee_cartesian_velocity";
@@ -232,7 +232,11 @@ CallbackReturn FrankaMultiHardwareInterface::on_activate(
 CallbackReturn FrankaMultiHardwareInterface::on_deactivate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   RCLCPP_INFO(getLogger(), "trying to Stop...");
-  for(auto arm_container_pair : arms_){
+  // Let all arms brake in parallel instead of one after the other
+  for(auto& arm_container_pair : arms_){
+    arm_container_pair.second.robot_->requestBrake();
+  }
+  for(auto& arm_container_pair : arms_){
     auto &arm = arm_container_pair.second;
     arm.control_mode_ = ControlMode::None;
     arm.robot_->stopRobot();
@@ -273,7 +277,7 @@ hardware_interface::return_type FrankaMultiHardwareInterface::read(const rclcpp:
   }
 
 hardware_interface::return_type FrankaMultiHardwareInterface::write(const rclcpp::Time& /*time*/,
-                                                               const rclcpp::Duration& /*period*/) {
+                                                               const rclcpp::Duration& period) {
   for(auto& arm_container_pair: arms_){
     auto &arm = arm_container_pair.second;
     if (std::any_of(arm.hw_commands_joint_effort_.begin(), arm.hw_commands_joint_effort_.end(),
@@ -304,7 +308,8 @@ hardware_interface::return_type FrankaMultiHardwareInterface::write(const rclcpp
                       arm.hw_commands_joint_position_, 
                       arm.hw_commands_joint_velocity_, 
                       arm.hw_commands_cartesian_position_, 
-                      arm.hw_commands_cartesian_velocity_);
+                      arm.hw_commands_cartesian_velocity_,
+                      period.seconds());
 
   }
   return hardware_interface::return_type::OK;
@@ -319,7 +324,8 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
   bool is_position = false;
   bool is_velocity = false;
   bool is_duplicate = false;
-  
+  std::vector<std::string> arms_to_brake;
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
   //              Handle the stop case first                    //
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -375,9 +381,10 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
             arm.second.hw_commands_joint_effort_[i] = 0;
           }
           // position command is not reset, since that can be dangerous
-          else if(is_velocity){
-            arm.second.hw_commands_joint_velocity_[i] = 0;
-          }
+          // velocity command is reset when velocity control starts, a step to zero here is a discontinuity
+        }
+        if(is_position || is_velocity){
+          arms_to_brake.push_back(arm.first);
         }
         arm.second.control_mode_ = ControlMode::None;
         arm.second.switch_cm_ = true;
@@ -389,6 +396,7 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
             RCLCPP_ERROR(this->getLogger(), "Requested Cartesian position stop interface's size is not %d (got %ld)", 16, stop_interfaces.size());
             return hardware_interface::return_type::ERROR;
           }
+          arms_to_brake.push_back(arm.first);
         }
         if(is_velocity){
           if(stop_interfaces.size() != 6U){
@@ -396,10 +404,9 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
             return hardware_interface::return_type::ERROR;
 
           }
-          // set the commands to zero
-          for(int i = 0; i < 6; i++){
-            arm.second.hw_commands_cartesian_velocity_[i] = 0;
-          }
+          // The loop brakes to standstill below; the command is reset when velocity control starts,
+          // since a step to zero here is a discontinuity
+          arms_to_brake.push_back(arm.first);
         }
         arm.second.control_mode_ = ControlMode::None;
         arm.second.switch_cm_ = true;
@@ -498,6 +505,18 @@ hardware_interface::return_type FrankaMultiHardwareInterface::prepare_command_mo
     }
   }
 
+  // Brake the stopping joint position/velocity and Cartesian pose/velocity loops to standstill here,
+  // since this runs outside of the realtime loop: perform_command_mode_switch then joins immediately
+  // and the other arms keep running.
+  for(const auto& arm_name : arms_to_brake){
+    arms_.at(arm_name).robot_->requestBrake();
+  }
+  for(const auto& arm_name : arms_to_brake){
+    if(!arms_.at(arm_name).robot_->waitForBrake(std::chrono::seconds(2))){
+      RCLCPP_WARN(this->getLogger(), "Arm %s did not finish braking in time", arm_name.c_str());
+    }
+  }
+
   return hardware_interface::return_type::OK;
 
 }
@@ -522,18 +541,26 @@ hardware_interface::return_type FrankaMultiHardwareInterface::perform_command_mo
       }
       else if(arm.control_mode_ == ControlMode::JointPosition){
         arm.robot_->stopRobot();
+        // Overwrite a stale target, in case the new controller does not command before write()
+        arm.hw_commands_joint_position_ = arm.hw_franka_robot_state_.q_d;
         arm.robot_->initializeJointPositionControl();
       }
       else if(arm.control_mode_ == ControlMode::JointVelocity){
         arm.robot_->stopRobot();
+        // Start at rest, in case the new controller does not command before write()
+        arm.hw_commands_joint_velocity_.fill(0.0);
         arm.robot_->initializeJointVelocityControl();
       }
       else if(arm.control_mode_ == ControlMode::CartesianPose){
         arm.robot_->stopRobot();
+        // Overwrite a stale target, in case the new controller does not command before write()
+        arm.hw_commands_cartesian_position_ = arm.hw_franka_robot_state_.O_T_EE;
         arm.robot_->initializeCartesianPositionControl();
       }
       else if(arm.control_mode_ == ControlMode::CartesianVelocity){
         arm.robot_->stopRobot();
+        // Start at rest, in case the new controller does not command before write()
+        arm.hw_commands_cartesian_velocity_.fill(0.0);
         arm.robot_->initializeCartesianVelocityControl();
       }
       arm.switch_cm_ = false;

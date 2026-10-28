@@ -41,7 +41,6 @@ More thorough information is available in the documentation.
     * With the forked repository's `mujoco_ros2_control_system` package, you can easily add components with additional degrees of freedom to your robot. Take a look at `garmi_packages/garmi_description/robots/*.ros2_control.xacro` for an example on how to do this.
 
 ## Known issues
-* Joint position controller might cause some bad motor behaviors. Suggest using torque or velocity for now.
 * The default `franka_moveit_config` package depends on `warehouse_ros_mongo`, which has been deprecated. It has been changed to `warehouse_ros_sqlite` for now to ensure that `rosdep install` works properly. For now, please refer to this discussion [here](https://discourse.ros.org/t/fixing-moveit2-humble-moveit-ros-benchmarks-package/32048) for a potential solution; once a proper solution has been identified, it will be added.
 
 ## Installation with One-Click Installer (Recommended)
