@@ -42,15 +42,25 @@ JointPositionExampleController::state_interface_configuration() const {
     config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/position");
     config.names.push_back(arm_id_ + "_joint" + std::to_string(i) + "/velocity");
   }
+  config.names.push_back(arm_id_ + "/" + k_robot_state_interface_name);
   return config;
 }
 
 controller_interface::return_type JointPositionExampleController::update(
     const rclcpp::Time& /*time*/,
     const rclcpp::Duration& period) {
+  // Hold the start position first, so the robot settles and the long first period after a
+  // controller switch does not make the trajectory jump
+  if (hold_elapsed_ < hold_duration_) {
+    hold_elapsed_ = hold_elapsed_ + period;
+    for (int i = 0; i < num_joints; ++i) {
+      command_interfaces_[i].set_value(initial_q_(i));
+    }
+    return controller_interface::return_type::OK;
+  }
   init_time_ = init_time_ + period;
 
-  double delta_angle = M_PI / 16 * (1 - std::cos(M_PI / 5.0 * init_time_.seconds())) * 0.5;
+  double delta_angle = M_PI / 16 * (1 - std::cos(M_PI / 2.0 * init_time_.seconds())) * 0.5;
   for (int i = 0; i < num_joints; ++i) {
         command_interfaces_[i].set_value(initial_q_(i) + delta_angle);
   }
@@ -70,15 +80,38 @@ CallbackReturn JointPositionExampleController::on_init() {
 CallbackReturn JointPositionExampleController::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   arm_id_ = get_node()->get_parameter("arm_id").as_string();
+  franka_robot_state_ = std::make_unique<franka_semantic_components::FrankaRobotState>(
+      arm_id_ + "/" + k_robot_state_interface_name, arm_id_);
   return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn JointPositionExampleController::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
+  franka_robot_state_->assign_loaned_state_interfaces(state_interfaces_);
   updateJointStates();
   initial_q_ = q_;
+  // Start from the robot's own setpoint q_d, which the motion starts from and can differ from the
+  // measured position by ~1e-4 rad. The simulation does not provide q_d, so keep q there.
+  const franka::RobotState* robot_state = franka_robot_state_->get_robot_state_ptr();
+  if (robot_state != nullptr) {
+    const Vector7d q_d = Eigen::Map<const Vector7d>(robot_state->q_d.data());
+    if ((q_d - q_).cwiseAbs().maxCoeff() < 1e-2) {
+      initial_q_ = q_d;
+    }
+  }
+  // Command the start position right away, so the hardware never forwards a stale command
+  for (int i = 0; i < num_joints; ++i) {
+    command_interfaces_[i].set_value(initial_q_(i));
+  }
   start_time_ = this->get_node()->now();
   init_time_ = rclcpp::Duration(0, 0);
+  hold_elapsed_ = rclcpp::Duration(0, 0);
+  return CallbackReturn::SUCCESS;
+}
+
+CallbackReturn JointPositionExampleController::on_deactivate(
+    const rclcpp_lifecycle::State& /*previous_state*/) {
+  franka_robot_state_->release_interfaces();
   return CallbackReturn::SUCCESS;
 }
 

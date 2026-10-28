@@ -20,6 +20,9 @@ controller_manager:
     cartesian_velocity_example_controller:
       type: franka_example_controllers/CartesianVelocityExampleController
 
+    cartesian_pose_example_controller:
+      type: franka_example_controllers/CartesianPoseExampleController
+
     move_to_start_example_controller:
       type: franka_example_controllers/MoveToStartExampleController
 
@@ -138,5 +141,9 @@ joint_velocity_example_controller:
     arm_id: panda
 
 cartesian_velocity_example_controller:
+  ros__parameters:
+    arm_id: panda
+
+cartesian_pose_example_controller:
   ros__parameters:
     arm_id: panda

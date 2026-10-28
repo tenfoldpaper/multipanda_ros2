@@ -35,6 +35,7 @@ add_library(
         src/comless/joint_position_example_controller.cpp
         src/comless/joint_velocity_example_controller.cpp
         src/comless/cartesian_velocity_example_controller.cpp
+        src/comless/cartesian_pose_example_controller.cpp
         src/comless/motion_generator.cpp
         src/comless/model_example_controller.cpp
         src/comless/multi_joint_impedance_example_controller.cpp

@@ -27,12 +27,14 @@ controller_interface::InterfaceConfiguration
 CartesianVelocityExampleController::command_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
-  config.names.push_back("ee_cartesian_velocity/tx");
-  config.names.push_back("ee_cartesian_velocity/ty");
-  config.names.push_back("ee_cartesian_velocity/tz");
-  config.names.push_back("ee_cartesian_velocity/omega_x");
-  config.names.push_back("ee_cartesian_velocity/omega_y");
-  config.names.push_back("ee_cartesian_velocity/omega_z");
+  // The hardware prefixes the Cartesian interfaces with the arm id
+  const std::string prefix = arm_id_ + "_ee_cartesian_velocity/";
+  config.names.push_back(prefix + "tx");
+  config.names.push_back(prefix + "ty");
+  config.names.push_back(prefix + "tz");
+  config.names.push_back(prefix + "omega_x");
+  config.names.push_back(prefix + "omega_y");
+  config.names.push_back(prefix + "omega_z");
 
   return config;
 }
@@ -41,11 +43,12 @@ controller_interface::InterfaceConfiguration
 CartesianVelocityExampleController::state_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
-  for (int i = 1; i < 10; ++i) {
-    config.names.push_back("ee_cartesian_velocity/0" + std::to_string(i));
+  const std::string prefix = arm_id_ + "_ee_cartesian_velocity/";
+  for (int i = 0; i < 10; ++i) {
+    config.names.push_back(prefix + "0" + std::to_string(i));
   }
   for (int i = 10; i < 16; ++i) {
-    config.names.push_back("ee_cartesian_velocity/" + std::to_string(i));
+    config.names.push_back(prefix + std::to_string(i));
   }
   
   return config;
@@ -56,15 +59,22 @@ controller_interface::return_type CartesianVelocityExampleController::update(
     const rclcpp::Duration& period) {
   // updateJointStates();
   init_time_ = init_time_ + period;
-  double time_max = 4.0;
-  double v_max = 0.05;
-  double angle = M_PI / 4.0;
-  double cycle = std::floor(
-      pow(-1.0, (init_time_.seconds() - std::fmod(init_time_.seconds(), time_max)) / time_max));
-  double v = cycle * v_max / 2.0 * (1.0 - std::cos(2.0 * M_PI / time_max * init_time_.seconds()));
-  double v_x = std::cos(angle) * v;
-  double v_z = -std::sin(angle) * v;
-  std::array<double, 6> command = {{v_x, 0.0, v_z, 0.0, 0.0, 0.0}};
+  // Trace a circle in the x-y plane of the base frame through the start point, counter-clockwise
+  // seen from above. The angular rate ramps up smoothly, so the motion starts at rest.
+  const double radius = 0.05;       // [m]
+  const double circle_time = 5.0;   // [s] per revolution
+  const double ramp_time = 2.0;     // [s] until full speed
+  const double omega = 2.0 * M_PI / circle_time;
+  const double t = init_time_.seconds();
+  double rate = omega;                          // angular rate along the circle
+  double phase = omega * (t - 0.5 * ramp_time);  // angle along the circle
+  if (t < ramp_time) {
+    rate = omega * 0.5 * (1.0 - std::cos(M_PI * t / ramp_time));
+    phase = omega * (0.5 * t - ramp_time / (2.0 * M_PI) * std::sin(M_PI * t / ramp_time));
+  }
+  double v_x = -radius * rate * std::sin(phase);
+  double v_y = radius * rate * std::cos(phase);
+  std::array<double, 6> command = {{v_x, v_y, 0.0, 0.0, 0.0, 0.0}};
   for(int i = 0; i < 6; i++){
     command_interfaces_[i].set_value(command[i]);
   }

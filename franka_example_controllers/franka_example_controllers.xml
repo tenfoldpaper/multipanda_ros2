@@ -50,6 +50,12 @@
             Dummy position controller to starting pose.
         </description>
     </class>
+    <class name="franka_example_controllers/CartesianPoseExampleController"
+           type="franka_example_controllers::CartesianPoseExampleController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            The Cartesian pose example controller moves the end effector back and forth on a circular arc in the x-z plane.
+        </description>
+    </class>
     <class name="franka_example_controllers/JointVelocityExampleController"
            type="franka_example_controllers::JointVelocityExampleController" base_class_type="controller_interface::ControllerInterface">
         <description>

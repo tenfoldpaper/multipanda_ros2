@@ -25,7 +25,8 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 namespace franka_example_controllers {
 
 /**
- * The joint impedance example controller moves joint 4 and 5 in a very compliant periodic movement.
+ * The Cartesian velocity example controller moves the end effector on a circle in the x-y plane of
+ * the base frame, starting and passing through its current position.
  */
 class CartesianVelocityExampleController : public controller_interface::ControllerInterface {
  public:

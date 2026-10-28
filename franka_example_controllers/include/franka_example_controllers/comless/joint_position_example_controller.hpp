@@ -14,11 +14,14 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include <Eigen/Eigen>
 #include <controller_interface/controller_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include "franka_semantic_components/franka_robot_state.hpp"
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -37,9 +40,12 @@ class JointPositionExampleController : public controller_interface::ControllerIn
   CallbackReturn on_init() override;
   CallbackReturn on_configure(const rclcpp_lifecycle::State& previous_state) override;
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
+  CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
 
  private:
   std::string arm_id_;
+  std::unique_ptr<franka_semantic_components::FrankaRobotState> franka_robot_state_;
+  const std::string k_robot_state_interface_name{"robot_state"};
   const int num_joints = 7;
   Vector7d q_;
   Vector7d initial_q_;
@@ -47,6 +53,9 @@ class JointPositionExampleController : public controller_interface::ControllerIn
   Vector7d dq_filtered_;
   rclcpp::Time start_time_;
   rclcpp::Duration init_time_ = rclcpp::Duration(0, 0);
+  // Time the start position is held after activation, before the motion begins
+  const rclcpp::Duration hold_duration_ = rclcpp::Duration::from_seconds(0.1);
+  rclcpp::Duration hold_elapsed_ = rclcpp::Duration(0, 0);
   void updateJointStates();
 };
 
